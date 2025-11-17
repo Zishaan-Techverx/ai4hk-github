@@ -32,6 +32,7 @@ builder.Services.AddScoped<IFarmService, FarmService>();
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<ISaleService, SaleService>();
 builder.Services.AddScoped<ISeedingService, SeedingService>();
+builder.Services.AddScoped<IOrganizationService, OrganizationService>();
 
 // ----------------------
 // Add MVC Controllers with Views and Razor Pages

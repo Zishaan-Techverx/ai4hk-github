@@ -1,0 +1,144 @@
+﻿@* Compact Login + Register partial that posts to Identity Razor Pages *@
+<div class="row g-4 justify-content-center">
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="col-12">
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                <i class="fas fa-check-circle me-2"></i>@TempData["SuccessMessage"]
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    }
+
+    <!-- Login Form - Initially Visible -->
+    <div class="col-md-9" id="loginSection">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Log in</h5>
+
+                @if (TempData["ErrorMessage"] != null)
+                {
+                    <div class="alert alert-danger">@TempData["ErrorMessage"]</div>
+                }
+
+                <!-- CHANGED: Now uses HomeController Login method -->
+                <form asp-controller="Home" asp-action="Login" method="post" class="needs-validation" novalidate>
+                    <div class="form-floating mb-3">
+                        <input name="Input_Email" type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required />
+                        <label for="loginEmail">Email</label>
+                        <div class="invalid-feedback">
+                            Please provide a valid email.
+                        </div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input name="Input_Password" type="password" class="form-control" id="loginPassword" placeholder="Password" required />
+                        <label for="loginPassword">Password</label>
+                        <div class="invalid-feedback">
+                            Please provide your password.
+                        </div>
+                    </div>
+                    <div class="form-check mb-3">
+                        <input name="Input_RememberMe" class="form-check-input" type="checkbox" value="true" id="rememberMe" />
+                        <label class="form-check-label" for="rememberMe">Remember me</label>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Log in</button>
+                </form>
+
+                <button type="button" onclick="showRegister()" class="btn btn-outline-secondary w-100 mt-2">
+                    Signup
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register Form - Initially Hidden (Keep as is) -->
+    <div class="col-md-9" id="registerSection" style="display: none;">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">Register</h5>
+                <form asp-area="Identity" asp-page="/Account/Register" method="post" class="needs-validation" novalidate>
+                    <input type="hidden" name="ReturnUrl" value="@Context.Request.Path" />
+
+                    <div class="form-floating mb-3">
+                        <input name="Input.Name" type="text" class="form-control" id="registerName" placeholder="Full name" required />
+                        <label for="registerName">Name</label>
+                        <div class="invalid-feedback">
+                            Please provide your full name.
+                        </div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input name="Input.Email" type="email" class="form-control" id="registerEmail" placeholder="name@example.com" required />
+                        <label for="registerEmail">Email</label>
+                        <div class="invalid-feedback">
+                            Please provide a valid email.
+                        </div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input name="Input.Password" type="password" class="form-control" id="registerPassword" placeholder="Password" required />
+                        <label for="registerPassword">Password</label>
+                        <div class="invalid-feedback">
+                            Please provide a password.
+                        </div>
+                    </div>
+                    <div class="form-floating mb-3">
+                        <input name="Input.ConfirmPassword" type="password" class="form-control" id="registerConfirm" placeholder="Confirm Password" required />
+                        <label for="registerConfirm">Confirm Password</label>
+                        <div class="invalid-feedback">
+                            Please confirm your password.
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Register</button>
+                </form>
+                <button type="button" onclick="showLogin()" class="btn btn-outline-secondary w-100 mt-2">
+                    Login Existing User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function showRegister() {
+        document.getElementById('loginSection').style.display = 'none';
+        document.getElementById('registerSection').style.display = 'block';
+    }
+
+    function showLogin() {
+        document.getElementById('registerSection').style.display = 'none';
+        document.getElementById('loginSection').style.display = 'block';
+    }
+
+    (function () {
+        'use strict';
+        window.addEventListener('load', function () {
+            Array.from(document.getElementsByClassName('needs-validation')).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        }, false);
+    })();
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+                <text>
+                document.addEventListener('DOMContentLoaded', function() {
+                    showLogin();
+                });
+                </text>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+                <text>
+                document.addEventListener('DOMContentLoaded', function() {
+                    showLogin();
+                });
+                </text>
+    }
+</script>

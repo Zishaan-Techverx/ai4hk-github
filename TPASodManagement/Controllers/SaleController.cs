@@ -1,10 +1,12 @@
-using System.Threading.Tasks;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Controllers
 {
+    [Authorize]
     public class SaleController : Controller
     {
         private readonly ISaleService _saleService;

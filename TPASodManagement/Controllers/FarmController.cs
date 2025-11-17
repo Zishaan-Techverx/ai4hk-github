@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Threading.Tasks;
@@ -6,6 +7,7 @@ using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Controllers
 {
+    [Authorize]
     public class FarmController : Controller
     {
         private readonly IFarmService _farmService;

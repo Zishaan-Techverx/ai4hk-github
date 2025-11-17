@@ -90,11 +90,17 @@
             <td>
                 @Html.DisplayFor(modelItem => item.ProductCategory.ProductCategoryId)
             </td>
-            <td>
-                <a asp-action="Edit" asp-route-id="@item.ProductId">Edit</a> |
-                <a asp-action="Details" asp-route-id="@item.ProductId">Details</a> |
-                <a asp-action="Delete" asp-route-id="@item.ProductId">Delete</a>
-            </td>
+                <td style="display: flex; gap: 8px; align-items: center;">
+                    <a asp-action="Edit" asp-route-id="@item.ProductId">
+                        <i class="fa-regular fa-pen-to-square"></i>
+                    </a>
+                    <a asp-action="Details" asp-route-id="@item.ProductId">
+                        <i class="fa-solid fa-circle-info"></i>
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@item.ProductId">
+                        <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
+                    </a>
+                </td>
         </tr>
 }
     </tbody>

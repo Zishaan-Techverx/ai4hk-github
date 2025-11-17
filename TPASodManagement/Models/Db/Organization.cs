@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TpaSodManagement.Models.Db;
 
@@ -26,6 +27,10 @@ public partial class Organization
     public DateTimeOffset CreatedDate { get; set; }
 
     public DateTimeOffset UpdatedDate { get; set; }
+    public string? LogoPath { get; set; }
+
+    [NotMapped]
+    public IFormFile? LogoFile { get; set; }
 
     public virtual ICollection<Customer> Customers { get; set; } = new List<Customer>();
 

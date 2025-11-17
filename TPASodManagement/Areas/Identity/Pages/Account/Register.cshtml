@@ -1,0 +1,93 @@
+﻿@page
+@model TpaSodManagement.Areas.Identity.Pages.Account.RegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center">
+    <div class="row w-100 justify-content-center">
+        <div class="col-lg-8 col-xl-6">
+            <div class="text-center mb-5">
+                <h1 class="display-4 text-primary">Sod Management System</h1>
+            </div>
+
+            <div class="row g-4 justify-content-center">
+                <div class="col-md-9">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">Register</h5>
+
+                            <form id="registerForm" asp-route-returnUrl="@Model.ReturnUrl" method="post" class="needs-validation" novalidate>
+                                <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Input.Name" class="form-control" id="registerName" placeholder="Full name" required />
+                                    <label for="registerName">Name</label>
+                                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                                    <div class="invalid-feedback">
+                                        Please provide your full name.
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Input.Email" class="form-control" id="registerEmail" placeholder="name@example.com" required />
+                                    <label for="registerEmail">Email</label>
+                                    <span asp-validation-for="Input.Email" class="text-danger"></span>
+                                    <div class="invalid-feedback">
+                                        Please provide a valid email.
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Input.Password" class="form-control" id="registerPassword" placeholder="Password" required />
+                                    <label for="registerPassword">Password</label>
+                                    <span asp-validation-for="Input.Password" class="text-danger"></span>
+                                    <div class="invalid-feedback">
+                                        Please provide a password.
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Input.ConfirmPassword" class="form-control" id="registerConfirm" placeholder="Confirm Password" required />
+                                    <label for="registerConfirm">Confirm Password</label>
+                                    <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                                    <div class="invalid-feedback">
+                                        Please confirm your password.
+                                    </div>
+                                </div>
+
+                                <button id="registerSubmit" type="submit" class="btn btn-success w-100">Register</button>
+                            </form>
+
+                            <a href="/" class="btn btn-outline-secondary w-100 mt-2">
+                                Login Existing User
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+
+    <script>
+        (function () {
+            'use strict';
+            window.addEventListener('load', function () {
+                Array.from(document.getElementsByClassName('needs-validation')).forEach(function (form) {
+                    form.addEventListener('submit', function (event) {
+                        if (!form.checkValidity()) {
+                            event.preventDefault();
+                            event.stopPropagation();
+                        }
+                        form.classList.add('was-validated');
+                    }, false);
+                });
+            }, false);
+        })();
+    </script>
+}
