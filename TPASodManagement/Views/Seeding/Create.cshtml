@@ -1,0 +1,88 @@
+@model TpaSodManagement.Models.Db.Seeding
+
+@{
+    ViewData["Title"] = "Create";
+}
+
+<h1>Create</h1>
+
+<h4>Seeding</h4>
+<hr />
+<div class="row">
+    <div class="col-md-4">
+        <form asp-action="Create">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="form-group">
+                <label asp-for="UserId" class="control-label"></label>
+                <select asp-for="UserId" class ="form-control" asp-items="ViewBag.UserId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="FarmId" class="control-label"></label>
+                <select asp-for="FarmId" class ="form-control" asp-items="ViewBag.FarmId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="FieldId" class="control-label"></label>
+                <select asp-for="FieldId" class ="form-control" asp-items="ViewBag.FieldId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="TagRangeId" class="control-label"></label>
+                <select asp-for="TagRangeId" class ="form-control" asp-items="ViewBag.TagRangeId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="AreaAmount" class="control-label"></label>
+                <input asp-for="AreaAmount" class="form-control" />
+                <span asp-validation-for="AreaAmount" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="AreaTypeId" class="control-label"></label>
+                <select asp-for="AreaTypeId" class ="form-control" asp-items="ViewBag.AreaTypeId"></select>
+            </div>
+            <div class="form-group">
+                <label asp-for="SeedingDate" class="control-label"></label>
+                <input asp-for="SeedingDate" class="form-control" />
+                <span asp-validation-for="SeedingDate" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SeedingMethod" class="control-label"></label>
+                <input asp-for="SeedingMethod" class="form-control" />
+                <span asp-validation-for="SeedingMethod" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SeedRatePerUnit" class="control-label"></label>
+                <input asp-for="SeedRatePerUnit" class="form-control" />
+                <span asp-validation-for="SeedRatePerUnit" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="WeatherConditions" class="control-label"></label>
+                <input asp-for="WeatherConditions" class="form-control" />
+                <span asp-validation-for="WeatherConditions" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SoilTemperature" class="control-label"></label>
+                <input asp-for="SoilTemperature" class="form-control" />
+                <span asp-validation-for="SoilTemperature" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="SoilMoisture" class="control-label"></label>
+                <input asp-for="SoilMoisture" class="form-control" />
+                <span asp-validation-for="SoilMoisture" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <label asp-for="Notes" class="control-label"></label>
+                <input asp-for="Notes" class="form-control" />
+                <span asp-validation-for="Notes" class="text-danger"></span>
+            </div>
+            <div class="form-group">
+                <input type="submit" value="Create" class="btn btn-primary" />
+            </div>
+        </form>
+    </div>
+</div>
+
+<div>
+    <a asp-action="Index">Back to List</a>
+</div>
+
+@section Scripts {
+    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+}

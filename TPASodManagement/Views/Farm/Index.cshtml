@@ -1,0 +1,101 @@
+@model IEnumerable<TpaSodManagement.Models.Db.Farm>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.TotalArea)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.OrganicCertified)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.LicenseNumber)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CertificationDetails)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Latitude)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Longitude)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ElevationMeters)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SoilType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.IrrigationType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.ClimateZone)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AreaType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Organization)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.TotalArea)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.OrganicCertified)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.LicenseNumber)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CertificationDetails)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Latitude)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Longitude)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ElevationMeters)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SoilType)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.IrrigationType)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.ClimateZone)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AreaType.AreaTypeId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Organization.OrganizationId)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.FarmId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.FarmId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.FarmId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

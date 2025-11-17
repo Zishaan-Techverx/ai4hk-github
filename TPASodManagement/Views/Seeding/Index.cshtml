@@ -1,0 +1,113 @@
+@model IEnumerable<TpaSodManagement.Models.Db.Seeding>
+
+@{
+    ViewData["Title"] = "Index";
+}
+
+<h1>Index</h1>
+
+<p>
+    <a asp-action="Create">Create New</a>
+</p>
+<table class="table">
+    <thead>
+        <tr>
+            <th>
+                @Html.DisplayNameFor(model => model.AreaAmount)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SeedingDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SeedingMethod)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SeedRatePerUnit)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.WeatherConditions)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SoilTemperature)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.SoilMoisture)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Notes)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.CreatedDate)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.AreaType)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Farm)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.Field)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.TagRange)
+            </th>
+            <th>
+                @Html.DisplayNameFor(model => model.User)
+            </th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+@foreach (var item in Model) {
+        <tr>
+            <td>
+                @Html.DisplayFor(modelItem => item.AreaAmount)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SeedingDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SeedingMethod)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SeedRatePerUnit)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.WeatherConditions)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SoilTemperature)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.SoilMoisture)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Notes)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.CreatedDate)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.AreaType.AreaTypeId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Farm.FarmId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.Field.FieldId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.TagRange.TagRangeId)
+            </td>
+            <td>
+                @Html.DisplayFor(modelItem => item.User.UserId)
+            </td>
+            <td>
+                <a asp-action="Edit" asp-route-id="@item.SeedingId">Edit</a> |
+                <a asp-action="Details" asp-route-id="@item.SeedingId">Details</a> |
+                <a asp-action="Delete" asp-route-id="@item.SeedingId">Delete</a>
+            </td>
+        </tr>
+}
+    </tbody>
+</table>

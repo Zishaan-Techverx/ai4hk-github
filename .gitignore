@@ -1,0 +1,7 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/.vs
+/TPASodManagement/.idea/.idea.TSASodManagement.dir/.idea
+/TPASodManagement/.vs
