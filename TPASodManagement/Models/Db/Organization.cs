@@ -27,7 +27,8 @@ public partial class Organization
     public DateTimeOffset CreatedDate { get; set; }
 
     public DateTimeOffset UpdatedDate { get; set; }
-    public string? LogoPath { get; set; }
+
+    public byte[]? LogoBytes { get; set; }
 
     [NotMapped]
     public IFormFile? LogoFile { get; set; }

@@ -109,5 +109,34 @@ namespace TpaSodManagement.Controllers
                 await _organizationService.DeleteOrganizationAsync(id);
                 return RedirectToAction(nameof(Index));
             }
+
+        public async Task<IActionResult> GetLogo(long id)
+        {
+            var organization = await _organizationService.GetOrganizationByIdAsync(id);
+            if (organization?.LogoBytes == null || organization.LogoBytes.Length == 0)
+                return NotFound();
+
+            return File(organization.LogoBytes, GetImageContentType(organization.LogoBytes));
         }
+
+        private string GetImageContentType(byte[] bytes)
+        {
+            if (bytes.Length < 4) return "image/jpeg";
+
+            // PNG detection
+            if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+                return "image/png";
+
+            // JPEG detection
+            if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF)
+                return "image/jpeg";
+
+            // GIF detection
+            if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46)
+                return "image/gif";
+
+            // Default to JPEG
+            return "image/jpeg";
+        }
+    }
 }

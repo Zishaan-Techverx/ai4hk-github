@@ -1,5 +1,4 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
@@ -9,12 +8,11 @@ namespace TpaSodManagement.Services.Implementations
     public class OrganizationService : IOrganizationService
     {
         private readonly SodDbContext _context;
-        private readonly IWebHostEnvironment _env;
 
-        public OrganizationService(SodDbContext context, IWebHostEnvironment env)
+        // Remove IWebHostEnvironment dependency since we're not using file system
+        public OrganizationService(SodDbContext context)
         {
             _context = context;
-            _env = env;
         }
 
         public async Task<List<Organization>> GetAllOrganizationsAsync()
@@ -30,9 +28,9 @@ namespace TpaSodManagement.Services.Implementations
 
         public async Task<Organization> CreateOrganizationAsync(Organization organization, IFormFile logoFile)
         {
-            if (logoFile != null)
+            if (logoFile != null && logoFile.Length > 0)
             {
-                organization.LogoPath = await SaveLogoFileAsync(logoFile);
+                organization.LogoBytes = await ConvertFileToBytesAsync(logoFile);
             }
 
             _context.Organizations.Add(organization);
@@ -49,14 +47,9 @@ namespace TpaSodManagement.Services.Implementations
             orgDb.OrganizationName = updatedOrg.OrganizationName;
             orgDb.OrganizationType = updatedOrg.OrganizationType;
 
-            if (logoFile != null)
+            if (logoFile != null && logoFile.Length > 0)
             {
-                if (!string.IsNullOrEmpty(orgDb.LogoPath))
-                {
-                    DeleteLogoFile(orgDb.LogoPath);
-                }
-
-                orgDb.LogoPath = await SaveLogoFileAsync(logoFile);
+                orgDb.LogoBytes = await ConvertFileToBytesAsync(logoFile);
             }
 
             _context.Organizations.Update(orgDb);
@@ -70,11 +63,6 @@ namespace TpaSodManagement.Services.Implementations
             if (organization == null)
                 return false;
 
-            if (!string.IsNullOrEmpty(organization.LogoPath))
-            {
-                DeleteLogoFile(organization.LogoPath);
-            }
-
             _context.Organizations.Remove(organization);
             await _context.SaveChangesAsync();
             return true;
@@ -85,29 +73,13 @@ namespace TpaSodManagement.Services.Implementations
             return await _context.Organizations.AnyAsync(e => e.OrganizationId == id);
         }
 
-        private async Task<string> SaveLogoFileAsync(IFormFile logoFile)
+        private async Task<byte[]> ConvertFileToBytesAsync(IFormFile file)
         {
-            var uploadPath = Path.Combine(_env.WebRootPath, "uploads/organizations");
-
-            if (!Directory.Exists(uploadPath))
-                Directory.CreateDirectory(uploadPath);
-
-            string fileName = Guid.NewGuid() + Path.GetExtension(logoFile.FileName);
-            string filePath = Path.Combine(uploadPath, fileName);
-
-            using (var stream = new FileStream(filePath, FileMode.Create))
+            using (var memoryStream = new MemoryStream())
             {
-                await logoFile.CopyToAsync(stream);
+                await file.CopyToAsync(memoryStream);
+                return memoryStream.ToArray();
             }
-
-            return "/uploads/organizations/" + fileName;
-        }
-
-        private void DeleteLogoFile(string logoPath)
-        {
-            var logoFile = Path.Combine(_env.WebRootPath, logoPath.TrimStart('/'));
-            if (File.Exists(logoFile))
-                File.Delete(logoFile);
         }
     }
 }

@@ -30,9 +30,9 @@
                 <label asp-for="LogoFile" class="control-label">Logo</label>
 
                 <div id="logoPreview" class="mb-2">
-                    @if (!string.IsNullOrEmpty(Model.LogoPath))
+                    @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
                     {
-                        <img id="currentLogo" src="@Url.Content(Model.LogoPath)"
+                        <img id="currentLogo" src="@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })"
                              alt="Current Logo"
                              style="max-width:150px; max-height:150px; border:1px solid #ccc; border-radius:5px;" />
                     }
@@ -44,6 +44,7 @@
 
                 <input asp-for="LogoFile" type="file" class="form-control" accept="image/*" onchange="previewLogo(event)" />
                 <span asp-validation-for="LogoFile" class="text-danger"></span>
+                <small class="form-text text-muted">Leave empty to keep current logo</small>
             </div>
 
             <div class="form-group">
@@ -84,6 +85,34 @@
                     previewContainer.appendChild(img);
                 };
                 reader.readAsDataURL(file);
+            } else {
+                // If no file selected, show the current logo again or "no logo" message
+                @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
+                {
+                        <text>
+                        const img = document.createElement('img');
+                        img.src = '@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })';
+                        img.alt = "Current Logo";
+                        img.style.maxWidth = "150px";
+                        img.style.maxHeight = "150px";
+                        img.style.border = "1px solid #ccc";
+                        img.style.borderRadius = "5px";
+                        img.id = "currentLogo";
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(img);
+                        </text>
+                }
+                else
+                {
+                        <text>
+                        const span = document.createElement('span');
+                        span.className = 'text-muted';
+                        span.id = 'noLogoText';
+                        span.textContent = 'No logo uploaded';
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(span);
+                        </text>
+                }
             }
         }
     </script>

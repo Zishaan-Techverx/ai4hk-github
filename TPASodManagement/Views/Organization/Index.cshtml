@@ -44,9 +44,11 @@
                 <td>@Html.DisplayFor(modelItem => item.OrganizationName)</td>
                 <td>@Html.DisplayFor(modelItem => item.OrganizationType)</td>
                 <td>
-                    @if (!string.IsNullOrEmpty(item.LogoPath))
+                    @if (item.LogoBytes != null && item.LogoBytes.Length > 0)
                     {
-                        <img src="@item.LogoPath" alt="Logo" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #ccc;" />
+                        <img src="@Url.Action("GetLogo", "Organization", new { id = item.OrganizationId })"
+                             alt="Logo"
+                             style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #ccc;" />
                     }
                     else
                     {
