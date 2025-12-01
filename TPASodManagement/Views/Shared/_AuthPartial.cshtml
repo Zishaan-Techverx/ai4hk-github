@@ -1,4 +1,18 @@
-﻿@* Compact Login + Register partial that posts to Identity Razor Pages *@
+﻿@using TpaSodManagement.Services.Interfaces
+@using System.Linq
+@using TpaSodManagement.Models.Db
+
+@inject IOrganizationService OrganizationService
+
+@{
+    // Get ALL organizations from ViewData (loaded in HomeController)
+    var organizations = ViewData["Organizations"] as List<Organization> ?? new List<Organization>();
+    var allOrganizations = organizations
+        .OrderBy(o => o.OrganizationName)
+        .ToList();
+}
+
+@* Compact Login + Register partial that posts to Identity Razor Pages *@
 <div class="row g-4 justify-content-center">
 
     @if (TempData["SuccessMessage"] != null)
@@ -25,14 +39,14 @@
                 <!-- CHANGED: Now uses HomeController Login method -->
                 <form asp-controller="Home" asp-action="Login" method="post" class="needs-validation" novalidate>
                     <div class="form-floating mb-3">
-                        <input name="Input_Email" type="email" class="form-control" id="loginEmail" placeholder="name@example.com" required />
-                        <label for="loginEmail">Email</label>
+                        <input name="Input_Email" type="text" class="form-control" id="loginEmail" required />
+                        <label for="loginEmail">Email / Username</label>
                         <div class="invalid-feedback">
-                            Please provide a valid email.
+                            Please provide a valid email or username.
                         </div>
                     </div>
                     <div class="form-floating mb-3">
-                        <input name="Input_Password" type="password" class="form-control" id="loginPassword" placeholder="Password" required />
+                        <input name="Input_Password" type="password" class="form-control" id="loginPassword" required />
                         <label for="loginPassword">Password</label>
                         <div class="invalid-feedback">
                             Please provide your password.
@@ -46,13 +60,13 @@
                 </form>
 
                 <button type="button" onclick="showRegister()" class="btn btn-outline-secondary w-100 mt-2">
-                    Signup
+                    Register
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Register Form - Initially Hidden (Keep as is) -->
+    <!-- Register Form - Initially Hidden -->
     <div class="col-md-9" id="registerSection" style="display: none;">
         <div class="card">
             <div class="card-body">
@@ -61,35 +75,65 @@
                     <input type="hidden" name="ReturnUrl" value="@Context.Request.Path" />
 
                     <div class="form-floating mb-3">
-                        <input name="Input.Name" type="text" class="form-control" id="registerName" placeholder="Full name" required />
-                        <label for="registerName">Name</label>
+                        <input name="Input.FirstName" type="text" class="form-control" id="registerFirstName" required />
+                        <label for="registerFirstName">First Name</label>
                         <div class="invalid-feedback">
-                            Please provide your full name.
+                            Please provide your first name.
                         </div>
                     </div>
+
                     <div class="form-floating mb-3">
-                        <input name="Input.Email" type="email" class="form-control" id="registerEmail" placeholder="name@example.com" required />
+                        <input name="Input.LastName" type="text" class="form-control" id="registerLastName" required />
+                        <label for="registerLastName">Last Name</label>
+                        <div class="invalid-feedback">
+                            Please provide your last name.
+                        </div>
+                    </div>
+                    
+                    <div class="form-floating mb-3">
+                        <input name="Input.Email" type="email" class="form-control" id="registerEmail" required />
                         <label for="registerEmail">Email</label>
                         <div class="invalid-feedback">
                             Please provide a valid email.
                         </div>
                     </div>
+                    
+                    <div class="mb-3">
+                        <label for="registerOrganization" class="form-label">Organization Name</label>
+                        <select name="Input.OrganizationName" 
+                                class="form-select" 
+                                id="registerOrganization" 
+                                required>
+                            <option value="">-- Select Organization --</option>
+                            @foreach (var org in allOrganizations)
+                            {
+                                <option value="@org.OrganizationName">@org.OrganizationName</option>
+                            }
+                        </select>
+                        <div class="invalid-feedback">
+                            Please select an organization.
+                        </div>
+                    </div>
+                    
                     <div class="form-floating mb-3">
-                        <input name="Input.Password" type="password" class="form-control" id="registerPassword" placeholder="Password" required />
+                        <input name="Input.Password" type="password" class="form-control" id="registerPassword" required />
                         <label for="registerPassword">Password</label>
                         <div class="invalid-feedback">
                             Please provide a password.
                         </div>
                     </div>
+                    
                     <div class="form-floating mb-3">
-                        <input name="Input.ConfirmPassword" type="password" class="form-control" id="registerConfirm" placeholder="Confirm Password" required />
+                        <input name="Input.ConfirmPassword" type="password" class="form-control" id="registerConfirm" required />
                         <label for="registerConfirm">Confirm Password</label>
                         <div class="invalid-feedback">
                             Please confirm your password.
                         </div>
                     </div>
-                    <button type="submit" class="btn btn-success w-100">Register</button>
+                    
+                    <button type="submit" class="btn btn-primary w-100">Register</button>
                 </form>
+                
                 <button type="button" onclick="showLogin()" class="btn btn-outline-secondary w-100 mt-2">
                     Login Existing User
                 </button>
@@ -126,19 +170,19 @@
 
     @if (TempData["SuccessMessage"] != null)
     {
-                <text>
-                document.addEventListener('DOMContentLoaded', function() {
-                    showLogin();
-                });
-                </text>
+        <text>
+        document.addEventListener('DOMContentLoaded', function() {
+            showLogin();
+        });
+        </text>
     }
 
     @if (TempData["ErrorMessage"] != null)
     {
-                <text>
-                document.addEventListener('DOMContentLoaded', function() {
-                    showLogin();
-                });
-                </text>
+        <text>
+        document.addEventListener('DOMContentLoaded', function() {
+            showLogin();
+        });
+        </text>
     }
 </script>

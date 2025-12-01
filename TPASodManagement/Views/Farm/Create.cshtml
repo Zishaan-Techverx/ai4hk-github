@@ -3,8 +3,15 @@
 @{
     ViewData["Title"] = "Create";
 }
+<br />
 
-<h1>Create</h1>
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>
+    </a>
+
+    <h1 class="ms-4 mb-0">Create</h1>
+</div>
 
 <h4>Farm</h4>
 <hr />
@@ -13,63 +20,74 @@
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
-                <label asp-for="OrganizationId" class="control-label"></label>
+                <label asp-for="OrganizationId" class="control-label">Organization Id</label>
                 <select asp-for="OrganizationId" class ="form-control" asp-items="ViewBag.OrganizationId"></select>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="TotalArea" class="control-label"></label>
+                <label asp-for="TotalArea" class="control-label">Total Area</label>
                 <input asp-for="TotalArea" class="form-control" />
                 <span asp-validation-for="TotalArea" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="AreaTypeId" class="control-label"></label>
+                <label asp-for="AreaTypeId" class="control-label">Area Type Id</label>
                 <select asp-for="AreaTypeId" class ="form-control" asp-items="ViewBag.AreaTypeId"></select>
             </div>
             <div class="form-group form-check">
                 <label class="form-check-label">
-                    <input class="form-check-input" asp-for="OrganicCertified" /> @Html.DisplayNameFor(model => model.OrganicCertified)
+                    <input class="form-check-input" asp-for="OrganicCertified" /> Organic Certified
                 </label>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="LicenseNumber" class="control-label"></label>
+                <label asp-for="LicenseNumber" class="control-label">License Number</label>
                 <input asp-for="LicenseNumber" class="form-control" />
                 <span asp-validation-for="LicenseNumber" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="CertificationDetails" class="control-label"></label>
+                <label asp-for="CertificationDetails" class="control-label">Certification Details</label>
                 <input asp-for="CertificationDetails" class="form-control" />
                 <span asp-validation-for="CertificationDetails" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="Latitude" class="control-label"></label>
+                <label asp-for="Latitude" class="control-label">Latitude</label>
                 <input asp-for="Latitude" class="form-control" />
                 <span asp-validation-for="Latitude" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="Longitude" class="control-label"></label>
+                <label asp-for="Longitude" class="control-label">Longitude</label>
                 <input asp-for="Longitude" class="form-control" />
                 <span asp-validation-for="Longitude" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="ElevationMeters" class="control-label"></label>
+                <label asp-for="ElevationMeters" class="control-label">Elevation Meters</label>
                 <input asp-for="ElevationMeters" class="form-control" />
                 <span asp-validation-for="ElevationMeters" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="SoilType" class="control-label"></label>
+                <label asp-for="SoilType" class="control-label">Soil Type</label>
                 <input asp-for="SoilType" class="form-control" />
                 <span asp-validation-for="SoilType" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="IrrigationType" class="control-label"></label>
+                <label asp-for="IrrigationType" class="control-label">Irrigation Type</label>
                 <input asp-for="IrrigationType" class="form-control" />
                 <span asp-validation-for="IrrigationType" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="ClimateZone" class="control-label"></label>
+                <label asp-for="ClimateZone" class="control-label">Climate Zone</label>
                 <input asp-for="ClimateZone" class="form-control" />
                 <span asp-validation-for="ClimateZone" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
@@ -77,9 +95,8 @@
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<br />
+<br />
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

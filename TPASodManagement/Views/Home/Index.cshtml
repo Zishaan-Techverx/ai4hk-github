@@ -2,8 +2,12 @@
     ViewData["Title"] = "Home";
 }
 
+
+<br />
+
 @if (!User.Identity.IsAuthenticated)
 {
+    <!-- Show login/register for unauthenticated users -->
     <div class="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center">
         <div class="row w-100 justify-content-center">
             <div class="col-lg-8 col-xl-6">
@@ -17,6 +21,7 @@
 }
 else
 {
+    <!-- Show dashboard for authenticated users -->
     <div class="container-fluid">
         <div class="row">
             <div class="col-12">
@@ -25,7 +30,8 @@ else
 
                 </div>
 
-                <div class="toast-container position-fixed top-0 end-0 p-3">
+                <!-- Welcome Toast Popup -->
+                @* <div class="toast-container position-fixed top-0 end-0 p-3">
                     <div id="welcomeToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
                         <div class="toast-header bg-success text-white">
                             <i class="fas fa-check-circle me-2"></i>
@@ -37,15 +43,123 @@ else
                             Hello, <strong>@User.Identity.Name</strong>! Welcome to Sod Management System.
                         </div>
                     </div>
-                </div>
+                </div> *@
 
 
-                
+                @* <!-- Quick stats or dashboard content -->
+                <div class="row">
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4>Farms</h4>
+                                        <h2>@(ViewBag.FarmCount ?? 0)</h2>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-tractor fa-2x"></i>
+                                    </div>
+                                </div>
+                                <a href="@Url.Action("Index", "Farm")" class="text-white stretched-link"></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4>Customers</h4>
+                                        <h2>@(ViewBag.CustomerCount ?? 0)</h2>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-users fa-2x"></i>
+                                    </div>
+                                </div>
+                                <a href="@Url.Action("Index", "Customer")" class="text-white stretched-link"></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4>Products</h4>
+                                        <h2>@(ViewBag.ProductCount ?? 0)</h2>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-seedling fa-2x"></i>
+                                    </div>
+                                </div>
+                                <a href="@Url.Action("Index", "Product")" class="text-white stretched-link"></a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3 mb-4">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between">
+                                    <div>
+                                        <h4>Sales</h4>
+                                        <h2>@(ViewBag.SaleCount ?? 0)</h2>
+                                    </div>
+                                    <div class="align-self-center">
+                                        <i class="fas fa-chart-line fa-2x"></i>
+                                    </div>
+                                </div>
+                                <a href="@Url.Action("Index", "Sale")" class="text-white stretched-link"></a>
+                            </div>
+                        </div>
+                    </div>
+                </div> *@
+
+                @* <!-- Recent activity or other dashboard widgets -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="card-title mb-0">Quick Actions</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-3 text-center mb-3">
+                                        <a href="@Url.Action("Create", "Farm")" class="btn btn-outline-primary btn-lg w-100">
+                                            <i class="fas fa-plus-circle fa-2x mb-2"></i><br>
+                                            Add Farm
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3 text-center mb-3">
+                                        <a href="@Url.Action("Create", "Customer")" class="btn btn-outline-success btn-lg w-100">
+                                            <i class="fas fa-user-plus fa-2x mb-2"></i><br>
+                                            Add Customer
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3 text-center mb-3">
+                                        <a href="@Url.Action("Create", "Sale")" class="btn btn-outline-info btn-lg w-100">
+                                            <i class="fas fa-cash-register fa-2x mb-2"></i><br>
+                                            New Sale
+                                        </a>
+                                    </div>
+                                    <div class="col-md-3 text-center mb-3">
+                                        <a href="@Url.Action("Create", "Seeding")" class="btn btn-outline-warning btn-lg w-100">
+                                            <i class="fas fa-seedling fa-2x mb-2"></i><br>
+                                            New Seeding
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div
+                    </div>
+                </div> *@
             </div>
         </div>
     </div>
-
-    <script>
+    <!-- Script to show the welcome toast -->
+    @* <script>
         document.addEventListener('DOMContentLoaded', function() {
             const welcomeToast = document.getElementById('welcomeToast');
             if (welcomeToast) {
@@ -53,5 +167,5 @@ else
                 toast.show();
             }
         });
-    </script>
+    </script> *@
 }

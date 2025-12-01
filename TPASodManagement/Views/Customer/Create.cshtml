@@ -4,34 +4,49 @@
     ViewData["Title"] = "Create";
 }
 
-<h1>Create</h1>
+<br />
+
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>
+    </a>
+
+    <h1 class="ms-4 mb-0">Create</h1>
+</div>
+
+<br />
 
 <h4>Customer</h4>
 <hr />
+<br />
 <div class="row">
     <div class="col-md-4">
         <form asp-action="Create">
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <div class="form-group">
-                <label asp-for="CustomerType" class="control-label"></label>
+                <label asp-for="CustomerType" class="control-label">Customer Type</label>
                 <input asp-for="CustomerType" class="form-control" />
                 <span asp-validation-for="CustomerType" class="text-danger"></span>
             </div>
+            <br/>
             <div class="form-group">
-                <label asp-for="PersonId" class="control-label"></label>
+                <label asp-for="PersonId" class="control-label">Person Id</label>
                 <select asp-for="PersonId" class ="form-control" asp-items="ViewBag.PersonId"></select>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="OrganizationId" class="control-label"></label>
+                <label asp-for="OrganizationId" class="control-label">Organization Id</label>
                 <select asp-for="OrganizationId" class ="form-control" asp-items="ViewBag.OrganizationId"></select>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="CustomerCode" class="control-label"></label>
+                <label asp-for="CustomerCode" class="control-label">Customer Code</label>
                 <input asp-for="CustomerCode" class="form-control" />
                 <span asp-validation-for="CustomerCode" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="CreditLimit" class="control-label"></label>
+                <label asp-for="CreditLimit" class="control-label">Credit Limit</label>
                 <input asp-for="CreditLimit" class="form-control" />
                 <span asp-validation-for="CreditLimit" class="text-danger"></span>
             </div>
@@ -40,11 +55,13 @@
                     <input class="form-check-input" asp-for="TaxExempt" /> @Html.DisplayNameFor(model => model.TaxExempt)
                 </label>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="Notes" class="control-label"></label>
+                <label asp-for="Notes" class="control-label">Notes</label>
                 <input asp-for="Notes" class="form-control" />
                 <span asp-validation-for="Notes" class="text-danger"></span>
             </div>
+            <br/>
             <div class="form-group">
                 <input type="submit" value="Create" class="btn btn-primary" />
             </div>
@@ -52,9 +69,8 @@
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<br />
+<br />
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

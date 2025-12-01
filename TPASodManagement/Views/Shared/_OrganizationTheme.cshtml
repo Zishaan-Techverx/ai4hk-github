@@ -1,0 +1,402 @@
+@* Organization Theme Partial - Handles Navbar Colors and Footer *@
+
+@using Microsoft.AspNetCore.Identity
+@using TpaSodManagement.Areas.Identity.Data
+@using TpaSodManagement.Services.Interfaces
+
+@inject UserManager<TpaSodManagementUser> UserManager
+@inject IOrganizationService OrganizationService
+
+@{
+    string userOrganizationName = null;
+    
+    if (User.Identity.IsAuthenticated)
+    {
+        var user = await UserManager.GetUserAsync(User);
+        if (user != null && !string.IsNullOrWhiteSpace(user.OrganizationName))
+        {
+            userOrganizationName = user.OrganizationName.Trim();
+        }
+    }
+    
+    // Normalize organization name for comparison
+    var orgNameUpper = userOrganizationName?.ToUpper() ?? "";
+    
+    // Set navbar colors based on organization
+    string navbarBgColor = "#212529"; // Default dark
+    string navbarTextColor = "#ffffff"; // Default white
+    
+    if (!string.IsNullOrWhiteSpace(orgNameUpper))
+    {
+        if (orgNameUpper == "TPA" || orgNameUpper == "TURF PRODUCERS ASSOCIATION" || orgNameUpper.Contains("TURF PRODUCERS"))
+        {
+            navbarBgColor = "#2B2B2B"; // TPA Dark Gray
+            navbarTextColor = "#F6F4EE"; // TPA Off-White
+        }
+        else if ((orgNameUpper == "HGT" || orgNameUpper == "HEALTHY GRASS TECHNOLOGY" || orgNameUpper.Contains("HEALTHY GRASS")) && !orgNameUpper.Contains("RTF"))
+        {
+            navbarBgColor = "#FFDB00"; // HGT Yellow
+            navbarTextColor = "#1E1E1E"; // HGT Black
+        }
+        else if (orgNameUpper == "RTF" || (orgNameUpper.Contains("RTF") && !orgNameUpper.Contains("HGT")))
+        {
+            navbarBgColor = "#34B233"; // RTF Green
+            navbarTextColor = "#1E1E1E"; // RTF Black (changed from Yellow)
+        }
+        else if (orgNameUpper.Contains("RTF") && orgNameUpper.Contains("HGT"))
+        {
+            navbarBgColor = "#00A8E2"; // RTF+HGT Blue
+            navbarTextColor = "#FFFFFF"; // White
+        }
+    }
+    
+    // Determine which section to render (Styles or Footer)
+    string renderSection = ViewBag.RenderSection?.ToString() ?? "Footer"; // Default to Footer
+}
+
+@* NAVBAR STYLES SECTION - Render when ViewBag.RenderSection = "Styles" *@
+@if (renderSection == "Styles")
+{
+    <style>
+        .org-navbar {
+            background-color: @navbarBgColor !important;
+        }
+        
+        .org-navbar .nav-link,
+        .org-navbar .navbar-brand,
+        .org-navbar .navbar-text,
+        .org-navbar .dropdown-toggle {
+            color: @navbarTextColor !important;
+        }
+        
+        /* Remove navbar-dark text color override for better control */
+        .org-navbar.navbar-dark .nav-link,
+        .org-navbar.navbar-dark .navbar-brand,
+        .org-navbar.navbar-dark .navbar-text,
+        .org-navbar.navbar-dark .dropdown-toggle {
+            color: @navbarTextColor !important;
+        }
+        
+        .org-navbar .nav-link:hover,
+        .org-navbar .navbar-brand:hover,
+        .org-navbar .dropdown-toggle:hover {
+            color: @navbarTextColor !important;
+            opacity: 0.8;
+        }
+        
+        .org-navbar .navbar-toggler {
+            border-color: @navbarTextColor !important;
+        }
+        
+        .org-navbar .navbar-toggler-icon {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='@navbarTextColor' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e") !important;
+            opacity: 0.75;
+        }
+        
+        .org-navbar .dropdown-menu {
+            background-color: @navbarBgColor !important;
+            border-color: rgba(0, 0, 0, 0.1) !important;
+        }
+        
+        .org-navbar .dropdown-item {
+            color: @navbarTextColor !important;
+        }
+        
+        .org-navbar .dropdown-item:hover,
+        .org-navbar .dropdown-item:focus {
+            background-color: rgba(0, 0, 0, 0.1) !important;
+            color: @navbarTextColor !important;
+        }
+        
+        /* Ensure all text elements in navbar use the correct color */
+        .org-navbar * {
+            --bs-navbar-color: @navbarTextColor !important;
+        }
+    </style>
+}
+
+@* FOOTER CONTENT SECTION - Render when ViewBag.RenderSection = "Footer" or not set *@
+@if (renderSection == "Footer")
+{
+    <footer class="organizations-footer">
+        @* TPA Footer *@
+        @if (orgNameUpper == "TPA" || orgNameUpper == "TURF PRODUCERS ASSOCIATION" || orgNameUpper.Contains("TURF PRODUCERS"))
+        {
+            <!-- TPA Section -->
+            <div class="footer-section" style="background-color: #2B2B2B; color: #F6F4EE;">
+                <div class="container py-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-3" style="color: #F6F4EE; font-weight: bold;">TURF PRODUCERS ASSOCIATION</h5>
+                            <p class="mb-2" style="color: #F6F4EE;">
+                                <strong>Contact Information:</strong> For any inquiries regarding the use of the TPA™ logo, please contact: 
+                                <a href="mailto:jenny@turfrproducers.com" style="color: #AC9C7C;">jenny@turfrproducers.com</a>
+                            </p>
+                            <p class="mb-1" style="color: #F6F4EE;">
+                                <i class="fas fa-map-marker-alt me-2" style="color: #AC9C7C;"></i>
+                                Turf Producers Association • 2617 Tepee Circle • Freemont • NE
+                            </p>
+                            <p class="mb-1" style="color: #F6F4EE;">
+                                <i class="fas fa-phone me-2" style="color: #AC9C7C;"></i>
+                                T 402.480.4936
+                            </p>
+                            <p class="mb-0" style="color: #F6F4EE;">
+                                <i class="fas fa-globe me-2" style="color: #AC9C7C;"></i>
+                                W <a href="http://www.turfproducers.com" target="_blank" style="color: #AC9C7C;">www.turfproducers.com</a>
+                            </p>
+                        </div>
+                        <div class="col-md-6 text-md-end">
+                            <div class="tpa-logo-placeholder mb-3" style="display: inline-block; padding: 15px; background-color: #2B2B2B; border: 2px solid #F6F4EE;">
+                                <span style="color: #F6F4EE; font-size: 18px; font-weight: bold;">TURF PRODUCERS<br>ASSOCIATION</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        @* HGT Footer *@
+        @if ((orgNameUpper == "HGT" || orgNameUpper == "HEALTHY GRASS TECHNOLOGY" || orgNameUpper.Contains("HEALTHY GRASS")) && 
+             !orgNameUpper.Contains("RTF"))
+        {
+            <!-- HGT Section -->
+            <div class="footer-section" style="background-color: #FFDB00; color: #1E1E1E;">
+                <div class="container py-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-3" style="color: #1E1E1E; font-weight: bold;">Healthy Grass Technology®</h5>
+                            <p class="mb-2" style="color: #1E1E1E;">
+                                <strong>Contact Information:</strong> For any inquiries regarding the use of the HGT® logo, please contact: 
+                                <a href="mailto:acrawford@barusa.com" style="color: #00A8E2;">acrawford@barusa.com</a>
+                            </p>
+                            <p class="mb-1" style="color: #1E1E1E;">
+                                <i class="fas fa-map-marker-alt me-2" style="color: #34B233;"></i>
+                                Barenbrug USA • 33477 HWY 99E • Tangent • OR
+                            </p>
+                            <p class="mb-1" style="color: #1E1E1E;">
+                                <i class="fas fa-phone me-2" style="color: #34B233;"></i>
+                                T 800 547 4101
+                            </p>
+                            <p class="mb-2" style="color: #1E1E1E;">
+                                <i class="fas fa-envelope me-2" style="color: #34B233;"></i>
+                                E <a href="mailto:info@barenbrug.com" style="color: #00A8E2;">info@barenbrug.com</a>
+                            </p>
+                            <p class="mb-0" style="color: #1E1E1E;">
+                                <i class="fas fa-globe me-2" style="color: #34B233;"></i>
+                                W <a href="http://www.barenbrug.com" target="_blank" style="color: #00A8E2;">www.barenbrug.com</a>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-md-end justify-content-start align-items-center gap-3">
+                                <div class="hgt-logo-placeholder" style="display: inline-block; padding: 10px; background-color: #34B233; border-radius: 50%; width: 60px; height: 60px;">
+                                    <i class="fas fa-leaf" style="color: #00A8E2; font-size: 30px;"></i>
+                                </div>
+                                <div style="text-align: left;">
+                                    <span style="color: #1E1E1E; font-size: 32px; font-weight: bold; background-color: #1E1E1E; color: #FFDB00; padding: 5px 10px;">HGT®</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        @* RTF Footer (not combined) *@
+        @if ((orgNameUpper == "RTF" || orgNameUpper.Contains("RTF")) && !orgNameUpper.Contains("HGT"))
+        {
+            <!-- RTF Section -->
+            <div class="footer-section" style="background-color: #34B233; color: #1E1E1E;">
+                <div class="container py-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-3" style="color: #1E1E1E; font-weight: bold;">RTF®</h5>
+                            <p class="mb-2" style="color: #1E1E1E;">
+                                <strong style="color: #FFDB00;">Contact Information:</strong> For any inquiries regarding the use of the RTF® logo, please contact: 
+                                <a href="mailto:acrawford@barusa.com" style="color: #1E1E1E;">acrawford@barusa.com</a>
+                            </p>
+                            <p class="mb-1" style="color: #1E1E1E;">
+                                <i class="fas fa-map-marker-alt me-2" style="color: #FFDB00;"></i>
+                                Barenbrug USA • 33477 HWY 99E • Tangent • OR
+                            </p>
+                            <p class="mb-1" style="color: #1E1E1E;">
+                                <i class="fas fa-phone me-2" style="color: #FFDB00;"></i>
+                                T 800 547 4101
+                            </p>
+                            <p class="mb-2" style="color: #1E1E1E;">
+                                <i class="fas fa-envelope me-2" style="color: #FFDB00;"></i>
+                                E <a href="mailto:info@barenbrug.com" style="color: #1E1E1E;">info@barenbrug.com</a>
+                            </p>
+                            <p class="mb-0" style="color: #1E1E1E;">
+                                <i class="fas fa-globe me-2" style="color: #FFDB00;"></i>
+                                W <a href="http://www.barusa.com" target="_blank" style="color: #1E1E1E;">www.barusa.com</a>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-md-end justify-content-start align-items-center gap-3">
+                                <div class="rtf-logo-placeholder" style="display: inline-block; padding: 10px; background-color: #FFDB00; border-radius: 50%; width: 60px; height: 60px;">
+                                    <i class="fas fa-seedling" style="color: #34B233; font-size: 30px;"></i>
+                                </div>
+                                <div style="text-align: left;">
+                                    <span style="color: #1E1E1E; font-size: 32px; font-weight: bold; background-color: #1E1E1E; color: #FFDB00; padding: 5px 10px;">RTF®</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        
+        @* RTF + HGT Combined Footer *@
+        @if (orgNameUpper.Contains("RTF") && orgNameUpper.Contains("HGT"))
+        {
+            <!-- RTF + HGT Combined Section -->
+            <div class="footer-section" style="background-color: #00A8E2; color: #FFFFFF;">
+                <div class="container py-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-6">
+                            <h5 class="mb-3" style="color: #FFFFFF; font-weight: bold;">RTF® + HGT®</h5>
+                            <p class="mb-2" style="color: #FFFFFF;">
+                                <strong>Contact Information:</strong> For any inquiries regarding the use of the RTF® + HGT® logos, please contact: 
+                                <a href="mailto:acrawford@barusa.com" style="color: #FFDB00;">acrawford@barusa.com</a>
+                            </p>
+                            <p class="mb-1" style="color: #FFFFFF;">
+                                <i class="fas fa-map-marker-alt me-2" style="color: #34B233;"></i>
+                                Barenbrug USA • 33477 HWY 99E • Tangent • OR
+                            </p>
+                            <p class="mb-1" style="color: #FFFFFF;">
+                                <i class="fas fa-phone me-2" style="color: #34B233;"></i>
+                                T 800 547 4101
+                            </p>
+                            <p class="mb-2" style="color: #FFFFFF;">
+                                <i class="fas fa-envelope me-2" style="color: #34B233;"></i>
+                                E <a href="mailto:info@barenbrug.com" style="color: #FFDB00;">info@barenbrug.com</a>
+                            </p>
+                            <p class="mb-0" style="color: #FFFFFF;">
+                                <i class="fas fa-globe me-2" style="color: #34B233;"></i>
+                                W <a href="http://www.barusa.com" target="_blank" style="color: #FFDB00;">www.barusa.com</a>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-md-end justify-content-start align-items-center gap-4">
+                                <div style="display: flex; gap: 15px;">
+                                    <div style="background-color: #34B233; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                        <span style="color: #FFDB00; font-weight: bold; font-size: 18px;">RTF®</span>
+                                    </div>
+                                    <div style="background-color: #34B233; border-radius: 50%; width: 60px; height: 60px; display: flex; align-items: center; justify-content: center;">
+                                        <span style="color: #FFDB00; font-weight: bold; font-size: 18px;">HGT®</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mt-3">
+                        <div class="col-12 text-center">
+                            <div class="social-icons d-flex justify-content-center gap-3">
+                                <a href="#" target="_blank" style="color: #FFDB00; font-size: 24px;">
+                                    <i class="fab fa-facebook"></i>
+                                </a>
+                                <a href="#" target="_blank" style="color: #FFDB00; font-size: 24px;">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                                <a href="#" target="_blank" style="color: #FFDB00; font-size: 24px;">
+                                    <i class="fab fa-linkedin"></i>
+                                </a>
+                                <a href="#" target="_blank" style="color: #FFDB00; font-size: 24px;">
+                                    <i class="fab fa-youtube"></i>
+                                </a>
+                                <a href="#" target="_blank" style="color: #FFDB00; font-size: 24px;">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Default footer if user is not logged in or has no organization -->
+        @if (userOrganizationName == null)
+        {
+            <div class="footer-section text-center py-3" style="background-color: #1E1E1E; color: #FFFFFF;">
+                <div class="container">
+                    <p class="mb-0">&copy; @DateTime.Now.Year - Sod Management System</p>
+                </div>
+            </div>
+        }
+
+        <!-- Copyright Bar - Hide for defined organizations (TPA, HGT, RTF, RTF+HGT) -->
+        @* Only show copyright bar if user is not logged in or doesn't belong to defined organizations *@
+        @if (userOrganizationName == null || 
+             !(orgNameUpper == "TPA" || orgNameUpper == "TURF PRODUCERS ASSOCIATION" || orgNameUpper.Contains("TURF PRODUCERS") ||
+               ((orgNameUpper == "HGT" || orgNameUpper == "HEALTHY GRASS TECHNOLOGY" || orgNameUpper.Contains("HEALTHY GRASS")) && !orgNameUpper.Contains("RTF")) ||
+               (orgNameUpper == "RTF" || (orgNameUpper.Contains("RTF") && !orgNameUpper.Contains("HGT"))) ||
+               (orgNameUpper.Contains("RTF") && orgNameUpper.Contains("HGT"))))
+        {
+            <div class="copyright-bar text-center py-2" style="background-color: #1E1E1E; color: #FFFFFF;">
+                <div class="container">
+                    <p class="mb-0" style="font-size: 14px;">
+                        &copy; @DateTime.Now.Year - All Rights Reserved
+                        @if (userOrganizationName != null)
+                        {
+                            if (orgNameUpper.Contains("TPA"))
+                            {
+                                <text>| TPA™</text>
+                            }
+                            if (orgNameUpper.Contains("HGT"))
+                            {
+                                <text>| HGT®</text>
+                            }
+                            if (orgNameUpper.Contains("RTF"))
+                            {
+                                <text>| RTF®</text>
+                            }
+                        }
+                    </p>
+                </div>
+            </div>
+        }
+    </footer>
+
+    <style>
+        .organizations-footer {
+            width: 100%;
+        }
+
+        .footer-section {
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .footer-section:first-child {
+            border-top: none;
+        }
+
+        .organizations-footer a {
+            text-decoration: none;
+            transition: opacity 0.3s;
+        }
+
+        .organizations-footer a:hover {
+            opacity: 0.8;
+            text-decoration: underline;
+        }
+
+        .social-icons a {
+            transition: transform 0.3s;
+        }
+
+        .social-icons a:hover {
+            transform: scale(1.2);
+        }
+
+        @@media (max-width: 768px) {
+            .footer-section .container {
+                text-align: center !important;
+            }
+
+            .footer-section .col-md-6 {
+                text-align: center !important;
+                margin-bottom: 20px;
+            }
+        }
+    </style>
+}

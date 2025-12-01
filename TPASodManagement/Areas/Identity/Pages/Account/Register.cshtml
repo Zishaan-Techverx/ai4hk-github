@@ -22,16 +22,25 @@
                                 <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
 
                                 <div class="form-floating mb-3">
-                                    <input asp-for="Input.Name" class="form-control" id="registerName" placeholder="Full name" required />
-                                    <label for="registerName">Name</label>
-                                    <span asp-validation-for="Input.Name" class="text-danger"></span>
+                                    <input asp-for="Input.FirstName" class="form-control" id="registerFirstName" required />
+                                    <label for="registerFirstName">First Name</label>
+                                    <span asp-validation-for="Input.FirstName" class="text-danger"></span>
                                     <div class="invalid-feedback">
-                                        Please provide your full name.
+                                        Please provide your first name.
                                     </div>
                                 </div>
 
                                 <div class="form-floating mb-3">
-                                    <input asp-for="Input.Email" class="form-control" id="registerEmail" placeholder="name@example.com" required />
+                                    <input asp-for="Input.LastName" class="form-control" id="registerLastName" required />
+                                    <label for="registerLastName">Last Name</label>
+                                    <span asp-validation-for="Input.LastName" class="text-danger"></span>
+                                    <div class="invalid-feedback">
+                                        Please provide your last name.
+                                    </div>
+                                </div>
+
+                                <div class="form-floating mb-3">
+                                    <input asp-for="Input.Email" class="form-control" id="registerEmail" required />
                                     <label for="registerEmail">Email</label>
                                     <span asp-validation-for="Input.Email" class="text-danger"></span>
                                     <div class="invalid-feedback">
@@ -39,8 +48,23 @@
                                     </div>
                                 </div>
 
+                                <div class="mb-3">
+                                    <label asp-for="Input.OrganizationName" class="form-label">Organization Name</label>
+                                    <select asp-for="Input.OrganizationName" 
+                                            class="form-select" 
+                                            asp-items='@(ViewData["Organizations"] as SelectList)' 
+                                            id="registerOrganization" 
+                                            required>
+                                        <option value="">-- Select Organization --</option>
+                                    </select>
+                                    <span asp-validation-for="Input.OrganizationName" class="text-danger"></span>
+                                    <div class="invalid-feedback">
+                                        Please select an organization.
+                                    </div>
+                                </div>
+
                                 <div class="form-floating mb-3">
-                                    <input asp-for="Input.Password" class="form-control" id="registerPassword" placeholder="Password" required />
+                                    <input asp-for="Input.Password" class="form-control" id="registerPassword" required />
                                     <label for="registerPassword">Password</label>
                                     <span asp-validation-for="Input.Password" class="text-danger"></span>
                                     <div class="invalid-feedback">
@@ -49,7 +73,7 @@
                                 </div>
 
                                 <div class="form-floating mb-3">
-                                    <input asp-for="Input.ConfirmPassword" class="form-control" id="registerConfirm" placeholder="Confirm Password" required />
+                                    <input asp-for="Input.ConfirmPassword" class="form-control" id="registerConfirm" required />
                                     <label for="registerConfirm">Confirm Password</label>
                                     <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
                                     <div class="invalid-feedback">
@@ -57,7 +81,7 @@
                                     </div>
                                 </div>
 
-                                <button id="registerSubmit" type="submit" class="btn btn-success w-100">Register</button>
+                                <button id="registerSubmit" type="submit" class="btn btn-primary w-100">Register</button>
                             </form>
 
                             <a href="/" class="btn btn-outline-secondary w-100 mt-2">

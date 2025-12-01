@@ -3,8 +3,14 @@
 @{
     ViewData["Title"] = "Edit";
 }
+<br />
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>
+    </a>
 
-<h1>Edit</h1>
+    <h1 class="ms-4 mb-0">Edit</h1>
+</div>
 
 <h4>Product</h4>
 <hr />
@@ -14,75 +20,85 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="ProductId" />
             <div class="form-group">
-                <label asp-for="ProductCode" class="control-label"></label>
+                <label asp-for="ProductCode" class="control-label">Product Code</label>
                 <input asp-for="ProductCode" class="form-control" />
                 <span asp-validation-for="ProductCode" class="text-danger"></span>
             </div>
+            <br/>
             <div class="form-group">
-                <label asp-for="ProductName" class="control-label"></label>
+                <label asp-for="ProductName" class="control-label">Product Name</label>
                 <input asp-for="ProductName" class="form-control" />
                 <span asp-validation-for="ProductName" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="ProductCategoryId" class="control-label"></label>
+                <label asp-for="ProductCategoryId" class="control-label">Product Category Id</label>
                 <select asp-for="ProductCategoryId" class="form-control" asp-items="ViewBag.ProductCategoryId"></select>
                 <span asp-validation-for="ProductCategoryId" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="UnitOfMeasure" class="control-label"></label>
+                <label asp-for="UnitOfMeasure" class="control-label">Unit Of Measure</label>
                 <input asp-for="UnitOfMeasure" class="form-control" />
                 <span asp-validation-for="UnitOfMeasure" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="StandardPrice" class="control-label"></label>
+                <label asp-for="StandardPrice" class="control-label">Standard Price</label>
                 <input asp-for="StandardPrice" class="form-control" />
                 <span asp-validation-for="StandardPrice" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="CurrencyId" class="control-label"></label>
+                <label asp-for="CurrencyId" class="control-label">Currency Id</label>
                 <select asp-for="CurrencyId" class="form-control" asp-items="ViewBag.CurrencyId"></select>
                 <span asp-validation-for="CurrencyId" class="text-danger"></span>
             </div>
             <div class="form-group form-check">
                 <label class="form-check-label">
-                    <input class="form-check-input" asp-for="RequiresCertificate" /> @Html.DisplayNameFor(model => model.RequiresCertificate)
+                    <input class="form-check-input" asp-for="RequiresCertificate" /> Requires Certificate
                 </label>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="CertificateTypeId" class="control-label"></label>
+                <label asp-for="CertificateTypeId" class="control-label">Certificate Type Id</label>
                 <select asp-for="CertificateTypeId" class="form-control" asp-items="ViewBag.CertificateTypeId"></select>
                 <span asp-validation-for="CertificateTypeId" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="Description" class="control-label"></label>
+                <label asp-for="Description" class="control-label">Description</label>
                 <input asp-for="Description" class="form-control" />
                 <span asp-validation-for="Description" class="text-danger"></span>
             </div>
             <div class="form-group form-check">
                 <label class="form-check-label">
-                    <input class="form-check-input" asp-for="IsActive" /> @Html.DisplayNameFor(model => model.IsActive)
+                    <input class="form-check-input" asp-for="IsActive" /> IsActive
                 </label>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="CreatedDate" class="control-label"></label>
+                <label asp-for="CreatedDate" class="control-label">Created Date</label>
                 <input asp-for="CreatedDate" class="form-control" />
                 <span asp-validation-for="CreatedDate" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="CreatedByUserId" class="control-label"></label>
+                <label asp-for="CreatedByUserId" class="control-label">Created By UserId</label>
                 <select asp-for="CreatedByUserId" class="form-control" asp-items="ViewBag.CreatedByUserId"></select>
                 <span asp-validation-for="CreatedByUserId" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <input type="submit" value="Update" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-danger ms-2">Cancel</a>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<br />
+<br />
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

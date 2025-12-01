@@ -1,0 +1,232 @@
+@model TpaSodManagement.Areas.Identity.Data.TpaSodManagementUser
+
+@{
+    bool isDetailsView = ViewBag.IsDetailsView ?? false;
+    ViewData["Title"] = isDetailsView ? "User Details" : "Edit User";
+    string disabledAttr = isDetailsView ? "disabled" : null;
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@(isDetailsView ? "User Details" : "Edit User")</h5>
+                </div>
+
+                <div class="card-body">
+
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <strong>Success!</strong> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        @* Hidden Fields *@
+                        <input type="hidden" asp-for="Id" />
+                        <input type="hidden" asp-for="UserName" /> @* Add this for disabled field *@
+                        <input type="hidden" asp-for="EmailConfirmed" />
+                        <input type="hidden" asp-for="PhoneNumberConfirmed" />
+                        <input type="hidden" asp-for="TwoFactorEnabled" />
+                        <input type="hidden" asp-for="LockoutEnabled" />
+                        <input type="hidden" asp-for="AccessFailedCount" />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="UserName" class="form-label"></label>
+                                <input asp-for="UserName" class="form-control" readonly style="background-color: #e9ecef; cursor: not-allowed;" />
+                                <span asp-validation-for="UserName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label"></label>
+                                <input asp-for="Email" type="email" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FirstName" class="form-label"></label>
+                                <input asp-for="FirstName" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="LastName" class="form-label"></label>
+                                <input asp-for="LastName" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PrimaryContact" class="form-label">Primary Contact</label>
+                                <input asp-for="PrimaryContact" type="number" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="PrimaryContact" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="OrganizationName" class="form-label">Organization Name</label>
+                                <select asp-for="OrganizationName" class="form-select" asp-items="ViewBag.Organizations" disabled="@disabledAttr">
+                                    <option value="">-- Select Organization --</option>
+                                </select>
+                                <span asp-validation-for="OrganizationName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PhoneNumber" class="form-label"></label>
+                                <input asp-for="PhoneNumber" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PostalCode" class="form-label"></label>
+                                <input asp-for="PostalCode" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="PostalCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label"></label>
+                            <textarea asp-for="Address" rows="2" class="form-control" disabled="@disabledAttr"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="State" class="form-label"></label>
+                                <input asp-for="State" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="State" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Country" class="form-label"></label>
+                                <input asp-for="Country" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="Country" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label me-3 mb-0">Is Active</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input asp-for="IsActive" type="checkbox" class="form-check-input" id="isActiveSwitch" disabled="@disabledAttr" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">@(isDetailsView ? "Back" : "Cancel")</a>
+
+                            @if (!isDetailsView)
+                            {
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            }
+                            else
+                            {
+                                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-warning">Edit</a>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (!isDetailsView)
+    {
+        <partial name="_ValidationScriptsPartial" />
+        
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                const organizationSelect = document.querySelector('select[name="OrganizationName"]');
+                const firstNameInput = document.querySelector('input[name="FirstName"]');
+                const userNameInput = document.querySelector('input[name="UserName"]');
+                
+                const originalUsername = userNameInput ? userNameInput.value : '';
+                
+                function generateUsername(organizationName, firstName) {
+                    if (!organizationName || !firstName) {
+                        return originalUsername; // Return original if required fields are missing
+                    }
+                    
+                    const rawOrgName = organizationName.replace(/\s+/g, '');
+                    const orgPrefixLength = 5;
+                    const orgPrefix = rawOrgName.length >= orgPrefixLength 
+                        ? rawOrgName.substring(0, orgPrefixLength).toUpperCase()
+                        : rawOrgName.toUpperCase();
+                    
+                    const nameParts = firstName.trim().split(/\s+/);
+                    let userInitials;
+                    
+                    if (nameParts.length >= 2) {
+                        // First letter of first word + first letter of last word
+                        userInitials = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+                    } else if (firstName.length >= 2) {
+                        userInitials = firstName.substring(0, 2).toUpperCase();
+                    } else {
+                        userInitials = firstName.toUpperCase();
+                    }
+                    
+                    const baseUsername = `${orgPrefix}-${userInitials}`;
+                    
+                    return baseUsername;
+                }
+                
+                function updateUsername() {
+                    if (!organizationSelect || !firstNameInput || !userNameInput) return;
+                    
+                    const orgName = organizationSelect.value;
+                    const firstName = firstNameInput.value;
+                    
+                    if (orgName && firstName) {
+                        const newUsername = generateUsername(orgName, firstName);
+                        userNameInput.value = newUsername;
+                    }
+                }
+                
+                if (organizationSelect) {
+                    organizationSelect.addEventListener('change', updateUsername);
+                }
+                
+                if (firstNameInput) {
+                    firstNameInput.addEventListener('input', updateUsername);
+                    firstNameInput.addEventListener('change', updateUsername);
+                }
+            });
+        </script>
+    }
+}

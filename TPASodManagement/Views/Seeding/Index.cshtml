@@ -2,118 +2,190 @@
 
 @{
     ViewData["Title"] = "Index";
+    int pageNumber = ViewBag.PageNumber ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = ViewBag.PageSize ?? 10;
 }
+<br />
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Seedings</h1>
 
-<h1>Index</h1>
+    @if (User.HasPermission("Seeding.Create"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    }
+</div>
+<br />
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label for="pageSizeSelect" class="form-label">Page Size</label>
+        <select id="pageSizeSelect" class="form-select" style="width: auto; display: inline-block;" onchange="changePageSize(this.value)">
+            <option value="10" selected="@(pageSize == 10)">10</option>
+            <option value="15" selected="@(pageSize == 15)">15</option>
+            <option value="20" selected="@(pageSize == 20)">20</option>
+            <option value="25" selected="@(pageSize == 25)">25</option>
+            <option value="50" selected="@(pageSize == 50)">50</option>
+            <option value="100" selected="@(pageSize == 100)">100</option>
+        </select>
+    </div>
+</div>
+<div class="card card-body shadow-sm">
+    <table class="table">
+        <thead>
+            <tr>
+                <th>
+                    Area Amount
+                </th>
+                <th>
+                    Seeding Date
+                </th>
+                <th>
+                    Seeding Method
+                </th>
+                <th>
+                    SeedRate Per Unit
+                </th>
+                <th>
+                    Weather Conditions
+                </th>
+                <th>
+                    Soil Temperature
+                </th>
+                <th>
+                    Soil Moisture
+                </th>
+                <th>
+                    Notes
+                </th>
+                <th>
+                    Created Date
+                </th>
+                <th>
+                    Area Type
+                </th>
+                <th>
+                    Farm
+                </th>
+                <th>
+                    Field
+                </th>
+                <th>
+                    TagRange
+                </th>
+                <th>
+                    User
+                </th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.AreaAmount)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SeedingDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SeedingMethod)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SeedRatePerUnit)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.WeatherConditions)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SoilTemperature)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.SoilMoisture)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Notes)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.CreatedDate)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.AreaType.AreaTypeId)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Farm.FarmId)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.Field.FieldId)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.TagRange.TagRangeId)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.User.UserId)
+                    </td>
+                    <td style="display: flex; gap: 8px; align-items: center;">
+                        @if (User.HasPermission("Seeding.Edit"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.SeedingId">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </a>
+                        }
 
-<p>
-    <a asp-action="Create">Create New</a>
-</p>
-<table class="table">
-    <thead>
-        <tr>
-            <th>
-                @Html.DisplayNameFor(model => model.AreaAmount)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SeedingDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SeedingMethod)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SeedRatePerUnit)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.WeatherConditions)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SoilTemperature)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.SoilMoisture)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Notes)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.CreatedDate)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.AreaType)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Farm)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.Field)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.TagRange)
-            </th>
-            <th>
-                @Html.DisplayNameFor(model => model.User)
-            </th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-@foreach (var item in Model) {
-        <tr>
-            <td>
-                @Html.DisplayFor(modelItem => item.AreaAmount)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SeedingDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SeedingMethod)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SeedRatePerUnit)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.WeatherConditions)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SoilTemperature)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.SoilMoisture)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Notes)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.CreatedDate)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.AreaType.AreaTypeId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Farm.FarmId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.Field.FieldId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.TagRange.TagRangeId)
-            </td>
-            <td>
-                @Html.DisplayFor(modelItem => item.User.UserId)
-            </td>
-                <td style="display: flex; gap: 8px; align-items: center;">
-                    <a asp-action="Edit" asp-route-id="@item.SeedingId">
-                        <i class="fa-regular fa-pen-to-square"></i>
-                    </a>
-                    <a asp-action="Details" asp-route-id="@item.SeedingId">
-                        <i class="fa-solid fa-circle-info"></i>
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@item.SeedingId">
-                        <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
-                    </a>
-                </td>
-        </tr>
-}
-    </tbody>
-</table>
+                        @if (User.HasPermission("Seeding.Detail"))
+                        {
+                            <a asp-action="Details" asp-route-id="@item.SeedingId">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </a>
+                        }
+
+                        @if (User.HasPermission("Seeding.Delete"))
+                        {
+                            <a asp-action="Delete" asp-route-id="@item.SeedingId">
+                                <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+<br />
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
+            <a class="page-link"
+                href="@Url.Action("Index", new { pageNumber = pageNumber - 1, pageSize = pageSize })">Previous</a>
+        </li>
+
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(i == pageNumber ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+            </li>
+        }
+
+        <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
+            <a class="page-link"
+                href="@Url.Action("Index", new { pageNumber = pageNumber + 1, pageSize = pageSize })">Next</a>
+        </li>
+    </ul>
+</nav>
+
+<div class="text-muted mt-2">
+    Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records
+</div>
+
+<br />
+<br />
+<script>
+    function changePageSize(selectedPageSize) {
+        window.location.href = '@Url.Action("Index", new { pageNumber = 1 })' + '&pageSize=' + selectedPageSize;
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        document.getElementById('pageSizeSelect').value = '@pageSize';
+    });
+</script>

@@ -3,88 +3,93 @@
 @{
     ViewData["Title"] = "Details";
 }
+<br />
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>
+    </a>
 
-<h1>Details</h1>
+    <h1 class="ms-4 mb-0">Details</h1>
+</div>
 
 <div>
     <h4>Farm</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TotalArea)
+            Total Area
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.TotalArea)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.OrganicCertified)
+            Organic Certified
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.OrganicCertified)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.LicenseNumber)
+            License Number
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.LicenseNumber)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CertificationDetails)
+            Certification Details
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.CertificationDetails)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Latitude)
+            Latitude
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Latitude)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Longitude)
+            Longitude
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Longitude)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ElevationMeters)
+            Elevation Meters
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.ElevationMeters)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.SoilType)
+            Soil Type
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.SoilType)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.IrrigationType)
+            Irrigation Type
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.IrrigationType)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.ClimateZone)
+            Climate Zone
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.ClimateZone)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.AreaType)
+            Area Type
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.AreaType.AreaTypeId)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Organization)
+            Organization
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Organization.OrganizationId)
         </dd>
     </dl>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.FarmId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+<br />
+<br />

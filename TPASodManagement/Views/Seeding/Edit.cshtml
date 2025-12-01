@@ -3,8 +3,14 @@
 @{
     ViewData["Title"] = "Edit";
 }
+<br />
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>
+    </a>
 
-<h1>Edit</h1>
+    <h1 class="ms-4 mb-0">Edit</h1>
+</div>
 
 <h4>Seeding</h4>
 <hr />
@@ -14,85 +20,99 @@
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
             <input type="hidden" asp-for="SeedingId" />
             <div class="form-group">
-                <label asp-for="UserId" class="control-label"></label>
+                <label asp-for="UserId" class="control-label">User Id</label>
                 <select asp-for="UserId" class="form-control" asp-items="ViewBag.UserId"></select>
                 <span asp-validation-for="UserId" class="text-danger"></span>
             </div>
+            <br/>
             <div class="form-group">
-                <label asp-for="FarmId" class="control-label"></label>
+                <label asp-for="FarmId" class="control-label">Farm Id</label>
                 <select asp-for="FarmId" class="form-control" asp-items="ViewBag.FarmId"></select>
                 <span asp-validation-for="FarmId" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="FieldId" class="control-label"></label>
+                <label asp-for="FieldId" class="control-label">Field Id</label>
                 <select asp-for="FieldId" class="form-control" asp-items="ViewBag.FieldId"></select>
                 <span asp-validation-for="FieldId" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="TagRangeId" class="control-label"></label>
+                <label asp-for="TagRangeId" class="control-label">TagRange Id</label>
                 <select asp-for="TagRangeId" class="form-control" asp-items="ViewBag.TagRangeId"></select>
                 <span asp-validation-for="TagRangeId" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="AreaAmount" class="control-label"></label>
+                <label asp-for="AreaAmount" class="control-label">Area Amount</label>
                 <input asp-for="AreaAmount" class="form-control" />
                 <span asp-validation-for="AreaAmount" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="AreaTypeId" class="control-label"></label>
+                <label asp-for="AreaTypeId" class="control-label">AreaType Id</label>
                 <select asp-for="AreaTypeId" class="form-control" asp-items="ViewBag.AreaTypeId"></select>
                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="SeedingDate" class="control-label"></label>
+                <label asp-for="SeedingDate" class="control-label">Seeding Date</label>
                 <input asp-for="SeedingDate" class="form-control" />
                 <span asp-validation-for="SeedingDate" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="SeedingMethod" class="control-label"></label>
+                <label asp-for="SeedingMethod" class="control-label">Seeding Method</label>
                 <input asp-for="SeedingMethod" class="form-control" />
                 <span asp-validation-for="SeedingMethod" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="SeedRatePerUnit" class="control-label"></label>
+                <label asp-for="SeedRatePerUnit" class="control-label">SeedRate Per Unit</label>
                 <input asp-for="SeedRatePerUnit" class="form-control" />
                 <span asp-validation-for="SeedRatePerUnit" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="WeatherConditions" class="control-label"></label>
+                <label asp-for="WeatherConditions" class="control-label">Weather Conditions</label>
                 <input asp-for="WeatherConditions" class="form-control" />
                 <span asp-validation-for="WeatherConditions" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="SoilTemperature" class="control-label"></label>
+                <label asp-for="SoilTemperature" class="control-label">Soil Temperature</label>
                 <input asp-for="SoilTemperature" class="form-control" />
                 <span asp-validation-for="SoilTemperature" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="SoilMoisture" class="control-label"></label>
+                <label asp-for="SoilMoisture" class="control-label">Soil Moisture</label>
                 <input asp-for="SoilMoisture" class="form-control" />
                 <span asp-validation-for="SoilMoisture" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="Notes" class="control-label"></label>
+                <label asp-for="Notes" class="control-label">Notes</label>
                 <input asp-for="Notes" class="form-control" />
                 <span asp-validation-for="Notes" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <label asp-for="CreatedDate" class="control-label"></label>
+                <label asp-for="CreatedDate" class="control-label">Created Date</label>
                 <input asp-for="CreatedDate" class="form-control" />
                 <span asp-validation-for="CreatedDate" class="text-danger"></span>
             </div>
+            <br />
             <div class="form-group">
-                <input type="submit" value="Save" class="btn btn-primary" />
+                <input type="submit" value="Update" class="btn btn-primary" />
+                <a asp-action="Index" class="btn btn-danger ms-2">Cancel</a>
             </div>
         </form>
     </div>
 </div>
 
-<div>
-    <a asp-action="Index">Back to List</a>
-</div>
+<br />
+<br />
 
 @section Scripts {
     @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}

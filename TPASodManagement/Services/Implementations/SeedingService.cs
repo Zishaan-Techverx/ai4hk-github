@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using TpaSodManagement.Data;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 

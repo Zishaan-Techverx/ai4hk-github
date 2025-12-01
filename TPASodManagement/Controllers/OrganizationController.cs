@@ -119,6 +119,20 @@ namespace TpaSodManagement.Controllers
             return File(organization.LogoBytes, GetImageContentType(organization.LogoBytes));
         }
 
+        // ADD THIS METHOD - Get Logo by Organization Name
+        [AllowAnonymous] // Allow access even if not authorized (for navbar)
+        public async Task<IActionResult> GetLogoByName(string organizationName)
+        {
+            if (string.IsNullOrWhiteSpace(organizationName))
+                return NotFound();
+
+            var organization = await _organizationService.GetOrganizationByNameAsync(organizationName);
+            if (organization?.LogoBytes == null || organization.LogoBytes.Length == 0)
+                return NotFound();
+
+            return File(organization.LogoBytes, GetImageContentType(organization.LogoBytes));
+        }
+
         private string GetImageContentType(byte[] bytes)
         {
             if (bytes.Length < 4) return "image/jpeg";

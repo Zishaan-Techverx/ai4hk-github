@@ -48,7 +48,7 @@ public partial class SodDbContext : IdentityDbContext<TpaUser, UserRole, long>
     public virtual DbSet<Product> Products { get; set; }
 
     public virtual DbSet<ProductCategory> ProductCategories { get; set; }
-
+    
     public virtual DbSet<Sale> Sales { get; set; }
 
     public virtual DbSet<SaleLineItem> SaleLineItems { get; set; }

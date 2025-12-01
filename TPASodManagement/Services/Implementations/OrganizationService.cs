@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using TpaSodManagement.Data;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 
@@ -24,6 +25,16 @@ namespace TpaSodManagement.Services.Implementations
         {
             return await _context.Organizations
                 .FirstOrDefaultAsync(m => m.OrganizationId == id);
+        }
+
+        // ADD THIS METHOD
+        public async Task<Organization> GetOrganizationByNameAsync(string organizationName)
+        {
+            if (string.IsNullOrWhiteSpace(organizationName))
+                return null;
+
+            return await _context.Organizations
+                .FirstOrDefaultAsync(o => o.OrganizationName.ToUpper() == organizationName.ToUpper());
         }
 
         public async Task<Organization> CreateOrganizationAsync(Organization organization, IFormFile logoFile)

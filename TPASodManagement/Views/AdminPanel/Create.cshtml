@@ -1,0 +1,38 @@
+﻿@{
+    ViewData["Title"] = "Create New Role";
+}
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-4">
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>
+                </a>
+
+                <h1 class="ms-4 mb-0">Create New Role</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Role Information</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="CreateRole" method="post">
+                        <div class="mb-3">
+                            <label for="roleName" class="form-label">Role Name</label>
+                            <input type="text" class="form-control" id="roleName" name="roleName" required>
+                            <div class="form-text">Enter a unique role name (e.g., "Manager", "Supervisor")</div>
+                        </div>
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-primary">Create Role</button>
+                            <a href="@Url.Action("Index")" class="btn btn-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

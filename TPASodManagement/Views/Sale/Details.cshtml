@@ -3,136 +3,141 @@
 @{
     ViewData["Title"] = "Details";
 }
+<br />
+<div class="d-flex align-items-center mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+        <i class="fa-solid fa-arrow-left me-1"></i>
+    </a>
 
-<h1>Details</h1>
+    <h1 class="ms-4 mb-0">Details</h1>
+</div>
 
 <div>
     <h4>Sale</h4>
     <hr />
     <dl class="row">
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.SaleNumber)
+            Sale Number
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.SaleNumber)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.InvoiceNumber)
+            Invoice Number
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.InvoiceNumber)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PurchaseOrderNumber)
+            Purchase Order Number
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.PurchaseOrderNumber)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.SaleDate)
+            Sale Date
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.SaleDate)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DueDate)
+            Due Date
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.DueDate)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.SubtotalAmount)
+            Subtotal Amount
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.SubtotalAmount)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TaxAmount)
+            Tax Amount
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.TaxAmount)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.DiscountAmount)
+            Discount Amount
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.DiscountAmount)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.TotalAmount)
+            Total Amount
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.TotalAmount)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.PaymentTermsDays)
+            Payment Terms Days
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.PaymentTermsDays)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Notes)
+            Notes
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Notes)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.CreatedDate)
+            Created Date
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.CreatedDate)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UpdatedDate)
+            Updated Date
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.UpdatedDate)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Currency)
+            Currency
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Currency.CurrencyId)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Customer)
+            Customer
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Customer.CustomerId)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Farm)
+            Farm
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Farm.FarmId)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.SaleType)
+            Sale Type
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.SaleType.SaleTypeId)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.Status)
+            Status
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.Status.StatusId)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.UpdatedByUser)
+            Updated By User
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.UpdatedByUser.UserId)
         </dd>
         <dt class = "col-sm-2">
-            @Html.DisplayNameFor(model => model.User)
+            User
         </dt>
         <dd class = "col-sm-10">
             @Html.DisplayFor(model => model.User.UserId)
         </dd>
     </dl>
 </div>
-<div>
-    <a asp-action="Edit" asp-route-id="@Model?.SaleId">Edit</a> |
-    <a asp-action="Index">Back to List</a>
-</div>
+
+<br />
+<br />

@@ -8,11 +8,18 @@
     int pageSize = ViewBag.PageSize ?? 10;
 }
 
-<h1>Organizations</h1>
+<br />
 
-<p>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-</p>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Organizations</h1>
+
+    @if (User.HasPermission("Organization.Create"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    }
+</div>
+
+<br />
 
 <div class="row mb-3">
     <div class="col-md-6">
@@ -28,48 +35,72 @@
     </div>
 </div>
 
-<table class="table">
-    <thead>
-        <tr>
-            <th>@Html.DisplayNameFor(model => model.OrganizationName)</th>
-            <th>@Html.DisplayNameFor(model => model.OrganizationType)</th>
-            <th>Logo</th>
-            <th></th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach (var item in Model)
-        {
+<div class="card card-body shadow-sm">
+
+    <table class="table" id="organizationTable">
+        <thead>
             <tr>
-                <td>@Html.DisplayFor(modelItem => item.OrganizationName)</td>
-                <td>@Html.DisplayFor(modelItem => item.OrganizationType)</td>
-                <td>
-                    @if (item.LogoBytes != null && item.LogoBytes.Length > 0)
-                    {
-                        <img src="@Url.Action("GetLogo", "Organization", new { id = item.OrganizationId })"
-                             alt="Logo"
-                             style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #ccc;" />
-                    }
-                    else
-                    {
-                        <span class="text-muted">No logo</span>
-                    }
-                </td>
-                <td style="display: flex; gap: 8px; align-items: center;">
-                    <a asp-action="Edit" asp-route-id="@item.OrganizationId">
-                        <i class="fa-regular fa-pen-to-square"></i>
-                    </a>
-                    <a asp-action="Details" asp-route-id="@item.OrganizationId">
-                        <i class="fa-solid fa-circle-info"></i>
-                    </a>
-                    <a asp-action="Delete" asp-route-id="@item.OrganizationId">
-                        <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
-                    </a>
-                </td>
+                <th>Organization Name</th>
+                <th>Organization Type</th>
+                <th>Logo</th>
+                <th></th>
             </tr>
-        }
-    </tbody>
-</table>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr id="row-@item.OrganizationId">
+                    <td>@Html.DisplayFor(modelItem => item.OrganizationName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.OrganizationType)</td>
+                    <td>
+                        @if (item.LogoBytes != null && item.LogoBytes.Length > 0)
+                        {
+                            <img src="@Url.Action("GetLogo", "Organization", new { id = item.OrganizationId })"
+                                 alt="Logo"
+                                 style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #ccc;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">No logo</span>
+                        }
+                    </td>
+                    <td style="display: flex; gap: 8px; align-items: center; height: 77px;">
+                        @if (User.HasPermission("Organization.Edit"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.OrganizationId" title="Edit">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </a>
+                        }
+
+                        @if (User.HasPermission("Organization.Detail"))
+                        {
+                            <a asp-action="Details" asp-route-id="@item.OrganizationId" title="Details">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </a>
+                        }
+
+                        @if (User.HasPermission("Organization.Delete"))
+                        {
+                            <a href="#"
+                               class="delete-btn"
+                               data-id="@item.OrganizationId"
+                               data-name="@item.OrganizationName"
+                               data-bs-toggle="modal"
+                               data-bs-target="#deleteModal"
+                               title="Delete">
+                                <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
+                            </a>
+                        }
+
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+</div>
+
+<br />
 
 <nav aria-label="Page navigation">
     <ul class="pagination">
@@ -94,12 +125,128 @@
     Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records
 </div>
 
+<br />
+<br />
+
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="deleteSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Record deleted successfully!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the organization: <strong id="organizationNamePlaceholder"></strong>?</p>
+                <div class="alert alert-danger d-none" role="alert" id="deleteError">
+                    Error deleting the record. Please try again.
+                </div>
+
+                <input type="hidden" id="organizationIdToDelete" />
+
+                @Html.AntiForgeryToken()
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function changePageSize(selectedPageSize) {
         window.location.href = '@Url.Action("Index", new { pageNumber = 1 })' + '&pageSize=' + selectedPageSize;
     }
 
     document.addEventListener('DOMContentLoaded', function () {
+
         document.getElementById('pageSizeSelect').value = '@pageSize';
+
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const organizationIdInput = document.getElementById('organizationIdToDelete');
+        const organizationNamePlaceholder = document.getElementById('organizationNamePlaceholder');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deleteErrorAlert = document.getElementById('deleteError');
+        const deleteSuccessToast = new bootstrap.Toast(document.getElementById('deleteSuccessToast'));
+
+        // NEW: Get Anti-forgery Token value from the hidden field generated by @Html.AntiForgeryToken()
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const orgId = this.getAttribute('data-id');
+                const orgName = this.getAttribute('data-name');
+
+                organizationIdInput.value = orgId;
+                organizationNamePlaceholder.innerText = orgName;
+                deleteErrorAlert.classList.add('d-none'); 
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = 'Delete';
+            });
+        });
+
+        confirmDeleteBtn.addEventListener('click', function () {
+            const orgId = organizationIdInput.value;
+            if (!orgId) {
+                deleteErrorAlert.innerText = 'Error: Organization ID not found.';
+                deleteErrorAlert.classList.remove('d-none');
+                return;
+            }
+
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+
+            const requestBody = 'id=' + encodeURIComponent(orgId) +
+                                '&' + '__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+
+            fetch('@Url.Action("Delete", "Organization")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: requestBody 
+            })
+            .then(response => {
+                if (!response.ok) {
+
+                    throw new Error('Server returned status: ' + response.status);
+                }
+
+                return response.text();
+            })
+            .then(() => {
+
+                const rowToRemove = document.getElementById('row-' + orgId);
+                if (rowToRemove) {
+                    rowToRemove.remove();
+                }
+
+                deleteModal.hide();
+
+                deleteSuccessToast.show();
+            })
+            .catch(error => {
+                console.error('Delete failed:', error);
+                deleteErrorAlert.innerText = 'Deletion failed. Please check if the Anti-forgery Token is correctly handled by the controller, or if the server returned an error: ' + error.message;
+                deleteErrorAlert.classList.remove('d-none');
+            })
+            .finally(() => {
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = 'Delete';
+            });
+        });
     });
 </script>

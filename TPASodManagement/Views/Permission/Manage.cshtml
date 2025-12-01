@@ -1,0 +1,109 @@
+﻿@using TpaSodManagement.Controllers
+@model ManagePermissionsViewModel
+
+@{
+    ViewData["Title"] = "Manage Permissions - " + Model.Role.Name;
+}
+
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex align-items-center mb-4 gap-3">
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>
+                </a>
+
+                <h1>Manage Permissions for @Model.Role.Name</h1>
+            </div>
+
+            <!-- Success/Error Messages -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <strong>Success!</strong> @TempData["SuccessMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <strong>Error!</strong> @TempData["ErrorMessage"]
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            }
+
+            <form method="post" action="@Url.Action("Manage", new { roleId = Model.Role.Id })">
+                @Html.AntiForgeryToken()
+
+                @foreach (var category in Model.AllPermissions.GroupBy(p => p.Category))
+                {
+                    <div class="card mb-4">
+                        <div class="card-header bg-primary text-white">
+                            <h5 class="card-title mb-0">@category.Key</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-bordered">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Module</th>
+                                            <th>Description</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var permission in category)
+                                        {
+                                            var rolePermission = Model.RolePermissions?.FirstOrDefault(rp => rp.PermissionId ==
+                                            permission.Id);
+                                            <tr>
+                                                <td>
+                                                    <strong>@permission.Name</strong>
+                                                    <input type="hidden" name="permissions[@permission.Id].PermissionId"
+                                                        value="@permission.Id" />
+                                                    <input type="hidden" name="permissions[@permission.Id].RoleId"
+                                                        value="@Model.Role.Id" />
+                                                </td>
+                                                <td>@permission.Description</td>
+                                                <td>
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input permission-toggle" type="checkbox"
+                                                            name="permissions[@permission.Id].IsActive" value="true"
+                                                            @(rolePermission?.IsActive == true ? "checked" : "")>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                <div class="text-end">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-save"></i> Save Permissions
+                    </button>
+                    <a href="@Url.Action("Index")" class="btn btn-danger btn-lg">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<br />
+<br />
+
+
+@section Scripts {
+    <script>
+        setTimeout(function () {
+            $('.alert').alert('close');
+        }, 5000);
+    </script>
+}

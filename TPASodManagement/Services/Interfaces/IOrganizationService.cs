@@ -7,6 +7,7 @@ namespace TpaSodManagement.Services.Interfaces
     {
         Task<List<Organization>> GetAllOrganizationsAsync();
         Task<Organization> GetOrganizationByIdAsync(long id);
+        Task<Organization> GetOrganizationByNameAsync(string organizationName);
         Task<Organization> CreateOrganizationAsync(Organization organization, IFormFile logoFile);
         Task<Organization> UpdateOrganizationAsync(long id, Organization updatedOrg, IFormFile logoFile);
         Task<bool> DeleteOrganizationAsync(long id);

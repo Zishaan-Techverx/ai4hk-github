@@ -1,0 +1,69 @@
+﻿@model Microsoft.AspNetCore.Identity.IdentityRole
+@using TpaSodManagement.Areas.Identity.Data
+
+@{
+    ViewData["Title"] = "Edit Role";
+    var usersInRole = ViewBag.UsersInRole as List<string>;
+    var roleName = ViewBag.RoleName as string;
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            
+            <div class="d-flex align-items-center mb-4">
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="fa-solid fa-arrow-left me-1"></i>
+                </a>
+
+                <h1 class="ms-4 mb-0">Edit Role</h1>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Edit Role Information</h5>
+                </div>
+                <div class="card-body">
+                    <form asp-action="EditRole" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@Model.Id" />
+
+                        <div class="mb-3">
+                            <label for="roleName" class="form-label">Role Name</label>
+                            <input type="text" class="form-control" id="roleName" name="roleName" value="@roleName" required>
+                        </div>
+
+                        @if (usersInRole != null && usersInRole.Any())
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Users in this Role (@usersInRole.Count users)</label>
+                                <div class="alert alert-info">
+                                    <ul class="mb-0">
+                                        @foreach (var user in usersInRole)
+                                        {
+                                            <li>@user</li>
+                                        }
+                                    </ul>
+                                </div>
+                                <small class="text-muted">Note: Changing the role name will not affect user assignments.</small>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="alert alert-warning">
+                                No users are currently assigned to this role.
+                            </div>
+                        }
+
+                        <div class="mb-3">
+                            <button type="submit" class="btn btn-warning">Update Role</button>
+                            <a href="@Url.Action("Index")" class="btn btn-danger">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
