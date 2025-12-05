@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,112 +11,114 @@ using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Services.Implementations
 {
-    public class SeedingService : ISeedingService
+    public class FieldService : IFieldService
     {
         private readonly SodDbContext _context;
         private readonly UserManager<TpaSodManagementUser> _userManager;
 
-        public SeedingService(SodDbContext context, UserManager<TpaSodManagementUser> userManager)
+        public FieldService(SodDbContext context, UserManager<TpaSodManagementUser> userManager)
         {
             _context = context;
             _userManager = userManager;
         }
 
-        public async Task<ServiceResponse<List<Seeding>>> GetAllAsync()
+        public async Task<ServiceResponse<List<Field>>> GetAllAsync()
         {
-            var response = new ServiceResponse<List<Seeding>>();
+            var response = new ServiceResponse<List<Field>>();
             try
             {
-                response.Data = await _context.Seedings
-                    .Include(s => s.AreaType)
-                    .Include(s => s.Farm)
-                    .Include(s => s.Field)
-                    .Include(s => s.TagRange)
-                    .Include(s => s.User)
+                response.Data = await _context.Fields
+                    .Include(f => f.Farm)
+                        .ThenInclude(f => f.Organization)
+                    .Include(f => f.AreaType)
+                    .Include(f => f.CreatedByUser)
+                        .ThenInclude(u => u.Person)
+                    .OrderBy(f => f.FieldName)
                     .ToListAsync();
             }
             catch (System.Exception ex)
             {
                 response.Success = false;
-                response.Message = $"Error fetching seedings: {ex.Message}";
+                response.Message = $"Error fetching fields: {ex.Message}";
             }
             return response;
         }
 
-        public async Task<ServiceResponse<Seeding>> GetByIdAsync(long id)
+        public async Task<ServiceResponse<Field>> GetByIdAsync(long id)
         {
-            var response = new ServiceResponse<Seeding>();
+            var response = new ServiceResponse<Field>();
             try
             {
-                var seeding = await _context.Seedings
-                    .Include(s => s.AreaType)
-                    .Include(s => s.Farm)
-                    .Include(s => s.Field)
-                    .Include(s => s.TagRange)
-                    .Include(s => s.User)
-                    .FirstOrDefaultAsync(s => s.SeedingId == id);
+                var field = await _context.Fields
+                    .Include(f => f.Farm)
+                        .ThenInclude(f => f.Organization)
+                    .Include(f => f.AreaType)
+                    .Include(f => f.CreatedByUser)
+                        .ThenInclude(u => u.Person)
+                    .FirstOrDefaultAsync(f => f.FieldId == id);
 
-                if (seeding == null)
+                if (field == null)
                 {
                     response.Success = false;
-                    response.Message = "Seeding not found";
+                    response.Message = "Field not found";
                 }
                 else
                 {
-                    response.Data = seeding;
+                    response.Data = field;
                 }
             }
             catch (System.Exception ex)
             {
                 response.Success = false;
-                response.Message = $"Error fetching seeding: {ex.Message}";
+                response.Message = $"Error fetching field: {ex.Message}";
             }
             return response;
         }
 
-        public async Task<ServiceResponse<Seeding>> CreateAsync(Seeding seeding)
+        public async Task<ServiceResponse<Field>> CreateAsync(Field field)
         {
-            var response = new ServiceResponse<Seeding>();
+            var response = new ServiceResponse<Field>();
             try
             {
-                _context.Seedings.Add(seeding);
+                field.CreatedDate = System.DateTimeOffset.Now;
+                _context.Fields.Add(field);
                 await _context.SaveChangesAsync();
-                response.Data = seeding;
+                response.Data = field;
             }
             catch (System.Exception ex)
             {
                 response.Success = false;
-                response.Message = $"Error creating seeding: {ex.Message}";
+                response.Message = $"Error creating field: {ex.Message}";
             }
             return response;
         }
 
-        public async Task<ServiceResponse<Seeding>> UpdateAsync(Seeding seeding)
+        public async Task<ServiceResponse<Field>> UpdateAsync(Field field)
         {
-            var response = new ServiceResponse<Seeding>();
+            var response = new ServiceResponse<Field>();
             try
             {
-                var exists = await _context.Seedings.AnyAsync(s => s.SeedingId == seeding.SeedingId);
+                var exists = await _context.Fields.AnyAsync(f => f.FieldId == field.FieldId);
                 if (!exists)
                 {
                     response.Success = false;
-                    response.Message = "Seeding not found";
+                    response.Message = "Field not found";
                     return response;
                 }
 
-                _context.Seedings.Update(seeding);
+                _context.Fields.Update(field);
                 await _context.SaveChangesAsync();
-                response.Data = seeding;
+                response.Data = field;
             }
             catch (DbUpdateConcurrencyException)
             {
                 response.Success = false;
-                response.Message = "Concurrency error updating seeding";
+                response.Message = "Concurrency error updating field";
             }
             catch (System.Exception ex)
             {
                 response.Success = false;
-                response.Message = $"Error updating seeding: {ex.Message}";
+                response.Message = $"Error updating field: {ex.Message}";
             }
             return response;
         }
@@ -126,64 +128,59 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<bool>();
             try
             {
-                var seeding = await _context.Seedings.FindAsync(id);
-                if (seeding == null)
+                var field = await _context.Fields.FindAsync(id);
+                if (field == null)
                 {
                     response.Success = false;
-                    response.Message = "Seeding not found";
+                    response.Message = "Field not found";
                     response.Data = false;
                     return response;
                 }
 
-                _context.Seedings.Remove(seeding);
+                _context.Fields.Remove(field);
                 await _context.SaveChangesAsync();
                 response.Data = true;
             }
             catch (System.Exception ex)
             {
                 response.Success = false;
-                response.Message = $"Error deleting seeding: {ex.Message}";
+                response.Message = $"Error deleting field: {ex.Message}";
                 response.Data = false;
             }
             return response;
         }
 
-        public async Task<ServiceResponse<(SelectList AreaTypes, SelectList Farms, SelectList Fields, SelectList TagRanges, SelectList Users)>> GetDropdownDataAsync()
+        public async Task<ServiceResponse<(SelectList Farms, SelectList AreaTypes, SelectList Users)>> GetDropdownDataAsync()
         {
-            var response = new ServiceResponse<(SelectList, SelectList, SelectList, SelectList, SelectList)>();
+            var response = new ServiceResponse<(SelectList, SelectList, SelectList)>();
             try
             {
-                var areaTypes = await _context.AreaTypes
-                    .OrderBy(a => a.AreaTypeName)
-                    .ToListAsync();
-
                 var farms = await _context.Farms
                     .Include(f => f.Organization)
                     .OrderBy(f => f.FarmId)
                     .ToListAsync();
 
-                var fields = await _context.Fields.ToListAsync();
-                var tagRanges = await _context.TagRanges.ToListAsync();
-                
+                var areaTypes = await _context.AreaTypes
+                    .OrderBy(a => a.AreaTypeName)
+                    .ToListAsync();
+
                 // TpaSodManagementUser se users fetch karein
                 var users = await _userManager.Users
                     .OrderBy(u => u.UserName)
                     .ToListAsync();
 
-                // Create SelectList for AreaTypes using AreaTypeName
-                var areaTypeItems = areaTypes.Select(a => new SelectListItem
-                {
-                    Value = a.AreaTypeId.ToString(),
-                    Text = a.AreaTypeName
-                }).ToList();
-
-                // Create SelectList for Farms with display name
                 var farmItems = farms.Select(f => new SelectListItem
                 {
                     Value = f.FarmId.ToString(),
                     Text = !string.IsNullOrEmpty(f.LicenseNumber)
                         ? $"{f.LicenseNumber} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
                         : $"Farm #{f.FarmId} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
+                }).ToList();
+
+                var areaTypeItems = areaTypes.Select(a => new SelectListItem
+                {
+                    Value = a.AreaTypeId.ToString(),
+                    Text = a.AreaTypeName
                 }).ToList();
 
                 // Create SelectList for Users with display name (FirstName LastName or UserName)
@@ -196,10 +193,8 @@ namespace TpaSodManagement.Services.Implementations
                 }).ToList();
 
                 response.Data = (
-                    new SelectList(areaTypeItems, "Value", "Text"),
                     new SelectList(farmItems, "Value", "Text"),
-                    new SelectList(fields, "FieldId", "FieldId"),
-                    new SelectList(tagRanges, "TagRangeId", "TagRangeId"),
+                    new SelectList(areaTypeItems, "Value", "Text"),
                     new SelectList(userItems, "Value", "Text")
                 );
             }
@@ -216,14 +211,15 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<bool>();
             try
             {
-                response.Data = await _context.Seedings.AnyAsync(s => s.SeedingId == id);
+                response.Data = await _context.Fields.AnyAsync(f => f.FieldId == id);
             }
             catch (System.Exception ex)
             {
                 response.Success = false;
-                response.Message = $"Error checking seeding existence: {ex.Message}";
+                response.Message = $"Error checking field existence: {ex.Message}";
             }
             return response;
         }
     }
 }
+

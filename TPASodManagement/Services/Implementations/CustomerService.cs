@@ -143,10 +143,12 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<(SelectList Organizations, SelectList People)>();
             try
             {
-                var orgs = await _context.Organizations.ToListAsync();
+                var orgs = await _context.Organizations
+                    .OrderBy(o => o.OrganizationName) // Sort by name
+                    .ToListAsync();
                 var people = await _context.People.ToListAsync();
                 response.Data = (
-                    new SelectList(orgs, "OrganizationId", "OrganizationId"),
+                    new SelectList(orgs, "OrganizationId", "OrganizationName"), // Changed: OrganizationName as text
                     new SelectList(people, "PersonId", "PersonId")
                 );
             }

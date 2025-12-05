@@ -22,6 +22,7 @@ namespace TpaSodManagement.Controllers
                 return View(organizations);
             }
 
+            // GET: Organization/Details/{id}
             public async Task<IActionResult> Details(long? id)
             {
                 if (id == null)
@@ -31,7 +32,9 @@ namespace TpaSodManagement.Controllers
                 if (organization == null)
                     return NotFound();
 
-                return View(organization);
+                ViewBag.IsDetailsView = true;
+                ViewBag.Title = "Organization Details";
+                return View("Edit", organization); // Same Edit view use karein
             }
 
             public IActionResult Create()
@@ -90,24 +93,19 @@ namespace TpaSodManagement.Controllers
                 return View(updatedOrg);
             }
 
-            public async Task<IActionResult> Delete(long? id)
-            {
-                if (id == null)
-                    return NotFound();
-
-                var organization = await _organizationService.GetOrganizationByIdAsync(id.Value);
-                if (organization == null)
-                    return NotFound();
-
-                return View(organization);
-            }
-
-            [HttpPost, ActionName("Delete")]
+            [HttpPost]
             [ValidateAntiForgeryToken]
-            public async Task<IActionResult> DeleteConfirmed(long id)
+            public async Task<IActionResult> Delete(long id)
             {
-                await _organizationService.DeleteOrganizationAsync(id);
-                return RedirectToAction(nameof(Index));
+                try
+                {
+                    await _organizationService.DeleteOrganizationAsync(id);
+                    return Json(new { success = true, message = "Organization deleted successfully." });
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = ex.Message });
+                }
             }
 
         public async Task<IActionResult> GetLogo(long id)

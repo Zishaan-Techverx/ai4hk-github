@@ -25,7 +25,6 @@ namespace TpaSodManagement.Services.Implementations
                 response.Data = await _context.Products
                     .Include(p => p.CertificateType)
                     .Include(p => p.CreatedByUser)
-                    .Include(p => p.Currency)
                     .Include(p => p.ProductCategory)
                     .ToListAsync();
             }
@@ -45,7 +44,6 @@ namespace TpaSodManagement.Services.Implementations
                 var product = await _context.Products
                     .Include(p => p.CertificateType)
                     .Include(p => p.CreatedByUser)
-                    .Include(p => p.Currency)
                     .Include(p => p.ProductCategory)
                     .FirstOrDefaultAsync(p => p.ProductId == id);
 
@@ -148,14 +146,22 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var certs = await _context.CertificateTypes.ToListAsync();
                 var users = await _context.TpaUsers.ToListAsync();
-                var currencies = await _context.Currencies.ToListAsync();
-                var categories = await _context.ProductCategories.ToListAsync();
+                var categories = await _context.ProductCategories
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.CategoryName)
+                    .ToListAsync();
+
+                // Get currencies from database instead of CurrencyHelper
+                var currencies = await _context.Currencies
+                    .Where(c => c.IsActive)
+                    .OrderBy(c => c.CurrencyName)
+                    .ToListAsync();
 
                 response.Data = (
                     new SelectList(certs, "CertificateTypeId", "CertificateTypeId"),
                     new SelectList(users, "UserId", "UserId"),
-                    new SelectList(currencies, "CurrencyId", "CurrencyId"),
-                    new SelectList(categories, "ProductCategoryId", "ProductCategoryId")
+                    new SelectList(currencies, "CurrencyId", "CurrencyName"), // Database se currencies
+                    new SelectList(categories, "ProductCategoryId", "CategoryName")
                 );
             }
             catch (System.Exception ex)

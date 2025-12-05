@@ -1,106 +1,156 @@
 @model TpaSodManagement.Models.Db.Seeding
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Seeding";
 }
+
 <br />
-<div class="d-flex align-items-center mb-4">
-    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-        <i class="fa-solid fa-arrow-left me-1"></i>
-    </a>
 
-    <h1 class="ms-4 mb-0">Create</h1>
-</div>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Create Seeding</h5>
+                </div>
 
-<h4>Seeding</h4>
-<hr />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="UserId" class="control-label">User Id</label>
-                <select asp-for="UserId" class ="form-control" asp-items="ViewBag.UserId"></select>
+                <div class="card-body">
+                    @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="UserId" class="form-label">User</label>
+                                <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserId">
+                                    <option value="">-- Select User --</option>
+                                </select>
+                                <span asp-validation-for="UserId" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FarmId" class="form-label">Farm</label>
+                                <select asp-for="FarmId" class="form-select" asp-items="ViewBag.FarmId">
+                                    <option value="">-- Select Farm --</option>
+                                </select>
+                                <span asp-validation-for="FarmId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FieldId" class="form-label">Field</label>
+                                <select asp-for="FieldId" class="form-select" asp-items="ViewBag.FieldName">
+                                    <option value="">-- Select Field --</option>
+                                </select>
+                                <span asp-validation-for="FieldId" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TagRangeId" class="form-label">Tag Range</label>
+                                <select asp-for="TagRangeId" class="form-select" asp-items="ViewBag.TagRangeId">
+                                    <option value="">-- Select Tag Range --</option>
+                                </select>
+                                <span asp-validation-for="TagRangeId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AreaAmount" class="form-label">Area Amount</label>
+                                <input asp-for="AreaAmount" type="number" step="0.01" class="form-control" />
+                                <span asp-validation-for="AreaAmount" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AreaTypeId" class="form-label">Area Type</label>
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="ViewBag.AreaTypeId">
+                                    <option value="">-- Select Area Type --</option>
+                                </select>
+                                <span asp-validation-for="AreaTypeId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SeedingDate" class="form-label">Seeding Date</label>
+                                <input asp-for="SeedingDate" type="date" class="form-control" />
+                                <span asp-validation-for="SeedingDate" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SeedingMethod" class="form-label">Seeding Method</label>
+                                <input asp-for="SeedingMethod" class="form-control" />
+                                <span asp-validation-for="SeedingMethod" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SeedRatePerUnit" class="form-label">Seed Rate Per Unit</label>
+                                <input asp-for="SeedRatePerUnit" type="number" step="0.01" class="form-control" />
+                                <span asp-validation-for="SeedRatePerUnit" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="WeatherConditions" class="form-label">Weather Conditions</label>
+                                <input asp-for="WeatherConditions" class="form-control" />
+                                <span asp-validation-for="WeatherConditions" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SoilTemperature" class="form-label">Soil Temperature</label>
+                                <input asp-for="SoilTemperature" type="number" step="0.01" class="form-control" />
+                                <span asp-validation-for="SoilTemperature" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SoilMoisture" class="form-label">Soil Moisture</label>
+                                <input asp-for="SoilMoisture" class="form-control" />
+                                <span asp-validation-for="SoilMoisture" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" rows="3" class="form-control"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="FarmId" class="control-label">Farm Id</label>
-                <select asp-for="FarmId" class ="form-control" asp-items="ViewBag.FarmId"></select>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="FieldId" class="control-label">Field Id</label>
-                <select asp-for="FieldId" class ="form-control" asp-items="ViewBag.FieldId"></select>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="TagRangeId" class="control-label">Tag Range Id</label>
-                <select asp-for="TagRangeId" class ="form-control" asp-items="ViewBag.TagRangeId"></select>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="AreaAmount" class="control-label">Area Amount</label>
-                <input asp-for="AreaAmount" class="form-control" />
-                <span asp-validation-for="AreaAmount" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="AreaTypeId" class="control-label">Area Type Id</label>
-                <select asp-for="AreaTypeId" class ="form-control" asp-items="ViewBag.AreaTypeId"></select>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="SeedingDate" class="control-label">Seeding Date</label>
-                <input asp-for="SeedingDate" class="form-control" />
-                <span asp-validation-for="SeedingDate" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="SeedingMethod" class="control-label">Seeding Method</label>
-                <input asp-for="SeedingMethod" class="form-control" />
-                <span asp-validation-for="SeedingMethod" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="SeedRatePerUnit" class="control-label">Seed Rate Per Unit</label>
-                <input asp-for="SeedRatePerUnit" class="form-control" />
-                <span asp-validation-for="SeedRatePerUnit" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="WeatherConditions" class="control-label">Weather Conditions</label>
-                <input asp-for="WeatherConditions" class="form-control" />
-                <span asp-validation-for="WeatherConditions" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="SoilTemperature" class="control-label">Soil Temperature</label>
-                <input asp-for="SoilTemperature" class="form-control" />
-                <span asp-validation-for="SoilTemperature" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="SoilMoisture" class="control-label">Soil Moisture</label>
-                <input asp-for="SoilMoisture" class="form-control" />
-                <span asp-validation-for="SoilMoisture" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="Notes" class="control-label">Notes</label>
-                <input asp-for="Notes" class="form-control" />
-                <span asp-validation-for="Notes" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<br />
-<br />
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

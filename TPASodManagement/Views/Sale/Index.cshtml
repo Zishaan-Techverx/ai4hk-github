@@ -105,7 +105,7 @@
             <tbody>
                 @foreach (var item in Model)
                 {
-                    <tr>
+                    <tr id="row-@item.SaleId">
                         <td>
                             @Html.DisplayFor(modelItem => item.SaleNumber)
                         </td>
@@ -183,7 +183,9 @@
 
                             @if (User.HasPermission("Sale.Delete"))
                             {
-                                <a asp-action="Delete" asp-route-id="@item.SaleId">
+                                <a href="#" class="delete-btn" data-id="@item.SaleId" 
+                                    data-name="@(!string.IsNullOrEmpty(item.SaleNumber) ? item.SaleNumber : $"Sale #{item.SaleId}")"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
                                     <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
                                 </a>
                             }
@@ -230,5 +232,116 @@
 
     document.addEventListener('DOMContentLoaded', function () {
         document.getElementById('pageSizeSelect').value = '@pageSize';
+
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const saleIdInput = document.getElementById('saleIdToDelete');
+        const saleNamePlaceholder = document.getElementById('saleNamePlaceholder');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deleteErrorAlert = document.getElementById('deleteError');
+        const deleteSuccessToast = new bootstrap.Toast(document.getElementById('deleteSuccessToast'));
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const saleId = this.getAttribute('data-id');
+                const saleName = this.getAttribute('data-name');
+
+                saleIdInput.value = saleId;
+                saleNamePlaceholder.innerText = saleName;
+                deleteErrorAlert.classList.add('d-none');
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = 'Delete';
+            });
+        });
+
+        confirmDeleteBtn.addEventListener('click', function () {
+            const saleId = saleIdInput.value;
+            if (!saleId) {
+                deleteErrorAlert.innerText = 'Error: Sale ID not found.';
+                deleteErrorAlert.classList.remove('d-none');
+                return;
+            }
+
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+
+            const requestBody = 'id=' + encodeURIComponent(saleId) +
+                '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+
+            fetch('@Url.Action("Delete", "Sale")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: requestBody
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const rowToRemove = document.getElementById('row-' + saleId);
+                        if (rowToRemove) {
+                            rowToRemove.remove();
+                        }
+                        deleteModal.hide();
+                        deleteSuccessToast.show();
+                    } else {
+                        deleteErrorAlert.innerText = data.message || 'Error deleting the record. Please try again.';
+                        deleteErrorAlert.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Delete failed:', error);
+                    deleteErrorAlert.innerText = 'Deletion failed: ' + error.message;
+                    deleteErrorAlert.classList.remove('d-none');
+                })
+                .finally(() => {
+                    confirmDeleteBtn.disabled = false;
+                    confirmDeleteBtn.innerHTML = 'Delete';
+                });
+        });
     });
 </script>
+
+<!-- Toast for success message -->
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="deleteSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Sale deleted successfully!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the sale: <strong id="saleNamePlaceholder"></strong>?</p>
+                <div class="alert alert-danger d-none" role="alert" id="deleteError">
+                    Error deleting the record. Please try again.
+                </div>
+
+                <input type="hidden" id="saleIdToDelete" />
+
+                @Html.AntiForgeryToken()
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>

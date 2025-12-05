@@ -1,77 +1,122 @@
 @model TpaSodManagement.Models.Db.Customer
 
 @{
-    ViewData["Title"] = "Create";
+    ViewData["Title"] = "Create Customer";
 }
 
 <br />
 
-<div class="d-flex align-items-center mb-4">
-    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-        <i class="fa-solid fa-arrow-left me-1"></i>
-    </a>
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Create Customer</h5>
+                </div>
 
-    <h1 class="ms-4 mb-0">Create</h1>
-</div>
+                <div class="card-body">
+                    @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
 
-<br />
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
 
-<h4>Customer</h4>
-<hr />
-<br />
-<div class="row">
-    <div class="col-md-4">
-        <form asp-action="Create">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <div class="form-group">
-                <label asp-for="CustomerType" class="control-label">Customer Type</label>
-                <input asp-for="CustomerType" class="form-control" />
-                <span asp-validation-for="CustomerType" class="text-danger"></span>
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CustomerType" class="form-label">Customer Type</label>
+                                <input asp-for="CustomerType" class="form-control" />
+                                <span asp-validation-for="CustomerType" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CustomerCode" class="form-label">Customer Code</label>
+                                <input asp-for="CustomerCode" class="form-control" />
+                                <span asp-validation-for="CustomerCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PersonId" class="form-label">Person</label>
+                                <select asp-for="PersonId" class="form-select" asp-items="ViewBag.PersonId">
+                                    <option value="">-- Select Person --</option>
+                                </select>
+                                <span asp-validation-for="PersonId" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="OrganizationId" class="form-label">Organization</label>
+                                <select asp-for="OrganizationId" class="form-select" asp-items="ViewBag.OrganizationId">
+                                    <option value="">-- Select Organization --</option>
+                                </select>
+                                <span asp-validation-for="OrganizationId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CreditLimit" class="form-label">Credit Limit</label>
+                                <input asp-for="CreditLimit" type="number" step="0.01" class="form-control" />
+                                <span asp-validation-for="CreditLimit" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PaymentTermsDays" class="form-label">Payment Terms Days</label>
+                                <input asp-for="PaymentTermsDays" type="number" class="form-control" />
+                                <span asp-validation-for="PaymentTermsDays" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label me-3 mb-0">Tax Exempt</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input asp-for="TaxExempt" type="checkbox" class="form-check-input" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" rows="3" class="form-control"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label me-3 mb-0">Is Active</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input asp-for="IsActive" type="checkbox" class="form-check-input" checked />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+                    </form>
+                </div>
             </div>
-            <br/>
-            <div class="form-group">
-                <label asp-for="PersonId" class="control-label">Person Id</label>
-                <select asp-for="PersonId" class ="form-control" asp-items="ViewBag.PersonId"></select>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="OrganizationId" class="control-label">Organization Id</label>
-                <select asp-for="OrganizationId" class ="form-control" asp-items="ViewBag.OrganizationId"></select>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="CustomerCode" class="control-label">Customer Code</label>
-                <input asp-for="CustomerCode" class="form-control" />
-                <span asp-validation-for="CustomerCode" class="text-danger"></span>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="CreditLimit" class="control-label">Credit Limit</label>
-                <input asp-for="CreditLimit" class="form-control" />
-                <span asp-validation-for="CreditLimit" class="text-danger"></span>
-            </div>
-            <div class="form-group form-check">
-                <label class="form-check-label">
-                    <input class="form-check-input" asp-for="TaxExempt" /> @Html.DisplayNameFor(model => model.TaxExempt)
-                </label>
-            </div>
-            <br />
-            <div class="form-group">
-                <label asp-for="Notes" class="control-label">Notes</label>
-                <input asp-for="Notes" class="form-control" />
-                <span asp-validation-for="Notes" class="text-danger"></span>
-            </div>
-            <br/>
-            <div class="form-group">
-                <input type="submit" value="Create" class="btn btn-primary" />
-            </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<br />
-<br />
-
 @section Scripts {
-    @{await Html.RenderPartialAsync("_ValidationScriptsPartial");}
+    <partial name="_ValidationScriptsPartial" />
 }

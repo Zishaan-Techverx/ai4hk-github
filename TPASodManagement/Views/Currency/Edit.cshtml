@@ -1,8 +1,8 @@
-@model TpaSodManagement.Models.Db.Customer
+@model TpaSodManagement.Models.Db.Currency
 
 @{
     bool isDetailsView = ViewBag.IsDetailsView ?? false;
-    ViewData["Title"] = isDetailsView ? "Customer Details" : "Edit Customer";
+    ViewData["Title"] = isDetailsView ? "Currency Details" : "Edit Currency";
     string disabledAttr = isDetailsView ? "disabled" : null;
 }
 
@@ -13,10 +13,10 @@
         <div class="col-md-8 offset-md-2">
             <div class="card">
                 <div class="card-header">
-                    <h5 class="card-title mb-0">@(isDetailsView ? "Customer Details" : "Edit Customer")</h5>
+                    <h5 class="card-title mb-0">@(isDetailsView ? "Currency Details" : "Edit Currency")</h5>
                 </div>
 
-                <div class="card-body"> 
+                <div class="card-body">
                     @if (TempData["SuccessMessage"] != null)
                     {
                         <div class="alert alert-success alert-dismissible fade show">
@@ -50,65 +50,34 @@
                     <form asp-action="Edit" method="post">
                         @Html.AntiForgeryToken()
                         
-                        <input type="hidden" asp-for="CustomerId" />
+                        <input type="hidden" asp-for="CurrencyId" />
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CustomerType" class="form-label">Customer Type</label>
-                                <input asp-for="CustomerType" class="form-control" disabled="@disabledAttr" />
-                                <span asp-validation-for="CustomerType" class="text-danger"></span>
+                                <label asp-for="CurrencyCode" class="form-label">Currency Code</label>
+                                <input asp-for="CurrencyCode" class="form-control" disabled="@disabledAttr" maxlength="3" style="text-transform:uppercase;" />
+                                <span asp-validation-for="CurrencyCode" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CustomerCode" class="form-label">Customer Code</label>
-                                <input asp-for="CustomerCode" class="form-control" disabled="@disabledAttr" />
-                                <span asp-validation-for="CustomerCode" class="text-danger"></span>
-                            </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="PersonId" class="form-label">Person</label>
-                                <select asp-for="PersonId" class="form-select" asp-items="ViewBag.PersonId" disabled="@disabledAttr">
-                                    <option value="">-- Select Person --</option>
-                                </select>
-                                <span asp-validation-for="PersonId" class="text-danger"></span>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationId" class="form-label">Organization</label>
-                                <select asp-for="OrganizationId" class="form-select" asp-items="ViewBag.OrganizationId" disabled="@disabledAttr">
-                                    <option value="">-- Select Organization --</option>
-                                </select>
-                                <span asp-validation-for="OrganizationId" class="text-danger"></span>
+                                <label asp-for="CurrencyName" class="form-label">Currency Name</label>
+                                <input asp-for="CurrencyName" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="CurrencyName" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CreditLimit" class="form-label">Credit Limit</label>
-                                <input asp-for="CreditLimit" type="number" step="0.01" class="form-control" disabled="@disabledAttr" />
-                                <span asp-validation-for="CreditLimit" class="text-danger"></span>
+                                <label asp-for="CurrencySymbol" class="form-label">Currency Symbol</label>
+                                <input asp-for="CurrencySymbol" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="CurrencySymbol" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="PaymentTermsDays" class="form-label">Payment Terms Days</label>
-                                <input asp-for="PaymentTermsDays" type="number" class="form-control" disabled="@disabledAttr" />
-                                <span asp-validation-for="PaymentTermsDays" class="text-danger"></span>
+                                <label asp-for="DecimalPlaces" class="form-label">Decimal Places</label>
+                                <input asp-for="DecimalPlaces" type="number" min="0" max="4" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="DecimalPlaces" class="text-danger"></span>
                             </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label class="form-label me-3 mb-0">Tax Exempt</label>
-                            <div class="form-check form-switch d-inline-block">
-                                <input asp-for="TaxExempt" type="checkbox" class="form-check-input" disabled="@disabledAttr" />
-                            </div>
-                        </div>
-
-                        <div class="mb-3">
-                            <label asp-for="Notes" class="form-label">Notes</label>
-                            <textarea asp-for="Notes" rows="3" class="form-control" disabled="@disabledAttr"></textarea>
-                            <span asp-validation-for="Notes" class="text-danger"></span>
                         </div>
 
                         <div class="mb-3">
@@ -125,12 +94,11 @@
                                     <label asp-for="CreatedDate" class="form-label">Created Date</label>
                                     <input asp-for="CreatedDate" type="text" class="form-control" readonly />
                                 </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="UpdatedDate" class="form-label">Updated Date</label>
-                                    <input asp-for="UpdatedDate" type="text" class="form-control" readonly />
-                                </div>
                             </div>
+                        }
+                        else
+                        {
+                            <input type="hidden" asp-for="CreatedDate" />
                         }
 
                         <div class="d-flex justify-content-between mt-3">
@@ -142,7 +110,7 @@
                             }
                             else
                             {
-                                <a asp-action="Edit" asp-route-id="@Model.CustomerId" class="btn btn-warning">Edit</a>
+                                <a asp-action="Edit" asp-route-id="@Model.CurrencyId" class="btn btn-warning">Edit</a>
                             }
                         </div>
                     </form>
@@ -156,5 +124,12 @@
     @if (!isDetailsView)
     {
         <partial name="_ValidationScriptsPartial" />
+        
+        <script>
+            // Auto uppercase currency code
+            document.querySelector('input[asp-for="CurrencyCode"]')?.addEventListener('input', function(e) {
+                this.value = this.value.toUpperCase();
+            });
+        </script>
     }
 }

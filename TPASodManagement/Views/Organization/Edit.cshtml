@@ -1,103 +1,188 @@
 ﻿@model TpaSodManagement.Models.Db.Organization
 
 @{
-    ViewData["Title"] = "Edit";
+    bool isDetailsView = ViewBag.IsDetailsView ?? false;
+    ViewData["Title"] = isDetailsView ? "Organization Details" : "Edit Organization";
+    string disabledAttr = isDetailsView ? "disabled" : null;
 }
 
 <br />
-<div class="d-flex align-items-center mb-4">
-    <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
-        <i class="fa-solid fa-arrow-left me-1"></i>
-    </a>
 
-    <h1 class="ms-4 mb-0">Edit</h1>
-</div>
-
-<h4>Organization</h4>
-<hr />
-<div class="row">
-    <div class="col-md-6">
-        <form asp-action="Edit" enctype="multipart/form-data">
-            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-            <input type="hidden" asp-for="OrganizationId" />
-
-            <div class="form-group mb-3">
-                <label asp-for="OrganizationName" class="control-label">Organization Name</label>
-                <input asp-for="OrganizationName" class="form-control" />
-                <span asp-validation-for="OrganizationName" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="OrganizationType" class="control-label">Organization Type</label>
-                <input asp-for="OrganizationType" class="form-control" />
-                <span asp-validation-for="OrganizationType" class="text-danger"></span>
-            </div>
-
-            <div class="form-group mb-3">
-                <label asp-for="LogoFile" class="control-label">Logo</label>
-
-                <div id="logoPreview" class="mb-2">
-                    @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
-                    {
-                        <img id="currentLogo" src="@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })"
-                             alt="Current Logo"
-                             style="max-width:150px; max-height:150px; border:1px solid #ccc; border-radius:5px;" />
-                    }
-                    else
-                    {
-                        <span class="text-muted" id="noLogoText">No logo uploaded</span>
-                    }
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@(isDetailsView ? "Organization Details" : "Edit Organization")</h5>
                 </div>
 
-                <input asp-for="LogoFile" type="file" class="form-control" accept="image/*" onchange="previewLogo(event)" />
-                <span asp-validation-for="LogoFile" class="text-danger"></span>
-                <small class="form-text text-muted">Leave empty to keep current logo</small>
-            </div>
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <strong>Success!</strong> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
 
-            <div class="form-group">
-                <input type="submit" value="Update" class="btn btn-primary" />
-                <a asp-action="Index" class="btn btn-danger ms-2">Cancel</a>
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
+                        @Html.AntiForgeryToken()
+                        
+                        <input type="hidden" asp-for="OrganizationId" />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="OrganizationName" class="form-label">Organization Name</label>
+                                <input asp-for="OrganizationName" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="OrganizationName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="OrganizationType" class="form-label">Organization Type</label>
+                                <input asp-for="OrganizationType" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="OrganizationType" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="OrganizationCode" class="form-label">Organization Code</label>
+                                <input asp-for="OrganizationCode" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="OrganizationCode" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TaxIdentificationNumber" class="form-label">Tax Identification Number</label>
+                                <input asp-for="TaxIdentificationNumber" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="TaxIdentificationNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RegistrationNumber" class="form-label">Registration Number</label>
+                                <input asp-for="RegistrationNumber" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="RegistrationNumber" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="EstablishedDate" class="form-label">Established Date</label>
+                                <input asp-for="EstablishedDate" type="date" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="EstablishedDate" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" rows="3" class="form-control" disabled="@disabledAttr"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="LogoFile" class="form-label">Logo</label>
+                            
+                            <div id="logoPreview" class="mb-2">
+                                @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
+                                {
+                                    <img id="currentLogo" src="@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })"
+                                         alt="Current Logo"
+                                         style="max-width:150px; max-height:150px; border:1px solid #ccc; border-radius:5px;" />
+                                }
+                                else
+                                {
+                                    <span class="text-muted" id="noLogoText">No logo uploaded</span>
+                                }
+                            </div>
+
+                            @if (!isDetailsView)
+                            {
+                                <input asp-for="LogoFile" type="file" class="form-control" accept="image/*" onchange="previewLogo(event)" />
+                                <span asp-validation-for="LogoFile" class="text-danger"></span>
+                                <small class="form-text text-muted">Leave empty to keep current logo</small>
+                            }
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label me-3 mb-0">Is Active</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input asp-for="IsActive" type="checkbox" class="form-check-input" disabled="@disabledAttr" />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">@(isDetailsView ? "Back" : "Cancel")</a>
+
+                            @if (!isDetailsView)
+                            {
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            }
+                            else
+                            {
+                                <a asp-action="Edit" asp-route-id="@Model.OrganizationId" class="btn btn-warning">Edit</a>
+                            }
+                        </div>
+                    </form>
+                </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
-<br/>
-<br/>
 
 @section Scripts {
-    @{
-        await Html.RenderPartialAsync("_ValidationScriptsPartial");
-    }
+    @if (!isDetailsView)
+    {
+        <partial name="_ValidationScriptsPartial" />
+        
+        <script>
+            function previewLogo(event) {
+                const fileInput = event.target;
+                const previewContainer = document.getElementById('logoPreview');
+                const noLogoText = document.getElementById('noLogoText');
+                const currentLogo = document.getElementById('currentLogo');
 
-    <script>
-        function previewLogo(event) {
-            const fileInput = event.target;
-            const previewContainer = document.getElementById('logoPreview');
-            const noLogoText = document.getElementById('noLogoText');
-            const currentLogo = document.getElementById('currentLogo');
+                if (currentLogo) currentLogo.remove();
+                if (noLogoText) noLogoText.remove();
 
-            if (currentLogo) currentLogo.remove();
-            if (noLogoText) noLogoText.remove();
-
-            const file = fileInput.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    const img = document.createElement('img');
-                    img.src = e.target.result;
-                    img.alt = "New Logo";
-                    img.style.maxWidth = "150px";
-                    img.style.maxHeight = "150px";
-                    img.style.border = "1px solid #ccc";
-                    img.style.borderRadius = "5px";
-                    previewContainer.innerHTML = '';
-                    previewContainer.appendChild(img);
-                };
-                reader.readAsDataURL(file);
-            } else {
-                // If no file selected, show the current logo again or "no logo" message
-                @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
-                {
+                const file = fileInput.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = function (e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.alt = "New Logo";
+                        img.style.maxWidth = "150px";
+                        img.style.maxHeight = "150px";
+                        img.style.border = "1px solid #ccc";
+                        img.style.borderRadius = "5px";
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(img);
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
+                    {
                         <text>
                         const img = document.createElement('img');
                         img.src = '@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })';
@@ -110,9 +195,9 @@
                         previewContainer.innerHTML = '';
                         previewContainer.appendChild(img);
                         </text>
-                }
-                else
-                {
+                    }
+                    else
+                    {
                         <text>
                         const span = document.createElement('span');
                         span.className = 'text-muted';
@@ -121,8 +206,9 @@
                         previewContainer.innerHTML = '';
                         previewContainer.appendChild(span);
                         </text>
+                    }
                 }
             }
-        }
-    </script>
+        </script>
+    }
 }

@@ -1,0 +1,177 @@
+@model TpaSodManagement.Models.Db.Field
+
+@{
+    bool isDetailsView = ViewBag.IsDetailsView ?? false;
+    ViewData["Title"] = isDetailsView ? "Field Details" : "Edit Field";
+    string disabledAttr = isDetailsView ? "disabled" : null;
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@(isDetailsView ? "Field Details" : "Edit Field")</h5>
+                </div>
+
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <strong>Success!</strong> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="FieldId" />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FieldName" class="form-label">Field Name *</label>
+                                <input asp-for="FieldName" class="form-control" disabled="@(disabledAttr)" />
+                                <span asp-validation-for="FieldName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FieldCode" class="form-label">Field Code</label>
+                                <input asp-for="FieldCode" class="form-control" disabled="@(disabledAttr)" />
+                                <span asp-validation-for="FieldCode" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FarmId" class="form-label">Farm *</label>
+                                <select asp-for="FarmId" class="form-select" asp-items="ViewBag.FarmId" disabled="@(disabledAttr)">
+                                    <option value="">-- Select Farm --</option>
+                                </select>
+                                <span asp-validation-for="FarmId" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AreaTypeId" class="form-label">Area Type *</label>
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="ViewBag.AreaTypeId" disabled="@(disabledAttr)">
+                                    <option value="">-- Select Area Type --</option>
+                                </select>
+                                <span asp-validation-for="AreaTypeId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AreaAmount" class="form-label">Area Amount *</label>
+                                <input asp-for="AreaAmount" type="number" step="0.01" class="form-control" disabled="@(disabledAttr)" />
+                                <span asp-validation-for="AreaAmount" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CreatedByUserId" class="form-label">Created By User *</label>
+                                <select asp-for="CreatedByUserId" class="form-select" asp-items="ViewBag.CreatedByUserId" disabled="@(disabledAttr)">
+                                    <option value="">-- Select User --</option>
+                                </select>
+                                <span asp-validation-for="CreatedByUserId" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SoilType" class="form-label">Soil Type</label>
+                                <input asp-for="SoilType" class="form-control" disabled="@(disabledAttr)" />
+                                <span asp-validation-for="SoilType" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SlopePercentage" class="form-label">Slope Percentage</label>
+                                <input asp-for="SlopePercentage" type="number" step="0.01" class="form-control" disabled="@(disabledAttr)" />
+                                <span asp-validation-for="SlopePercentage" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Latitude" class="form-label">Latitude</label>
+                                <input asp-for="Latitude" type="number" step="0.0000001" class="form-control" disabled="@(disabledAttr)" />
+                                <span asp-validation-for="Latitude" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Longitude" class="form-label">Longitude</label>
+                                <input asp-for="Longitude" type="number" step="0.0000001" class="form-control" disabled="@(disabledAttr)" />
+                                <span asp-validation-for="Longitude" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label me-3 mb-0">Irrigation Available</label>
+                                <div class="form-check form-switch d-inline-block">
+                                    <input asp-for="IrrigationAvailable" type="checkbox" class="form-check-input" disabled="@(disabledAttr)" />
+                                </div>
+                                <span asp-validation-for="IrrigationAvailable" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label me-3 mb-0">Is Active</label>
+                                <div class="form-check form-switch d-inline-block">
+                                    <input asp-for="IsActive" type="checkbox" class="form-check-input" disabled="@(disabledAttr)" />
+                                </div>
+                                <span asp-validation-for="IsActive" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="BoundaryCoordinates" class="form-label">Boundary Coordinates</label>
+                            <textarea asp-for="BoundaryCoordinates" rows="3" class="form-control" disabled="@(disabledAttr)"></textarea>
+                            <span asp-validation-for="BoundaryCoordinates" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Notes" class="form-label">Notes</label>
+                            <textarea asp-for="Notes" rows="3" class="form-control" disabled="@(disabledAttr)"></textarea>
+                            <span asp-validation-for="Notes" class="text-danger"></span>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">@(isDetailsView ? "Back" : "Cancel")</a>
+                            @if (!isDetailsView)
+                            {
+                                <button type="submit" class="btn btn-primary">Update</button>
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
+

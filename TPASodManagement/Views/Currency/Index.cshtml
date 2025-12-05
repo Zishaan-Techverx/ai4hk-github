@@ -1,0 +1,202 @@
+@model IEnumerable<TpaSodManagement.Models.Db.Currency>
+
+@{
+    ViewData["Title"] = "Currencies";
+}
+
+<br />
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Currencies</h1>
+    <a asp-action="Create" class="btn btn-primary">Create New</a>
+    @* @if (User.HasPermission("Currency.Create"))
+    {
+        
+    } *@
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <strong>Success!</strong> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<br />
+
+<div class="card card-body shadow-sm">
+    <table class="table" id="currencyTable">
+        <thead>
+            <tr>
+                <th>Currency Code</th>
+                <th>Currency Name</th>
+                <th>Currency Symbol</th>
+                <th>Decimal Places</th>
+                <th>Is Active</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr id="row-@item.CurrencyId">
+                    <td>@Html.DisplayFor(modelItem => item.CurrencyCode)</td>
+                    <td>@Html.DisplayFor(modelItem => item.CurrencyName)</td>
+                    <td>@Html.DisplayFor(modelItem => item.CurrencySymbol)</td>
+                    <td>@Html.DisplayFor(modelItem => item.DecimalPlaces)</td>
+                    <td>@Html.DisplayFor(modelItem => item.IsActive)</td>
+                    <td style="display: flex; gap: 8px; align-items: center;">
+                        @* @if (User.HasPermission("Currency.Edit"))
+                        {
+                            
+                        } *@
+                        <a asp-action="Edit" asp-route-id="@item.CurrencyId" title="Edit">
+                            <i class="fa-regular fa-pen-to-square"></i>
+                        </a>
+                        <a asp-action="Details" asp-route-id="@item.CurrencyId" title="Details">
+                            <i class="fa-solid fa-circle-info"></i>
+                        </a>
+                        <a href="#" class="delete-btn" data-id="@item.CurrencyId" data-name="@item.CurrencyName"
+                            data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
+                            <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
+                        </a>
+                        @* @if (User.HasPermission("Currency.Detail"))
+                        {
+                            
+                        } *@
+
+                        @* @if (User.HasPermission("Currency.Delete"))
+                        {
+                            
+                        } *@
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+<br />
+<br />
+
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="deleteSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Record deleted successfully!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the currency: <strong id="currencyNamePlaceholder"></strong>?</p>
+                <div class="alert alert-danger d-none" role="alert" id="deleteError">
+                    Error deleting the record. Please try again.
+                </div>
+
+                <input type="hidden" id="currencyIdToDelete" />
+
+                @Html.AntiForgeryToken()
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const currencyIdInput = document.getElementById('currencyIdToDelete');
+        const currencyNamePlaceholder = document.getElementById('currencyNamePlaceholder');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deleteErrorAlert = document.getElementById('deleteError');
+        const deleteSuccessToast = new bootstrap.Toast(document.getElementById('deleteSuccessToast'));
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const currencyId = this.getAttribute('data-id');
+                const currencyName = this.getAttribute('data-name');
+
+                currencyIdInput.value = currencyId;
+                currencyNamePlaceholder.innerText = currencyName;
+                deleteErrorAlert.classList.add('d-none');
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = 'Delete';
+            });
+        });
+
+        confirmDeleteBtn.addEventListener('click', function () {
+            const currencyId = currencyIdInput.value;
+            if (!currencyId) {
+                deleteErrorAlert.innerText = 'Error: Currency ID not found.';
+                deleteErrorAlert.classList.remove('d-none');
+                return;
+            }
+
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+
+            const requestBody = 'id=' + encodeURIComponent(currencyId) +
+                '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+
+            fetch('@Url.Action("Delete", "Currency")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: requestBody
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const rowToRemove = document.getElementById('row-' + currencyId);
+                        if (rowToRemove) {
+                            rowToRemove.remove();
+                        }
+                        deleteModal.hide();
+                        deleteSuccessToast.show();
+                    } else {
+                        deleteErrorAlert.innerText = data.message || 'Error deleting the record. Please try again.';
+                        deleteErrorAlert.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Delete failed:', error);
+                    deleteErrorAlert.innerText = 'Deletion failed: ' + error.message;
+                    deleteErrorAlert.classList.remove('d-none');
+                })
+                .finally(() => {
+                    confirmDeleteBtn.disabled = false;
+                    confirmDeleteBtn.innerHTML = 'Delete';
+                });
+        });
+    });
+</script>

@@ -6,16 +6,20 @@ using System.Threading.Tasks;
 using TpaSodManagement.Data;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Services.Implementations
 {
     public class SaleService : ISaleService
     {
         private readonly SodDbContext _context;
+        private readonly UserManager<TpaSodManagementUser> _userManager;
 
-        public SaleService(SodDbContext context)
+        public SaleService(SodDbContext context, UserManager<TpaSodManagementUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<ServiceResponse<List<Sale>>> GetAllAsync()
@@ -148,19 +152,56 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Dictionary<string, IEnumerable<SelectListItem>>>();
             try
             {
+                // TpaSodManagementUser se users fetch karein
+                var users = await _userManager.Users
+                    .OrderBy(u => u.UserName)
+                    .ToListAsync();
+
+                // Create SelectList for Users with display name (FirstName LastName or UserName)
+                var userItems = users.Select(u => new SelectListItem
+                {
+                    Value = u.Id, // TpaSodManagementUser ka Id string type hai
+                    Text = !string.IsNullOrEmpty(u.FirstName) && !string.IsNullOrEmpty(u.LastName)
+                        ? $"{u.FirstName} {u.LastName} ({u.UserName})"
+                        : u.UserName ?? $"User #{u.Id}"
+                }).ToList();
+
+                // Farms fetch karein with Organization
+                var farms = await _context.Farms
+                    .Include(f => f.Organization)
+                    .OrderBy(f => f.FarmId)
+                    .ToListAsync();
+
+                // Create SelectList for Farms with display name (LicenseNumber or Farm ID with Organization)
+                var farmItems = farms.Select(f => new SelectListItem
+                {
+                    Value = f.FarmId.ToString(),
+                    Text = !string.IsNullOrEmpty(f.LicenseNumber)
+                        ? $"{f.LicenseNumber} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
+                        : $"Farm #{f.FarmId} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
+                }).ToList();
+
+                // Currencies fetch karein
+                var currencies = await _context.Currencies
+                    .OrderBy(c => c.CurrencyName)
+                    .ToListAsync();
+
+                // Create SelectList for Currencies with display name
+                var currencyItems = currencies.Select(c => new SelectListItem
+                {
+                    Value = c.CurrencyId.ToString(),
+                    Text = c.CurrencyName
+                }).ToList();
+
                 response.Data = new Dictionary<string, IEnumerable<SelectListItem>>
                 {
-                    ["CurrencyId"] = await _context.Currencies
-                        .Select(x => new SelectListItem { Value = x.CurrencyId.ToString(), Text = x.CurrencyId.ToString() })
-                        .ToListAsync(),
+                    ["CurrencyId"] = currencyItems, // CurrencyName show hoga
 
                     ["CustomerId"] = await _context.Customers
                         .Select(x => new SelectListItem { Value = x.CustomerId.ToString(), Text = x.CustomerId.ToString() })
                         .ToListAsync(),
 
-                    ["FarmId"] = await _context.Farms
-                        .Select(x => new SelectListItem { Value = x.FarmId.ToString(), Text = x.FarmId.ToString() })
-                        .ToListAsync(),
+                    ["FarmId"] = farmItems, // LicenseNumber aur OrganizationName show hoga
 
                     ["SaleTypeId"] = await _context.SaleTypes
                         .Select(x => new SelectListItem { Value = x.SaleTypeId.ToString(), Text = x.SaleTypeId.ToString() })
@@ -170,13 +211,9 @@ namespace TpaSodManagement.Services.Implementations
                         .Select(x => new SelectListItem { Value = x.StatusId.ToString(), Text = x.StatusId.ToString() })
                         .ToListAsync(),
 
-                    ["UpdatedByUserId"] = await _context.TpaUsers
-                        .Select(x => new SelectListItem { Value = x.UserId.ToString(), Text = x.UserId.ToString() })
-                        .ToListAsync(),
+                    ["UpdatedByUserId"] = userItems, // TpaSodManagementUser se
 
-                    ["UserId"] = await _context.TpaUsers
-                        .Select(x => new SelectListItem { Value = x.UserId.ToString(), Text = x.UserId.ToString() })
-                        .ToListAsync()
+                    ["UserId"] = userItems // TpaSodManagementUser se
                 };
             }
             catch (Exception ex)

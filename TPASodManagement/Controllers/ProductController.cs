@@ -35,7 +35,18 @@ namespace TpaSodManagement.Controllers
             var result = await _productService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
-            return View(result.Data);
+            var dropdowns = await _productService.GetDropdownDataAsync();
+            if (dropdowns.Success)
+            {
+                ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
+                ViewData["CreatedByUserId"] = dropdowns.Data.Users;
+                ViewData["CurrencyId"] = dropdowns.Data.Currencies;
+                ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+            }
+
+            ViewBag.IsDetailsView = true;
+            ViewBag.Title = "Product Details";
+            return View("Edit", result.Data);
         }
 
         public async Task<IActionResult> Create()
@@ -59,9 +70,23 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Product product)
         {
+            // Remove CurrencyId from ModelState if it's empty string (from currency code dropdown)
+            //if (string.IsNullOrEmpty(Request.Form["CurrencyId"].ToString()))
+            //{
+            //    ModelState.Remove("CurrencyId");
+            //    product.CurrencyId = null;
+            //}
+
             if (!ModelState.IsValid)
             {
-                await Create(); // reload dropdowns
+                var dropdowns = await _productService.GetDropdownDataAsync();
+                if (dropdowns.Success)
+                {
+                    ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
+                    ViewData["CreatedByUserId"] = dropdowns.Data.Users;
+                    ViewData["CurrencyId"] = dropdowns.Data.Currencies;
+                    ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                }
                 return View(product);
             }
 
@@ -69,10 +94,18 @@ namespace TpaSodManagement.Controllers
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                await Create(); // reload dropdowns
+                var dropdowns = await _productService.GetDropdownDataAsync();
+                if (dropdowns.Success)
+                {
+                    ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
+                    ViewData["CreatedByUserId"] = dropdowns.Data.Users;
+                    ViewData["CurrencyId"] = dropdowns.Data.Currencies;
+                    ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                }
                 return View(product);
             }
 
+            TempData["SuccessMessage"] = "Product created successfully.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -118,26 +151,16 @@ namespace TpaSodManagement.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Delete(long? id)
-        {
-            if (id == null) return NotFound();
-
-            var result = await _productService.GetByIdAsync(id.Value);
-            if (!result.Success || result.Data == null) return NotFound();
-
-            return View(result.Data);
-        }
-
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(long id)
+        public async Task<IActionResult> Delete(long id)
         {
             var result = await _productService.DeleteAsync(id);
             if (!result.Success)
             {
-                TempData["Error"] = result.Message;
+                return Json(new { success = false, message = result.Message });
             }
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = "Product deleted successfully." });
         }
     }
 }

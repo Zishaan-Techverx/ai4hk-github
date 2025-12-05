@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TpaSodManagement.Models.Db;
 
@@ -11,9 +12,11 @@ using TpaSodManagement.Models.Db;
 namespace TpaSodManagement.Migrations.SodDb
 {
     [DbContext(typeof(SodDbContext))]
-    partial class SodDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251202181101_ProductCurrency")]
+    partial class ProductCurrency
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

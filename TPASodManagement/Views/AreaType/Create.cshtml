@@ -1,0 +1,98 @@
+@model TpaSodManagement.Models.Db.AreaType
+
+@{
+    ViewData["Title"] = "Create Area Type";
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Create Area Type</h5>
+                </div>
+
+                <div class="card-body">
+                    @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="AreaTypeName" class="form-label">Area Type Name</label>
+                                <input asp-for="AreaTypeName" class="form-control" placeholder="e.g., Square Meters, Hectares" />
+                                <span asp-validation-for="AreaTypeName" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="UnitAbbreviation" class="form-label">Unit Abbreviation</label>
+                                <input asp-for="UnitAbbreviation" class="form-control" placeholder="e.g., m², ha, ac" maxlength="10" />
+                                <span asp-validation-for="UnitAbbreviation" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="UnitSystem" class="form-label">Unit System</label>
+                                <input asp-for="UnitSystem" class="form-control" placeholder="e.g., Metric, Imperial" maxlength="10" />
+                                <span asp-validation-for="UnitSystem" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="ConversionToSquareMeters" class="form-label">Conversion to Square Meters</label>
+                                <input asp-for="ConversionToSquareMeters" type="number" class="form-control" placeholder="e.g., 1.0, 10000.0" />
+                                <span asp-validation-for="ConversionToSquareMeters" class="text-danger"></span>
+                                <small class="form-text text-muted">Conversion factor to square meters</small>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" rows="3" class="form-control" placeholder="Optional description"></textarea>
+                            <span asp-validation-for="Description" class="text-danger"></span>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label me-3 mb-0">Is Active</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input asp-for="IsActive" type="checkbox" class="form-check-input" checked />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

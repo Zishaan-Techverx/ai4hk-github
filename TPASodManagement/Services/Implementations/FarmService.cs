@@ -1,8 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using TpaSodManagement.Data;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 
@@ -142,12 +139,19 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>();
             try
             {
-                var areaTypes = await _context.AreaTypes.ToListAsync();
-                var orgs = await _context.Organizations.ToListAsync();
+                var areaTypes = await _context.AreaTypes
+                    // .Where(a => a.IsActive) // Optional: Only show active area types
+                    .OrderBy(a => a.AreaTypeName)
+                    .ToListAsync();
+
+                var orgs = await _context.Organizations
+                    // .Where(o => o.IsActive) // Optional: Only show active organizations
+                    .OrderBy(o => o.OrganizationName)
+                    .ToListAsync();
 
                 response.Data = (
-                    new SelectList(areaTypes, "AreaTypeId", "AreaTypeId"),
-                    new SelectList(orgs, "OrganizationId", "OrganizationId")
+                    new SelectList(areaTypes, "AreaTypeId", "AreaTypeName", null), 
+                    new SelectList(orgs, "OrganizationId", "OrganizationName", null) 
                 );
             }
             catch (System.Exception ex)

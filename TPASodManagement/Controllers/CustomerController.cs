@@ -28,6 +28,7 @@ namespace TpaSodManagement.Controllers
             return View(result.Data);
         }
 
+        // GET: Customer/Details/{id}
         public async Task<IActionResult> Details(long? id)
         {
             if (id == null) return NotFound();
@@ -35,7 +36,16 @@ namespace TpaSodManagement.Controllers
             var result = await _customerService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
-            return View(result.Data);
+            var viewData = await _customerService.GetCreateViewDataAsync();
+            if (viewData.Success && viewData.Data.Organizations != null && viewData.Data.People != null)
+            {
+                ViewData["OrganizationId"] = viewData.Data.Organizations;
+                ViewData["PersonId"] = viewData.Data.People;
+            }
+
+            ViewBag.IsDetailsView = true;
+            ViewBag.Title = "Customer Details";
+            return View("Edit", result.Data);
         }
 
         public async Task<IActionResult> Create()
@@ -45,6 +55,8 @@ namespace TpaSodManagement.Controllers
             {
                 ViewData["OrganizationId"] = result.Data.Organizations;
                 ViewData["PersonId"] = result.Data.People;
+                ViewBag.OrganizationId = result.Data.Organizations; // Added: ViewBag for view compatibility
+                ViewBag.PersonId = result.Data.People; // Added: ViewBag for view compatibility
             }
             else
             {
@@ -114,26 +126,16 @@ namespace TpaSodManagement.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Delete(long? id)
-        {
-            if (id == null) return NotFound();
-
-            var result = await _customerService.GetByIdAsync(id.Value);
-            if (!result.Success || result.Data == null) return NotFound();
-
-            return View(result.Data);
-        }
-
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(long id)
+        public async Task<IActionResult> Delete(long id)
         {
             var result = await _customerService.DeleteAsync(id);
             if (!result.Success)
             {
-                TempData["Error"] = result.Message;
+                return Json(new { success = false, message = result.Message });
             }
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = "Customer deleted successfully." });
         }
     }
 }

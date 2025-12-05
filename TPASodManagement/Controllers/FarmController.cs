@@ -35,16 +35,28 @@ namespace TpaSodManagement.Controllers
             var result = await _farmService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
-            return View(result.Data);
+            var dropdowns = await _farmService.GetDropdownDataAsync();
+            if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
+            {
+                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                ViewBag.OrganizationId = dropdowns.Data.Organizations;
+            }
+
+            ViewBag.IsDetailsView = true;
+            ViewBag.Title = "Farm Details";
+            return View("Edit", result.Data);
         }
 
         public async Task<IActionResult> Create()
         {
+            // Clear any existing ModelState errors on page load
+            ModelState.Clear();
+            
             var result = await _farmService.GetDropdownDataAsync();
             if (result.Success && result.Data.AreaTypes != null && result.Data.Organizations != null)
             {
-                ViewData["AreaTypeId"] = result.Data.AreaTypes;
-                ViewData["OrganizationId"] = result.Data.Organizations;
+                ViewBag.AreaTypeId = result.Data.AreaTypes;
+                ViewBag.OrganizationId = result.Data.Organizations;
             }
             else
             {
@@ -57,20 +69,41 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Farm farm)
         {
+            // Remove OrganizationId from ModelState validation if it's empty/0
+            // This allows the field to be optional
+            if (string.IsNullOrWhiteSpace(Request.Form["OrganizationId"].ToString()) || 
+                farm.OrganizationId == 0)
+            {
+                // Remove OrganizationId validation errors to make it optional
+                ModelState.Remove("OrganizationId");
+                farm.OrganizationId = 0; // Set to default if not provided
+            }
+
             if (!ModelState.IsValid)
             {
-                await Create(); // reload dropdowns
+                var dropdowns = await _farmService.GetDropdownDataAsync();
+                if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
+                {
+                    ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                    ViewBag.OrganizationId = dropdowns.Data.Organizations;
+                }
                 return View(farm);
             }
 
             var result = await _farmService.CreateAsync(farm);
             if (!result.Success)
             {
-                TempData["Error"] = result.Message;
-                await Create(); // reload dropdowns
+                TempData["ErrorMessage"] = result.Message;
+                var dropdowns = await _farmService.GetDropdownDataAsync();
+                if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
+                {
+                    ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                    ViewBag.OrganizationId = dropdowns.Data.Organizations;
+                }
                 return View(farm);
             }
 
+            TempData["SuccessMessage"] = "Farm created successfully.";
             return RedirectToAction(nameof(Index));
         }
 
@@ -84,8 +117,8 @@ namespace TpaSodManagement.Controllers
             var dropdowns = await _farmService.GetDropdownDataAsync();
             if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
             {
-                ViewData["AreaTypeId"] = dropdowns.Data.AreaTypes;
-                ViewData["OrganizationId"] = dropdowns.Data.Organizations;
+                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                ViewBag.OrganizationId = dropdowns.Data.Organizations;
             }
 
             return View(result.Data);
@@ -114,26 +147,16 @@ namespace TpaSodManagement.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Delete(long? id)
-        {
-            if (id == null) return NotFound();
-
-            var result = await _farmService.GetByIdAsync(id.Value);
-            if (!result.Success || result.Data == null) return NotFound();
-
-            return View(result.Data);
-        }
-
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(long id)
+        public async Task<IActionResult> Delete(long id)
         {
             var result = await _farmService.DeleteAsync(id);
             if (!result.Success)
             {
-                TempData["Error"] = result.Message;
+                return Json(new { success = false, message = result.Message });
             }
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = "Farm deleted successfully." });
         }
     }
 }

@@ -28,6 +28,7 @@ namespace TpaSodManagement.Controllers
             return View(result.Data);
         }
 
+        // GET: Seeding/Details/{id}
         public async Task<IActionResult> Details(long? id)
         {
             if (id == null) return NotFound();
@@ -35,7 +36,19 @@ namespace TpaSodManagement.Controllers
             var result = await _seedingService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
-            return View(result.Data);
+            var dropdowns = await _seedingService.GetDropdownDataAsync();
+            if (dropdowns.Success)
+            {
+                ViewData["AreaTypeId"] = dropdowns.Data.AreaTypes;
+                ViewData["FarmId"] = dropdowns.Data.Farms;
+                ViewData["FieldId"] = dropdowns.Data.Fields;
+                ViewData["TagRangeId"] = dropdowns.Data.TagRanges;
+                ViewData["UserId"] = dropdowns.Data.Users;
+            }
+
+            ViewBag.IsDetailsView = true;
+            ViewBag.Title = "Seeding Details";
+            return View("Edit", result.Data);
         }
 
         public async Task<IActionResult> Create()
@@ -120,26 +133,16 @@ namespace TpaSodManagement.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task<IActionResult> Delete(long? id)
-        {
-            if (id == null) return NotFound();
-
-            var result = await _seedingService.GetByIdAsync(id.Value);
-            if (!result.Success || result.Data == null) return NotFound();
-
-            return View(result.Data);
-        }
-
-        [HttpPost, ActionName("Delete")]
+        [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(long id)
+        public async Task<IActionResult> Delete(long id)
         {
             var result = await _seedingService.DeleteAsync(id);
             if (!result.Success)
             {
-                TempData["Error"] = result.Message;
+                return Json(new { success = false, message = result.Message });
             }
-            return RedirectToAction(nameof(Index));
+            return Json(new { success = true, message = "Seeding deleted successfully." });
         }
     }
 }

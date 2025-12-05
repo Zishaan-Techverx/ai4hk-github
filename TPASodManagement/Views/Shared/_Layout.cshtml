@@ -50,24 +50,11 @@
                         <ul class="navbar-nav me-auto">
                             <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Index">Home</a></li>
 
-                            @* @if (User.HasPermission("UserManagement.View") || User.HasPermission("UserManagement.Create") || User.HasPermission("UserManagement.Edit") || User.HasPermission("UserManagement.Delete"))
-                            {
-                                
-                            } *@
-                            <li class="nav-item"><a class="nav-link" asp-controller="User" asp-action="Index">Users</a></li>
+                            @* Users link removed from navbar - moved to dropdown *@
+
                             @if (User.HasPermission("Farm.View") || User.HasPermission("Farm.Create") || User.HasPermission("Farm.Edit") || User.HasPermission("Farm.Delete"))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Farm" asp-action="Index">Farms</a></li>
-                            }
-
-                            @if (User.HasPermission("Customer.View") || User.HasPermission("Customer.Create") || User.HasPermission("Customer.Edit") || User.HasPermission("Customer.Delete"))
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-controller="Customer" asp-action="Index">Customers</a></li>
-                            }
-
-                            @if (User.HasPermission("Organization.View") || User.HasPermission("Organization.Create") || User.HasPermission("Organization.Edit") || User.HasPermission("Organization.Delete"))
-                            {
-                                <li class="nav-item"><a class="nav-link" asp-controller="Organization" asp-action="Index">Organizations</a></li>
                             }
 
                             @if (User.HasPermission("Seeding.View") || User.HasPermission("Seeding.Create") || User.HasPermission("Seeding.Edit") || User.HasPermission("Seeding.Delete"))
@@ -80,41 +67,92 @@
                                 <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Index">Product</a></li>
                             }
 
+                            @* ProductCategory, Currency, AreaType removed from direct links - moved to Others dropdown *@
+
                             @if (User.HasPermission("Sale.View") || User.HasPermission("Sale.Create") || User.HasPermission("Sale.Edit") || User.HasPermission("Sale.Delete"))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Sale" asp-action="Index">Sale</a></li>
                             }
 
-                            
-
                             <li class="nav-item"><a class="nav-link" asp-controller="Home" asp-action="Privacy">Privacy</a></li>
+                            
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                    <i></i>Others
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    @if (User.HasPermission("Organization.View") || User.HasPermission("Organization.Create") || User.HasPermission("Organization.Edit") || User.HasPermission("Organization.Delete"))
+                            {
+                                        <li><a class="dropdown-item" asp-controller="Organization" asp-action="Index">Organizations</a></li>
+                            }
+                            @if (User.HasPermission("Customer.View") || User.HasPermission("Customer.Create") || User.HasPermission("Customer.Edit") || User.HasPermission("Customer.Delete"))
+                            {
+                                        <li><a class="dropdown-item" asp-controller="Customer" asp-action="Index">Customers</a></li>
+                            }
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="ProductCategory" asp-action="Index">
+                                            Product Category
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Currency" asp-action="Index">
+                                            Currency
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="AreaType" asp-action="Index">
+                                            Area Type
+                                        </a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" asp-controller="Field" asp-action="Index">Fields</a>
+                                    </li>
+                                </ul>
+                            </li>
                         </ul>
 
                         <ul class="navbar-nav ms-auto">
-                            @if (User.HasPermission("Admin.View") || User.HasPermission("Admin.Create") || User.HasPermission("Admin.Edit") || User.HasPermission("Admin.Delete"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" asp-controller="Admin" asp-action="Index">
-                                        <i class="fas fa-user-shield me-1"></i>Manage Roles
-                                    </a>
-                                </li>
-                            }
-
-                            @if (User.HasPermission("Permission.View") || User.HasPermission("Permission.Edit"))
-                            {
-                                <li class="nav-item">
-                                    <a class="nav-link" href="@Url.Action("Index", "Permission")">
-                                        <i class="fas fa-key"></i> Permissions
-                                    </a>
-                                </li>
-                            }
-
+                            @* User Dropdown Menu - Profile, Users, Permissions, Manage Roles, Logout *@
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
                                     <i class="fas fa-user me-1"></i>@User.Identity.Name
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="fas fa-id-card me-2"></i>Profile</a></li>
+                                    
+                                    @* Add Users link to dropdown - Only for Admin role *@
+                                    @if (User.IsInRole("Admin"))
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="User" asp-action="Index">
+                                                <i class="fas fa-users me-2"></i>Users
+                                            </a>
+                                        </li>
+                                    }
+                                    
+                                    @* Add Permissions link to dropdown *@
+                                    @if (User.HasPermission("Permission.View") || User.HasPermission("Permission.Edit"))
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" href="@Url.Action("Index", "Permission")">
+                                                <i class="fas fa-key me-2"></i>Permissions
+                                            </a>
+                                        </li>
+                                    }
+                                    
+                                    @* Add Manage Roles link to dropdown *@
+                                    @if (User.HasPermission("Admin.View") || User.HasPermission("Admin.Create") || User.HasPermission("Admin.Edit") || User.HasPermission("Admin.Delete"))
+                                    {
+                                        <li><hr class="dropdown-divider"></li>
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Admin" asp-action="Index">
+                                                <i class="fas fa-user-shield me-2"></i>Manage Roles
+                                            </a>
+                                        </li>
+                                    }
+                                    
                                     <li><hr class="dropdown-divider"></li>
                                     <li>
                                         <form class="form-inline" asp-area="Identity" asp-page="/Account/Logout" asp-route-returnUrl="@Url.Action("Index", "Home", new { area = "" })">
@@ -131,57 +169,58 @@
     }
 
     <div class="main-content-wrapper">
-        <div class="w-100 px-5 py-0">
-            <main role="main" class="pb-3">
-                @RenderBody()
-            </main>
+    <div class="w-100 px-5 py-0">
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    @if (User.Identity.IsAuthenticated && ViewData["ShowWelcomePopup"] != null && (bool)ViewData["ShowWelcomePopup"])
+    {
+        var userName = User.Identity.Name ?? "User";
+        var welcomeMessage = $"Hello, {userName}! You have successfully logged in.";
+
+        <!-- 1. Toast HTML Structure - Fixed position, green success color -->
+        <div id="welcomeToast" class="toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3"
+             role="alert" aria-live="assertive" aria-atomic="true" style="z-index: 1050; min-width: 300px;">
+            <div class="d-flex p-2">
+                <div class="toast-body">
+                    <h6 class="mb-1 text-white"><i class="fas fa-check-circle me-1"></i> Welcome!</h6>
+                    <small class="text-white-50">Just now</small>
+                    <p class="mb-0 mt-2">@welcomeMessage</p>
+                </div>
+                <button type="button" class="btn-close btn-close-white ms-auto m-auto me-2" data-bs-dismiss="toast" aria-label="Close"></button>
+            </div>
         </div>
 
-        @if (User.Identity.IsAuthenticated && ViewData["ShowWelcomePopup"] != null && (bool)ViewData["ShowWelcomePopup"])
-        {
-            var userName = User.Identity.Name ?? "User";
-            var welcomeMessage = $"Hello, {userName}! You have successfully logged in.";
+        <!-- 2. JavaScript to initialize and show the Toast -->
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var welcomeToastEl = document.getElementById('welcomeToast');
+                if (welcomeToastEl) {
+                    var toast = new bootstrap.Toast(welcomeToastEl, {
+                        autohide: true,
+                        delay: 5000 // 5 seconds
+                    });
+                    toast.show();
+                }
+            });
+        </script>
+    }
 
-            <!-- 1. Toast HTML Structure - Fixed position, green success color -->
-            <div id="welcomeToast" class="toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3"
-                 role="alert" aria-live="assertive" aria-atomic="true" style="z-index: 1050; min-width: 300px;">
-                <div class="d-flex p-2">
-                    <div class="toast-body">
-                        <h6 class="mb-1 text-white"><i class="fas fa-check-circle me-1"></i> Welcome!</h6>
-                        <small class="text-white-50">Just now</small>
-                        <p class="mb-0 mt-2">@welcomeMessage</p>
-                    </div>
-                    <button type="button" class="btn-close btn-close-white ms-auto m-auto me-2" data-bs-dismiss="toast" aria-label="Close"></button>
-                </div>
-            </div>
-
-            <!-- 2. JavaScript to initialize and show the Toast -->
-            <script>
-                document.addEventListener('DOMContentLoaded', function () {
-                    var welcomeToastEl = document.getElementById('welcomeToast');
-                    if (welcomeToastEl) {
-                        var toast = new bootstrap.Toast(welcomeToastEl, {
-                            autohide: true,
-                            delay: 5000 // 5 seconds
-                        });
-                        toast.show();
-                    }
-                });
-            </script>
-        }
-
-        @if (User.Identity.IsAuthenticated)
-        {
+    @if (User.Identity.IsAuthenticated)
+    {
             @* Include Organization Theme Footer in Body *@
            
             ViewBag.RenderSection = "Footer";
             
             <partial name="_OrganizationTheme" />
         }
-    </div>
+            </div>
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    
     <script src="~/js/site.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>

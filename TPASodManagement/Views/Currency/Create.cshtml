@@ -1,0 +1,103 @@
+@model TpaSodManagement.Models.Db.Currency
+
+@{
+    ViewData["Title"] = "Create Currency";
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Create Currency</h5>
+                </div>
+
+                <div class="card-body">
+                    @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CurrencyCode" class="form-label">Currency Code</label>
+                                <input asp-for="CurrencyCode" class="form-control" placeholder="e.g., USD, PKR, EUR" maxlength="3" style="text-transform:uppercase;" />
+                                <span asp-validation-for="CurrencyCode" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CurrencyName" class="form-label">Currency Name</label>
+                                <input asp-for="CurrencyName" class="form-control" placeholder="e.g., US Dollar, Pakistani Rupee" />
+                                <span asp-validation-for="CurrencyName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CurrencySymbol" class="form-label">Currency Symbol</label>
+                                <input asp-for="CurrencySymbol" class="form-control" placeholder="e.g., $, ₨, €" />
+                                <span asp-validation-for="CurrencySymbol" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="DecimalPlaces" class="form-label">Decimal Places</label>
+                                <input asp-for="DecimalPlaces" type="number" min="0" max="4" class="form-control" value="2" />
+                                <span asp-validation-for="DecimalPlaces" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label me-3 mb-0">Is Active</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input asp-for="IsActive" type="checkbox" class="form-check-input" checked />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        // Auto uppercase currency code
+        document.addEventListener('DOMContentLoaded', function() {
+            const currencyCodeInput = document.querySelector('input[name="CurrencyCode"]');
+            if (currencyCodeInput) {
+                currencyCodeInput.addEventListener('input', function(e) {
+                    this.value = this.value.toUpperCase();
+                });
+            }
+        });
+    </script>
+}
