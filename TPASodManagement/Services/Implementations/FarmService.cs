@@ -82,17 +82,32 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Farm>();
             try
             {
-                var exists = await _context.Farms.AnyAsync(f => f.FarmId == farm.FarmId);
-                if (!exists)
+                var existingFarm = await _context.Farms
+                    .FirstOrDefaultAsync(f => f.FarmId == farm.FarmId);
+                
+                if (existingFarm == null)
                 {
                     response.Success = false;
                     response.Message = "Farm not found";
                     return response;
                 }
 
-                _context.Update(farm);
+                // Update only the properties that are provided
+                existingFarm.OrganizationId = farm.OrganizationId;
+                existingFarm.TotalArea = farm.TotalArea;
+                existingFarm.AreaTypeId = farm.AreaTypeId;
+                existingFarm.LicenseNumber = farm.LicenseNumber;
+                existingFarm.OrganicCertified = farm.OrganicCertified;
+                existingFarm.CertificationDetails = farm.CertificationDetails;
+                existingFarm.Latitude = farm.Latitude;
+                existingFarm.Longitude = farm.Longitude;
+                existingFarm.ElevationMeters = farm.ElevationMeters;
+                existingFarm.SoilType = farm.SoilType;
+                existingFarm.IrrigationType = farm.IrrigationType;
+                existingFarm.ClimateZone = farm.ClimateZone;
+
                 await _context.SaveChangesAsync();
-                response.Data = farm;
+                response.Data = existingFarm;
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -134,24 +149,22 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>> GetDropdownDataAsync()
+        public async Task<ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>> GetDropdownDataAsync(long? selectedOrganizationId = null, int? selectedAreaTypeId = null)
         {
             var response = new ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>();
             try
             {
                 var areaTypes = await _context.AreaTypes
-                    // .Where(a => a.IsActive) // Optional: Only show active area types
                     .OrderBy(a => a.AreaTypeName)
                     .ToListAsync();
 
                 var orgs = await _context.Organizations
-                    // .Where(o => o.IsActive) // Optional: Only show active organizations
                     .OrderBy(o => o.OrganizationName)
                     .ToListAsync();
 
                 response.Data = (
-                    new SelectList(areaTypes, "AreaTypeId", "AreaTypeName", null), 
-                    new SelectList(orgs, "OrganizationId", "OrganizationName", null) 
+                    new SelectList(areaTypes, "AreaTypeId", "AreaTypeName", selectedAreaTypeId), 
+                    new SelectList(orgs, "OrganizationId", "OrganizationName", selectedOrganizationId) 
                 );
             }
             catch (System.Exception ex)

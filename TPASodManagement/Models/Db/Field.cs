@@ -35,11 +35,9 @@ public partial class Field
 
     public DateTimeOffset CreatedDate { get; set; }
 
-    public long CreatedByUserId { get; set; }
+    public string CreatedByUserId { get; set; } = null!; 
 
     public virtual AreaType AreaType { get; set; } = null!;
-
-    public virtual TpaUser CreatedByUser { get; set; } = null!;
 
     public virtual Farm Farm { get; set; } = null!;
 

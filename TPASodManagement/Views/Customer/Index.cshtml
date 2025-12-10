@@ -107,10 +107,18 @@
                         @Html.DisplayFor(modelItem => item.UpdatedDate)
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Organization.OrganizationId)
+                        @(item.Organization?.OrganizationName ?? "N/A")
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Person.PersonId)
+                        @if (item.Person != null)
+                        {
+                            var fullName = $"{item.Person.FirstName} {item.Person.LastName}".Trim();
+                            @(string.IsNullOrEmpty(fullName) ? "N/A" : fullName)
+                        }
+                        else
+                        {
+                            <text>N/A</text>
+                        }
                     </td>
                     <td style="display: flex; gap: 8px; align-items: center;">
                         @if (User.HasPermission("Customer.Edit"))

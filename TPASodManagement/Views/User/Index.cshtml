@@ -1,6 +1,8 @@
 ﻿@model List<TpaSodManagement.Areas.Identity.Data.TpaSodManagementUser>
 @using TpaSodManagement.Services.Interfaces
+@using TpaSodManagement.Models.Db
 @inject IAdminService AdminService
+@inject IRegistrationService RegistrationService
 
 @{
     ViewData["Title"] = "User Management";
@@ -13,6 +15,10 @@
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <h1>User Management</h1>
+                @if (User.HasPermission("User.Create"))
+                {
+                    <a asp-action="Create" class="btn btn-primary">Create New</a>
+                }
             </div>
 
             @if (TempData["SuccessMessage"] != null)
@@ -46,6 +52,9 @@
                                     <th>Last Name</th>
                                     <th>Phone Number</th>
                                     <th>Address</th>
+                                    <th>City</th>
+                                    <th>State</th>
+                                    <th>Postal Code</th>
                                     <th>Is Active</th>
                                     <th>Actions</th>
                                 </tr>
@@ -53,13 +62,19 @@
                             <tbody>
                                 @foreach (var user in Model)
                                 {
+                                    var person = await RegistrationService.GetUserPersonAsync(user.Id);
+                                    var address = await RegistrationService.GetUserAddressAsync(user.Id);
+                                    
                                     <tr>
                                         <td>@user.UserName</td>
                                         <td>@user.Email</td>
-                                        <td>@user.FirstName</td>
-                                        <td>@user.LastName</td>
+                                        <td>@(person?.FirstName ?? "N/A")</td>
+                                        <td>@(person?.LastName ?? "N/A")</td>
                                         <td>@user.PhoneNumber</td>
-                                        <td>@user.Address</td>
+                                        <td>@(address?.AddressLine1 ?? "N/A")</td>
+                                        <td>@(address?.City ?? "N/A")</td>
+                                        <td>@(address?.StateProvince?.StateName ?? "N/A")</td>
+                                        <td>@(address?.PostalCode ?? "N/A")</td>
                                         <td>
                                             @if (user.IsActive)
                                             {
@@ -74,34 +89,38 @@
                                             <div class="btn-group btn-group-sm">
 
                                                 <!-- DETAILS BUTTON -->
-                                                <a class="btn btn-info"
-                                                   asp-action="Details"
-                                                   asp-route-id="@user.Id">
-                                                    Details
-                                                </a>
+                                                @if (User.HasPermission("User.Detail"))
+                                                {
+                                                    <a class="btn btn-info"
+                                                       asp-action="Details"
+                                                       asp-route-id="@user.Id">
+                                                        Details
+                                                    </a>
+                                                }
 
                                                 <!-- EDIT BUTTON -->
-                                                <a class="btn btn-warning"
-                                                   asp-action="Edit"
-                                                   asp-route-id="@user.Id">
-                                                    Edit
-                                                </a>
+                                                @if (User.HasPermission("User.Edit"))
+                                                {
+                                                    <a class="btn btn-warning"
+                                                       asp-action="Edit"
+                                                       asp-route-id="@user.Id">
+                                                        Edit
+                                                    </a>
+                                                }
 
                                                 <!-- DELETE BUTTON -->
-                                                <a href="#" class="btn btn-danger delete-user-btn"
-                                                   data-user-id="@user.Id"
-                                                   data-user-name="@user.UserName"
-                                                   data-user-email="@user.Email"
-                                                   data-bs-toggle="modal"
-                                                   data-bs-target="#deleteUserModal"
-                                                   title="Delete User">
-                                                    Delete
-                                                </a>
-
-                                                @* Permission-based buttons (for later)
-            @if (User.HasPermission("UserManagement.Edit")) { ... }
-            @if (User.HasPermission("UserManagement.Delete")) { ... }
-            *@
+                                                @if (User.HasPermission("User.Delete"))
+                                                {
+                                                    <a href="#" class="btn btn-danger delete-user-btn"
+                                                       data-user-id="@user.Id"
+                                                       data-user-name="@user.UserName"
+                                                       data-user-email="@user.Email"
+                                                       data-bs-toggle="modal"
+                                                       data-bs-target="#deleteUserModal"
+                                                       title="Delete User">
+                                                        Delete
+                                                    </a>
+                                                }
 
                                             </div>
                                         </td>

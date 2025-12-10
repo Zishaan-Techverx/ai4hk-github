@@ -9,6 +9,7 @@ using TpaSodManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 
+
 namespace TpaSodManagement.Services.Implementations
 {
     public class FieldService : IFieldService
@@ -31,8 +32,7 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(f => f.Farm)
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
-                    .Include(f => f.CreatedByUser)
-                        .ThenInclude(u => u.Person)
+                    // CreatedByUser include remove karein (TpaSodManagementUser different context mein hai)
                     .OrderBy(f => f.FieldName)
                     .ToListAsync();
             }
@@ -53,8 +53,7 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(f => f.Farm)
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
-                    .Include(f => f.CreatedByUser)
-                        .ThenInclude(u => u.Person)
+                    // CreatedByUser include remove karein
                     .FirstOrDefaultAsync(f => f.FieldId == id);
 
                 if (field == null)
@@ -169,6 +168,13 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(u => u.UserName)
                     .ToListAsync();
 
+                // Fetch all Person records for these users in one query (efficient batch loading)
+                var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId.Value).ToList();
+                var people = await _context.People
+                    .Where(p => userIds.Contains(p.PersonId))
+                    .ToDictionaryAsync(p => p.PersonId);
+
+                // Create SelectList for Farms with display name
                 var farmItems = farms.Select(f => new SelectListItem
                 {
                     Value = f.FarmId.ToString(),
@@ -177,6 +183,7 @@ namespace TpaSodManagement.Services.Implementations
                         : $"Farm #{f.FarmId} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
                 }).ToList();
 
+                // Create SelectList for AreaTypes
                 var areaTypeItems = areaTypes.Select(a => new SelectListItem
                 {
                     Value = a.AreaTypeId.ToString(),
@@ -184,12 +191,25 @@ namespace TpaSodManagement.Services.Implementations
                 }).ToList();
 
                 // Create SelectList for Users with display name (FirstName LastName or UserName)
-                var userItems = users.Select(u => new SelectListItem
+                var userItems = users.Select(u =>
                 {
-                    Value = u.Id, // TpaSodManagementUser ka Id string type hai
-                    Text = !string.IsNullOrEmpty(u.FirstName) && !string.IsNullOrEmpty(u.LastName)
-                        ? $"{u.FirstName} {u.LastName} ({u.UserName})"
-                        : u.UserName ?? $"User #{u.Id}"
+                    Person? person = null;
+                    if (u.PersonId.HasValue && people.TryGetValue(u.PersonId.Value, out var p))
+                    {
+                        person = p;
+                    }
+
+                    var displayName = person != null && 
+                                      !string.IsNullOrEmpty(person.FirstName) && 
+                                      !string.IsNullOrEmpty(person.LastName)
+                        ? $"{person.FirstName} {person.LastName} ({u.UserName})"
+                        : u.UserName ?? $"User #{u.Id}";
+
+                    return new SelectListItem
+                    {
+                        Value = u.Id,
+                        Text = displayName
+                    };
                 }).ToList();
 
                 response.Data = (

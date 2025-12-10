@@ -8,7 +8,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Area Types</h1>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
+    @if (User.HasPermission("AreaType.Create"))
+    {
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    }
 </div>
 
 @if (TempData["SuccessMessage"] != null)
@@ -51,16 +54,27 @@
                     <td>@Html.DisplayFor(modelItem => item.ConversionToSquareMeters)</td>
                     <td>@Html.DisplayFor(modelItem => item.IsActive)</td>
                     <td style="display: flex; gap: 8px; align-items: center;">
-                        <a asp-action="Edit" asp-route-id="@item.AreaTypeId" title="Edit">
-                            <i class="fa-regular fa-pen-to-square"></i>
-                        </a>
-                        <a asp-action="Details" asp-route-id="@item.AreaTypeId" title="Details">
-                            <i class="fa-solid fa-circle-info"></i>
-                        </a>
-                        <a href="#" class="delete-btn" data-id="@item.AreaTypeId" data-name="@item.AreaTypeName"
-                            data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
-                            <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
-                        </a>
+                        @if (User.HasPermission("AreaType.Edit"))
+                        {
+                            <a asp-action="Edit" asp-route-id="@item.AreaTypeId" title="Edit">
+                                <i class="fa-regular fa-pen-to-square"></i>
+                            </a>
+                        }
+                        
+                        @if (User.HasPermission("AreaType.Detail"))
+                        {
+                            <a asp-action="Details" asp-route-id="@item.AreaTypeId" title="Details">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </a>
+                        }
+                        
+                        @if (User.HasPermission("AreaType.Delete"))
+                        {
+                            <a href="#" class="delete-btn" data-id="@item.AreaTypeId" data-name="@item.AreaTypeName"
+                                data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
+                                <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
+                            </a>
+                        }
                     </td>
                 </tr>
             }

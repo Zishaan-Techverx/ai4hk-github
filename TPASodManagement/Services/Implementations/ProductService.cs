@@ -144,8 +144,14 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<(SelectList, SelectList, SelectList, SelectList)>();
             try
             {
-                var certs = await _context.CertificateTypes.ToListAsync();
-                var users = await _context.TpaUsers.ToListAsync();
+                var certs = await _context.CertificateTypes
+                    .OrderBy(c => c.CertificateTypeId)
+                    .ToListAsync();
+                    
+                var users = await _context.TpaUsers
+                    .OrderBy(u => u.Username)
+                    .ToListAsync();
+                    
                 var categories = await _context.ProductCategories
                     .Where(c => c.IsActive)
                     .OrderBy(c => c.CategoryName)
@@ -157,11 +163,39 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(c => c.CurrencyName)
                     .ToListAsync();
 
+                // Create SelectList for CertificateTypes
+                var certItems = certs.Select(c => new SelectListItem
+                {
+                    Value = c.CertificateTypeId.ToString(),
+                    Text = c.CertificateTypeName ?? $"Certificate #{c.CertificateTypeId}"
+                }).ToList();
+
+                // Create SelectList for Users
+                var userItems = users.Select(u => new SelectListItem
+                {
+                    Value = u.UserId.ToString(),
+                    Text = u.Username ?? $"User #{u.UserId}"
+                }).ToList();
+
+                // Create SelectList for Categories
+                var categoryItems = categories.Select(c => new SelectListItem
+                {
+                    Value = c.ProductCategoryId.ToString(),
+                    Text = c.CategoryName
+                }).ToList();
+
+                // Create SelectList for Currencies
+                var currencyItems = currencies.Select(c => new SelectListItem
+                {
+                    Value = c.CurrencyId.ToString(),
+                    Text = c.CurrencyName
+                }).ToList();
+
                 response.Data = (
-                    new SelectList(certs, "CertificateTypeId", "CertificateTypeId"),
-                    new SelectList(users, "UserId", "UserId"),
-                    new SelectList(currencies, "CurrencyId", "CurrencyName"), // Database se currencies
-                    new SelectList(categories, "ProductCategoryId", "CategoryName")
+                    new SelectList(certItems, "Value", "Text"),
+                    new SelectList(userItems, "Value", "Text"),
+                    new SelectList(currencyItems, "Value", "Text"),
+                    new SelectList(categoryItems, "Value", "Text")
                 );
             }
             catch (System.Exception ex)

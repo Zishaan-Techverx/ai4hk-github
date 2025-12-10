@@ -8,11 +8,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Product Categories</h1>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-    @* @if (User.HasPermission("ProductCategory.Create"))
+    @if (User.HasPermission("ProductCategory.Create"))
     {
-        
-    } *@
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    }
 </div>
 <br />
 

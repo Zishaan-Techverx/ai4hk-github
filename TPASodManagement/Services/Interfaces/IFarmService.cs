@@ -12,6 +12,6 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<Farm>> CreateAsync(Farm farm);
         Task<ServiceResponse<Farm>> UpdateAsync(Farm farm);
         Task<ServiceResponse<bool>> DeleteAsync(long id);
-        Task<ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>> GetDropdownDataAsync();
+        Task<ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>> GetDropdownDataAsync(long? selectedOrganizationId = null, int? selectedAreaTypeId = null);
     }
 }

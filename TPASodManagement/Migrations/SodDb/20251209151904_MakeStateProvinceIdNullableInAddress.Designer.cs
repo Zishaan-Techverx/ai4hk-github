@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TpaSodManagement.Models.Db;
 
@@ -11,9 +12,11 @@ using TpaSodManagement.Models.Db;
 namespace TpaSodManagement.Migrations.SodDb
 {
     [DbContext(typeof(SodDbContext))]
-    partial class SodDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251209151904_MakeStateProvinceIdNullableInAddress")]
+    partial class MakeStateProvinceIdNullableInAddress
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -777,10 +780,8 @@ namespace TpaSodManagement.Migrations.SodDb
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("BoundaryCoordinates");
 
-                    b.Property<string>("CreatedByUserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("nvarchar(450)")
+                    b.Property<long>("CreatedByUserId")
+                        .HasColumnType("bigint")
                         .HasColumnName("CreatedByUserId");
 
                     b.Property<DateTimeOffset>("CreatedDate")
@@ -835,15 +836,12 @@ namespace TpaSodManagement.Migrations.SodDb
                         .HasColumnType("nvarchar(100)")
                         .HasColumnName("SoilType");
 
-                    b.Property<long?>("TpaUserUserId")
-                        .HasColumnType("bigint");
-
                     b.HasKey("FieldId")
                         .HasName("PK_Field");
 
                     b.HasIndex("AreaTypeId");
 
-                    b.HasIndex("TpaUserUserId");
+                    b.HasIndex("CreatedByUserId");
 
                     b.HasIndex(new[] { "FarmId" }, "IX_Field_Farm");
 
@@ -2441,17 +2439,21 @@ namespace TpaSodManagement.Migrations.SodDb
                         .IsRequired()
                         .HasConstraintName("FK_Field_AreaType");
 
+                    b.HasOne("TpaSodManagement.Models.Db.TpaUser", "CreatedByUser")
+                        .WithMany("Fields")
+                        .HasForeignKey("CreatedByUserId")
+                        .IsRequired()
+                        .HasConstraintName("FK_Field_TpaUser_CreatedBy");
+
                     b.HasOne("TpaSodManagement.Models.Db.Farm", "Farm")
                         .WithMany("Fields")
                         .HasForeignKey("FarmId")
                         .IsRequired()
                         .HasConstraintName("FK_Field_Farm");
 
-                    b.HasOne("TpaSodManagement.Models.Db.TpaUser", null)
-                        .WithMany("Fields")
-                        .HasForeignKey("TpaUserUserId");
-
                     b.Navigation("AreaType");
+
+                    b.Navigation("CreatedByUser");
 
                     b.Navigation("Farm");
                 });

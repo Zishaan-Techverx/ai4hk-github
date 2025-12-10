@@ -58,6 +58,11 @@
                                 <select asp-for="OrganizationId" class="form-select" asp-items="ViewBag.OrganizationId" disabled="@disabledAttr">
                                     <option value="">-- Select Organization --</option>
                                 </select>
+                                @* Hidden field sirf Details view mein rakhein, Edit view mein bilkul nahi *@
+                                @if (isDetailsView)
+                                {
+                                    <input type="hidden" asp-for="OrganizationId" />
+                                }
                                 <span asp-validation-for="OrganizationId" class="text-danger"></span>
                             </div>
 
@@ -145,7 +150,10 @@
                             }
                             else
                             {
-                                <a asp-action="Edit" asp-route-id="@Model.FarmId" class="btn btn-warning">Edit</a>
+                                @if (User.HasPermission("Farm.Edit"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@Model.FarmId" class="btn btn-warning">Edit</a>
+                                }
                             }
                         </div>
                     </form>
@@ -159,5 +167,6 @@
     @if (!isDetailsView)
     {
         <partial name="_ValidationScriptsPartial" />
+        @* JavaScript remove kar diya - hidden field conflict resolve karne ke baad zarurat nahi *@
     }
 }

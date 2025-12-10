@@ -8,11 +8,10 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Fields</h1>
-    <a asp-action="Create" class="btn btn-primary">Create New</a>
-    @* @if (User.HasPermission("Field.Create"))
+    @if (User.HasPermission("Field.Create"))
     {
-        
-    } *@
+        <a asp-action="Create" class="btn btn-primary">Create New</a>
+    }
 </div>
 
 @if (TempData["SuccessMessage"] != null)
@@ -79,26 +78,25 @@
                     <td style="display: flex; gap: 8px; align-items: center;">
                         @if (User.HasPermission("Field.Edit"))
                         {
-                            
-                        }
-                        <a asp-action="Edit" asp-route-id="@item.FieldId" title="Edit">
+                            <a asp-action="Edit" asp-route-id="@item.FieldId" title="Edit">
                                 <i class="fa-regular fa-pen-to-square"></i>
                             </a>
-                        <a asp-action="Details" asp-route-id="@item.FieldId" title="Details">
-                                <i class="fa-solid fa-circle-info"></i>
-                            </a>
+                        }
+                        
                         @if (User.HasPermission("Field.Detail"))
                         {
-                            
+                            <a asp-action="Details" asp-route-id="@item.FieldId" title="Details">
+                                <i class="fa-solid fa-circle-info"></i>
+                            </a>
                         }
-                        <a href="#" class="delete-btn" data-id="@item.FieldId" 
+                        
+                        @if (User.HasPermission("Field.Delete"))
+                        {
+                            <a href="#" class="delete-btn" data-id="@item.FieldId" 
                                 data-name="@item.FieldName"
                                 data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
                                 <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
                             </a>
-                        @if (User.HasPermission("Field.Delete"))
-                        {
-                            
                         }
                     </td>
                 </tr>

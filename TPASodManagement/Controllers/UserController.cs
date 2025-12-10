@@ -1,7 +1,9 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;  
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Controllers
@@ -11,18 +13,24 @@ namespace TpaSodManagement.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAdminService _adminService;
-        private readonly IOrganizationService _organizationService;  
+        private readonly IOrganizationService _organizationService;
+        private readonly IRegistrationService _registrationService;
+        private readonly SodDbContext _context;
         private readonly ILogger<UserController> _logger;
 
         public UserController(
             IUserService userService,
             IAdminService adminService,
-            IOrganizationService organizationService,  
+            IOrganizationService organizationService,
+            IRegistrationService registrationService,
+            SodDbContext context,
             ILogger<UserController> logger)
         {
             _userService = userService;
             _adminService = adminService;
-            _organizationService = organizationService;  
+            _organizationService = organizationService;
+            _registrationService = registrationService;
+            _context = context;
             _logger = logger;
         }
 
@@ -30,12 +38,6 @@ namespace TpaSodManagement.Controllers
         {
             try
             {
-                // if  (!User.HasPermission("UserManagement.Edit") && 
-                //     !User.HasPermission("UserManagement.Delete"))
-                // {
-                //     return Forbid();
-                // }
-
                 var users = await _userService.GetAllUsersAsync();
                 return View(users);
             }
@@ -52,21 +54,41 @@ namespace TpaSodManagement.Controllers
             if (string.IsNullOrEmpty(id))
                 return NotFound();
 
-            //if (!User.HasPermission("UserManagement.Edit"))
-            //    return Forbid();
-
             var user = await _userService.GetUserByIdAsync(id);
             if (user == null)
                 return NotFound();
 
+            // Load Person and Address data
+            var person = await _registrationService.GetUserPersonAsync(id);
+            var address = await _registrationService.GetUserAddressAsync(id);
+
+            // Load dropdowns
             var organizations = await _organizationService.GetAllOrganizationsAsync();
             ViewBag.Organizations = new SelectList(organizations, "OrganizationName", "OrganizationName", user.OrganizationName);
 
-            ViewBag.IsDetailsView = false; 
+            // Load AddressTypes for dropdown
+            var addressTypes = await _context.AddressTypes
+                .Where(at => at.IsActive)
+                .OrderBy(at => at.AddressTypeName)
+                .ToListAsync();
+            ViewBag.AddressTypes = new SelectList(addressTypes, "AddressTypeId", "AddressTypeName", address?.AddressTypeId);
+
+            // Load StateProvinces for dropdown
+            var stateProvinces = await _context.StateProvinces
+                .Include(sp => sp.Country)
+                .Where(sp => sp.IsActive)
+                .OrderBy(sp => sp.StateName)
+                .ToListAsync();
+            ViewBag.StateProvinces = new SelectList(stateProvinces, "StateProvinceId", "StateName", address?.StateProvinceId);
+
+            // Pass Person and Address to ViewBag
+            ViewBag.Person = person;
+            ViewBag.Address = address;
+
+            ViewBag.IsDetailsView = false;
             return View(user);
         }
 
-        // GET: User/Details
         public async Task<IActionResult> Details(string id)
         {
             if (string.IsNullOrEmpty(id))
@@ -76,17 +98,42 @@ namespace TpaSodManagement.Controllers
             if (user == null)
                 return NotFound();
 
+            // Load Person and Address data
+            var person = await _registrationService.GetUserPersonAsync(id);
+            var address = await _registrationService.GetUserAddressAsync(id);
+
             var organizations = await _organizationService.GetAllOrganizationsAsync();
             ViewBag.Organizations = new SelectList(organizations, "OrganizationName", "OrganizationName", user.OrganizationName);
 
-            ViewBag.IsDetailsView = true; 
+            // Load AddressTypes for dropdown
+            var addressTypes = await _context.AddressTypes
+                .Where(at => at.IsActive)
+                .OrderBy(at => at.AddressTypeName)
+                .ToListAsync();
+            ViewBag.AddressTypes = new SelectList(addressTypes, "AddressTypeId", "AddressTypeName", address?.AddressTypeId);
+
+            // Load StateProvinces for dropdown
+            var stateProvinces = await _context.StateProvinces
+                .Include(sp => sp.Country)
+                .Where(sp => sp.IsActive)
+                .OrderBy(sp => sp.StateName)
+                .ToListAsync();
+            ViewBag.StateProvinces = new SelectList(stateProvinces, "StateProvinceId", "StateName", address?.StateProvinceId);
+
+            // Pass Person and Address to ViewBag
+            ViewBag.Person = person;
+            ViewBag.Address = address;
+
+            ViewBag.IsDetailsView = true;
             ViewBag.Title = "User Details";
-            return View("Edit", user); 
+            return View("Edit", user);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(string id, TpaSodManagementUser user)
+        public async Task<IActionResult> Edit(string id, TpaSodManagementUser user, 
+            string firstName, string lastName, 
+            string addressLine1, string city, int? stateProvinceId, string postalCode, int? addressTypeId)
         {
             if (string.IsNullOrEmpty(id))
                 return NotFound();
@@ -97,9 +144,6 @@ namespace TpaSodManagement.Controllers
                 return View(user);
             }
 
-            //if (!User.HasPermission("UserManagement.Edit"))
-            //    return Forbid();
-
             ModelState.Remove("EmailConfirmed");
             ModelState.Remove("PhoneNumberConfirmed");
             ModelState.Remove("TwoFactorEnabled");
@@ -109,13 +153,73 @@ namespace TpaSodManagement.Controllers
             ModelState.Remove("ConcurrencyStamp");
             ModelState.Remove("NormalizedEmail");
             ModelState.Remove("NormalizedUserName");
-            ModelState.Remove("OrganizationName"); 
-            ModelState.Remove("PrimaryContact"); 
+            ModelState.Remove("OrganizationName");
+            ModelState.Remove("PrimaryContact");
+            ModelState.Remove("PhoneNumber"); // Add this line - Identity's PhoneNumber property
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    // Update Person
+                    var person = await _registrationService.GetUserPersonAsync(id);
+                    if (person != null)
+                    {
+                        person.FirstName = firstName ?? "";
+                        person.LastName = lastName ?? "";
+                        person.UpdatedDate = DateTimeOffset.UtcNow;
+                        _context.People.Update(person);
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        // Create Person if doesn't exist
+                        var existingUser = await _userService.GetUserByIdAsync(id);
+                        if (existingUser != null)
+                        {
+                            person = await _registrationService.CreatePersonForUserAsync(existingUser, firstName ?? "", lastName ?? "");
+                            person.UpdatedDate = DateTimeOffset.UtcNow;
+                            _context.People.Update(person);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
+                    // Update Address
+                    var address = await _registrationService.GetUserAddressAsync(id);
+                    if (address != null)
+                    {
+                        address.AddressLine1 = addressLine1 ?? "";
+                        address.City = city ?? "";
+                        address.PostalCode = postalCode ?? "";
+                        if (stateProvinceId.HasValue)
+                            address.StateProvinceId = stateProvinceId.Value;
+                        if (addressTypeId.HasValue)
+                            address.AddressTypeId = addressTypeId.Value;
+                        address.UpdatedDate = DateTimeOffset.UtcNow;
+                        _context.Addresses.Update(address);
+                        await _context.SaveChangesAsync();
+                    }
+                    else
+                    {
+                        // Create Address if doesn't exist
+                        var existingUser = await _userService.GetUserByIdAsync(id);
+                        if (existingUser != null)
+                        {
+                            address = await _registrationService.CreateAddressForUserAsync(existingUser);
+                            address.AddressLine1 = addressLine1 ?? "";
+                            address.City = city ?? "";
+                            address.PostalCode = postalCode ?? "";
+                            if (stateProvinceId.HasValue)
+                                address.StateProvinceId = stateProvinceId.Value;
+                            if (addressTypeId.HasValue)
+                                address.AddressTypeId = addressTypeId.Value;
+                            address.UpdatedDate = DateTimeOffset.UtcNow;
+                            _context.Addresses.Update(address);
+                            await _context.SaveChangesAsync();
+                        }
+                    }
+
+                    // Update User
                     var result = await _userService.UpdateUserAsync(user);
                     if (result.success)
                     {
@@ -140,12 +244,32 @@ namespace TpaSodManagement.Controllers
                         _logger.LogWarning("Validation error for {Key}: {Error}", key, error.ErrorMessage);
                     }
                 }
-                TempData["ErrorMessage"] = "Please fix the validation errors and try again.";
+                // Don't set TempData["ErrorMessage"] here - let field-specific errors show
             }
-            
+
+            // Reload dropdowns for error view
             var organizations = await _organizationService.GetAllOrganizationsAsync();
             ViewBag.Organizations = new SelectList(organizations, "OrganizationName", "OrganizationName", user.OrganizationName);
-            
+
+            var addressTypes = await _context.AddressTypes
+                .Where(at => at.IsActive)
+                .OrderBy(at => at.AddressTypeName)
+                .ToListAsync();
+            ViewBag.AddressTypes = new SelectList(addressTypes, "AddressTypeId", "AddressTypeName", addressTypeId);
+
+            var stateProvinces = await _context.StateProvinces
+                .Include(sp => sp.Country)
+                .Where(sp => sp.IsActive)
+                .OrderBy(sp => sp.StateName)
+                .ToListAsync();
+            ViewBag.StateProvinces = new SelectList(stateProvinces, "StateProvinceId", "StateName", stateProvinceId);
+
+            // Reload Person and Address
+            var personReload = await _registrationService.GetUserPersonAsync(id);
+            var addressReload = await _registrationService.GetUserAddressAsync(id);
+            ViewBag.Person = personReload;
+            ViewBag.Address = addressReload;
+
             return View(user);
         }
 
@@ -158,11 +282,6 @@ namespace TpaSodManagement.Controllers
             {
                 return BadRequest(new { success = false, message = "User ID is required." });
             }
-
-            // if (!User.HasPermission("UserManagement.Delete"))
-            // {
-            //     return Forbid();
-            // }
 
             try
             {

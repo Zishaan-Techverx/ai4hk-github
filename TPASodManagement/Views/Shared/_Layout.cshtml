@@ -52,24 +52,24 @@
 
                             @* Users link removed from navbar - moved to dropdown *@
 
-                            @if (User.HasPermission("Farm.View") || User.HasPermission("Farm.Create") || User.HasPermission("Farm.Edit") || User.HasPermission("Farm.Delete"))
+                            @if (User.HasPermission("Farm.View"))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Farm" asp-action="Index">Farms</a></li>
                             }
 
-                            @if (User.HasPermission("Seeding.View") || User.HasPermission("Seeding.Create") || User.HasPermission("Seeding.Edit") || User.HasPermission("Seeding.Delete"))
+                            @if (User.HasPermission("Seeding.View"))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Seeding" asp-action="Index">Seeding</a></li>
                             }
 
-                            @if (User.HasPermission("Product.View") || User.HasPermission("Product.Create") || User.HasPermission("Product.Edit") || User.HasPermission("Product.Delete"))
+                            @if (User.HasPermission("Product.View"))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Product" asp-action="Index">Product</a></li>
                             }
 
                             @* ProductCategory, Currency, AreaType removed from direct links - moved to Others dropdown *@
 
-                            @if (User.HasPermission("Sale.View") || User.HasPermission("Sale.Create") || User.HasPermission("Sale.Edit") || User.HasPermission("Sale.Delete"))
+                            @if (User.HasPermission("Sale.View"))
                             {
                                 <li class="nav-item"><a class="nav-link" asp-controller="Sale" asp-action="Index">Sale</a></li>
                             }
@@ -81,32 +81,48 @@
                                     <i></i>Others
                                 </a>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    @if (User.HasPermission("Organization.View") || User.HasPermission("Organization.Create") || User.HasPermission("Organization.Edit") || User.HasPermission("Organization.Delete"))
+                                    @if (User.HasPermission("Organization.View"))
                             {
                                         <li><a class="dropdown-item" asp-controller="Organization" asp-action="Index">Organizations</a></li>
                             }
-                            @if (User.HasPermission("Customer.View") || User.HasPermission("Customer.Create") || User.HasPermission("Customer.Edit") || User.HasPermission("Customer.Delete"))
+                            @if (User.HasPermission("Customer.View"))
                             {
                                         <li><a class="dropdown-item" asp-controller="Customer" asp-action="Index">Customers</a></li>
                             }
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="ProductCategory" asp-action="Index">
-                                            Product Category
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Currency" asp-action="Index">
-                                            Currency
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="AreaType" asp-action="Index">
-                                            Area Type
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Field" asp-action="Index">Fields</a>
-                                    </li>
+                                    @* ProductCategory with permission check *@
+                                    @if (User.HasPermission("ProductCategory.View"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="ProductCategory" asp-action="Index">
+                                                Product Category
+                                            </a>
+                                        </li>
+                                    }
+                                    @* Currency with permission check *@
+                                    @if (User.HasPermission("Currency.View"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Currency" asp-action="Index">
+                                                Currency
+                                            </a>
+                                        </li>
+                                    }
+                                    @* AreaType with permission check *@
+                                    @if (User.HasPermission("AreaType.View"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="AreaType" asp-action="Index">
+                                                Area Type
+                                            </a>
+                                        </li>
+                                    }
+                                    @* Field with permission check *@
+                                    @if (User.HasPermission("Field.View"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="Field" asp-action="Index">Fields</a>
+                                        </li>
+                                    }
                                 </ul>
                             </li>
                         </ul>
@@ -120,8 +136,8 @@
                                 <ul class="dropdown-menu dropdown-menu-end">
                                     <li><a class="dropdown-item" asp-area="Identity" asp-page="/Account/Manage/Index"><i class="fas fa-id-card me-2"></i>Profile</a></li>
                                     
-                                    @* Add Users link to dropdown - Only for Admin role *@
-                                    @if (User.IsInRole("Admin"))
+                                    @* Add Users link to dropdown - With permission check *@
+                                    @if (User.HasPermission("User.View"))
                                     {
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
@@ -132,7 +148,7 @@
                                     }
                                     
                                     @* Add Permissions link to dropdown *@
-                                    @if (User.HasPermission("Permission.View") || User.HasPermission("Permission.Edit"))
+                                    @if (User.HasPermission("Permission.View"))
                                     {
                                         <li><hr class="dropdown-divider"></li>
                                         <li>
@@ -143,7 +159,7 @@
                                     }
                                     
                                     @* Add Manage Roles link to dropdown *@
-                                    @if (User.HasPermission("Admin.View") || User.HasPermission("Admin.Create") || User.HasPermission("Admin.Edit") || User.HasPermission("Admin.Delete"))
+                                    @if (User.HasPermission("Admin.View"))
                                     {
                                         <li><hr class="dropdown-divider"></li>
                                         <li>

@@ -162,15 +162,27 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(f => f.FarmId)
                     .ToListAsync();
 
-                var fields = await _context.Fields.ToListAsync();
-                var tagRanges = await _context.TagRanges.ToListAsync();
+                // Fields fetch - Simple version without complex includes
+                var fields = await _context.Fields
+                    .OrderBy(f => f.FieldName)
+                    .ToListAsync();
+                
+                var tagRanges = await _context.TagRanges
+                    .OrderBy(t => t.TagRangeId)
+                    .ToListAsync();
                 
                 // TpaSodManagementUser se users fetch karein
                 var users = await _userManager.Users
                     .OrderBy(u => u.UserName)
                     .ToListAsync();
 
-                // Create SelectList for AreaTypes using AreaTypeName
+                // Fetch all Person records for these users in one query (efficient batch loading)
+                var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId.Value).ToList();
+                var people = await _context.People
+                    .Where(p => userIds.Contains(p.PersonId))
+                    .ToDictionaryAsync(p => p.PersonId);
+
+                // Create SelectList for AreaTypes
                 var areaTypeItems = areaTypes.Select(a => new SelectListItem
                 {
                     Value = a.AreaTypeId.ToString(),
@@ -186,20 +198,47 @@ namespace TpaSodManagement.Services.Implementations
                         : $"Farm #{f.FarmId} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
                 }).ToList();
 
-                // Create SelectList for Users with display name (FirstName LastName or UserName)
-                var userItems = users.Select(u => new SelectListItem
+                // Create SelectList for Fields - Simple version (just FieldName)
+                var fieldItems = fields.Select(f => new SelectListItem
                 {
-                    Value = u.Id, // TpaSodManagementUser ka Id string type hai
-                    Text = !string.IsNullOrEmpty(u.FirstName) && !string.IsNullOrEmpty(u.LastName)
-                        ? $"{u.FirstName} {u.LastName} ({u.UserName})"
-                        : u.UserName ?? $"User #{u.Id}"
+                    Value = f.FieldId.ToString(),
+                    Text = f.FieldName ?? $"Field #{f.FieldId}" // Simple: Just FieldName
+                }).ToList();
+
+                // Create SelectList for TagRanges
+                var tagRangeItems = tagRanges.Select(t => new SelectListItem
+                {
+                    Value = t.TagRangeId.ToString(),
+                    Text = $"Tag Range #{t.TagRangeId}" // Adjust based on TagRange model properties
+                }).ToList();
+
+                // Create SelectList for Users with display name (FirstName LastName or UserName)
+                var userItems = users.Select(u =>
+                {
+                    Person? person = null;
+                    if (u.PersonId.HasValue && people.TryGetValue(u.PersonId.Value, out var p))
+                    {
+                        person = p;
+                    }
+
+                    var displayName = person != null && 
+                                      !string.IsNullOrEmpty(person.FirstName) && 
+                                      !string.IsNullOrEmpty(person.LastName)
+                        ? $"{person.FirstName} {person.LastName} ({u.UserName})"
+                        : u.UserName ?? $"User #{u.Id}";
+
+                    return new SelectListItem
+                    {
+                        Value = u.Id,
+                        Text = displayName
+                    };
                 }).ToList();
 
                 response.Data = (
                     new SelectList(areaTypeItems, "Value", "Text"),
                     new SelectList(farmItems, "Value", "Text"),
-                    new SelectList(fields, "FieldId", "FieldId"),
-                    new SelectList(tagRanges, "TagRangeId", "TagRangeId"),
+                    new SelectList(fieldItems, "Value", "Text"), // Direct SelectList - no need for fieldsSelectList variable
+                    new SelectList(tagRangeItems, "Value", "Text"),
                     new SelectList(userItems, "Value", "Text")
                 );
             }

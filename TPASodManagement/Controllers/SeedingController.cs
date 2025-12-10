@@ -44,6 +44,13 @@ namespace TpaSodManagement.Controllers
                 ViewData["FieldId"] = dropdowns.Data.Fields;
                 ViewData["TagRangeId"] = dropdowns.Data.TagRanges;
                 ViewData["UserId"] = dropdowns.Data.Users;
+                
+                // Add ViewBag for view compatibility
+                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                ViewBag.FarmId = dropdowns.Data.Farms;
+                ViewBag.FieldId = dropdowns.Data.Fields;
+                ViewBag.TagRangeId = dropdowns.Data.TagRanges;
+                ViewBag.UserId = dropdowns.Data.Users;
             }
 
             ViewBag.IsDetailsView = true;
@@ -61,6 +68,13 @@ namespace TpaSodManagement.Controllers
                 ViewData["FieldId"] = dropdowns.Data.Fields;
                 ViewData["TagRangeId"] = dropdowns.Data.TagRanges;
                 ViewData["UserId"] = dropdowns.Data.Users;
+                
+                // Add ViewBag for view compatibility (Customer module pattern)
+                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                ViewBag.FarmId = dropdowns.Data.Farms;
+                ViewBag.FieldId = dropdowns.Data.Fields;
+                ViewBag.TagRangeId = dropdowns.Data.TagRanges;
+                ViewBag.UserId = dropdowns.Data.Users;
             }
             else
             {
@@ -105,6 +119,13 @@ namespace TpaSodManagement.Controllers
                 ViewData["FieldId"] = dropdowns.Data.Fields;
                 ViewData["TagRangeId"] = dropdowns.Data.TagRanges;
                 ViewData["UserId"] = dropdowns.Data.Users;
+                
+                // Add ViewBag for view compatibility
+                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                ViewBag.FarmId = dropdowns.Data.Farms;
+                ViewBag.FieldId = dropdowns.Data.Fields;
+                ViewBag.TagRangeId = dropdowns.Data.TagRanges;
+                ViewBag.UserId = dropdowns.Data.Users;
             }
 
             return View(result.Data);

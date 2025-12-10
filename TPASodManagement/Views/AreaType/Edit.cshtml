@@ -120,7 +120,10 @@
                             }
                             else
                             {
-                                <a asp-action="Edit" asp-route-id="@Model.AreaTypeId" class="btn btn-warning">Edit</a>
+                                @if (User.HasPermission("AreaType.Edit"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@Model.AreaTypeId" class="btn btn-warning">Edit</a>
+                                }
                             }
                         </div>
                     </form>

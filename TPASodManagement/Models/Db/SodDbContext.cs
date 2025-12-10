@@ -565,7 +565,9 @@ public partial class SodDbContext : IdentityDbContext<TpaUser, UserRole, long>
                 .HasColumnName("AreaAmount");
             entity.Property(e => e.AreaTypeId).HasColumnName("AreaTypeId");
             entity.Property(e => e.BoundaryCoordinates).HasColumnName("BoundaryCoordinates");
-            entity.Property(e => e.CreatedByUserId).HasColumnName("CreatedByUserId");
+            entity.Property(e => e.CreatedByUserId)
+                .HasMaxLength(450) // GUID ke liye standard length
+                .HasColumnName("CreatedByUserId");
             entity.Property(e => e.CreatedDate)
                 .HasDefaultValueSql("(sysdatetimeoffset())")
                 .HasColumnName("CreatedDate");
@@ -599,10 +601,11 @@ public partial class SodDbContext : IdentityDbContext<TpaUser, UserRole, long>
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_Field_AreaType");
 
-            entity.HasOne(d => d.CreatedByUser).WithMany(p => p.Fields)
-                .HasForeignKey(d => d.CreatedByUserId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_Field_TpaUser_CreatedBy");
+            // Foreign key relationship remove karein (TpaSodManagementUser different context mein hai)
+            // entity.HasOne(d => d.CreatedByUser).WithMany(p => p.Fields)
+            //     .HasForeignKey(d => d.CreatedByUserId)
+            //     .OnDelete(DeleteBehavior.ClientSetNull)
+            //     .HasConstraintName("FK_Field_TpaUser_CreatedBy");
 
             entity.HasOne(d => d.Farm).WithMany(p => p.Fields)
                 .HasForeignKey(d => d.FarmId)

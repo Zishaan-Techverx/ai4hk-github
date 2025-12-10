@@ -44,7 +44,8 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 builder.Services.AddScoped<IAreaTypeService, AreaTypeService>();
-builder.Services.AddScoped<IFieldService, FieldService>(); 
+builder.Services.AddScoped<IFieldService, FieldService>();
+builder.Services.AddScoped<IRegistrationService, RegistrationService>(); 
 
 builder.Services.AddAuthorization(options =>
 {

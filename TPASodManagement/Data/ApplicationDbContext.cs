@@ -72,15 +72,13 @@ public class IdentityTestUserEntityConfiguration : IEntityTypeConfiguration<TpaS
 {
     public void Configure(EntityTypeBuilder<TpaSodManagementUser> builder)
     {
-        builder.Property(u => u.FirstName).HasMaxLength(100);
-        builder.Property(u => u.LastName).HasMaxLength(100);
         builder.Property(u => u.PhoneNumber).HasMaxLength(20);
-        builder.Property(u => u.PostalCode).HasMaxLength(10);
-        builder.Property(u => u.Address).HasMaxLength(200);
-        builder.Property(u => u.State).HasMaxLength(100);
-        builder.Property(u => u.Country).HasMaxLength(100);
         builder.Property(u => u.PrimaryContact).HasMaxLength(20);
         builder.Property(u => u.IsActive).HasDefaultValue(false);
         builder.Property(u => u.OrganizationName).HasMaxLength(200);
+        builder.Property(u => u.AddressId);
+        builder.Property(u => u.PersonId);
+        builder.Property(u => u.WebsiteId);
+        builder.Property(u => u.FarmId);
     }
 }

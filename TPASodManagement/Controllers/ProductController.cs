@@ -1,7 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
+using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 
@@ -11,10 +14,17 @@ namespace TpaSodManagement.Controllers
     public class ProductController : Controller
     {
         private readonly IProductService _productService;
+        private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly SodDbContext _context;
 
-        public ProductController(IProductService productService)
+        public ProductController(
+            IProductService productService, 
+            UserManager<TpaSodManagementUser> userManager,
+            SodDbContext context)
         {
             _productService = productService;
+            _userManager = userManager;
+            _context = context;
         }
 
         public async Task<IActionResult> Index()
@@ -42,6 +52,12 @@ namespace TpaSodManagement.Controllers
                 ViewData["CreatedByUserId"] = dropdowns.Data.Users;
                 ViewData["CurrencyId"] = dropdowns.Data.Currencies;
                 ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                
+                // Add ViewBag for view compatibility
+                ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
+                ViewBag.CreatedByUserId = dropdowns.Data.Users;
+                ViewBag.CurrencyId = dropdowns.Data.Currencies;
+                ViewBag.ProductCategoryId = dropdowns.Data.Categories;
             }
 
             ViewBag.IsDetailsView = true;
@@ -58,6 +74,12 @@ namespace TpaSodManagement.Controllers
                 ViewData["CreatedByUserId"] = dropdowns.Data.Users;
                 ViewData["CurrencyId"] = dropdowns.Data.Currencies;
                 ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                
+                // Add ViewBag for view compatibility (Customer module pattern)
+                ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
+                ViewBag.CreatedByUserId = dropdowns.Data.Users;
+                ViewBag.CurrencyId = dropdowns.Data.Currencies;
+                ViewBag.ProductCategoryId = dropdowns.Data.Categories;
             }
             else
             {
@@ -70,26 +92,89 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Product product)
         {
-            // Remove CurrencyId from ModelState if it's empty string (from currency code dropdown)
-            //if (string.IsNullOrEmpty(Request.Form["CurrencyId"].ToString()))
-            //{
-            //    ModelState.Remove("CurrencyId");
-            //    product.CurrencyId = null;
-            //}
-
-            if (!ModelState.IsValid)
+            // Manually extract dropdown values if model binding failed
+            if (product.ProductCategoryId == 0 && Request.Form.TryGetValue("ProductCategoryId", out var categoryIdValue))
             {
-                var dropdowns = await _productService.GetDropdownDataAsync();
-                if (dropdowns.Success)
+                if (int.TryParse(categoryIdValue.ToString(), out int categoryId) && categoryId > 0)
                 {
-                    ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
-                    ViewData["CreatedByUserId"] = dropdowns.Data.Users;
-                    ViewData["CurrencyId"] = dropdowns.Data.Currencies;
-                    ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                    product.ProductCategoryId = categoryId;
+                    ModelState.Remove("ProductCategoryId");
                 }
-                return View(product);
             }
 
+            // Auto-set CreatedByUserId - get current logged in user's TpaUser
+            if (product.CreatedByUserId == 0)
+            {
+                if (Request.Form.TryGetValue("CreatedByUserId", out var userIdValue))
+                {
+                    if (long.TryParse(userIdValue.ToString(), out long userId) && userId > 0)
+                    {
+                        product.CreatedByUserId = userId;
+                    }
+                }
+                else
+                {
+                    // Get current logged in TpaSodManagementUser
+                    var currentIdentityUser = await _userManager.GetUserAsync(HttpContext.User);
+                    
+                    if (currentIdentityUser != null && !string.IsNullOrEmpty(currentIdentityUser.Email))
+                    {
+                        // Find TpaUser by Email
+                        var tpaUser = await _context.TpaUsers
+                            .FirstOrDefaultAsync(u => u.Email == currentIdentityUser.Email);
+                        
+                        if (tpaUser != null)
+                        {
+                            product.CreatedByUserId = tpaUser.UserId;
+                        }
+                        else
+                        {
+                            TempData["Error"] = "User not found in TpaUser table. Please contact administrator.";
+                            var dropdowns = await _productService.GetDropdownDataAsync();
+                            if (dropdowns.Success)
+                            {
+                                ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
+                                ViewData["CreatedByUserId"] = dropdowns.Data.Users;
+                                ViewData["CurrencyId"] = dropdowns.Data.Currencies;
+                                ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                                ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
+                                ViewBag.CreatedByUserId = dropdowns.Data.Users;
+                                ViewBag.CurrencyId = dropdowns.Data.Currencies;
+                                ViewBag.ProductCategoryId = dropdowns.Data.Categories;
+                            }
+                            return View(product);
+                        }
+                    }
+                    else
+                    {
+                        TempData["Error"] = "User not authenticated. Please login again.";
+                        var dropdowns = await _productService.GetDropdownDataAsync();
+                        if (dropdowns.Success)
+                        {
+                            ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
+                            ViewData["CreatedByUserId"] = dropdowns.Data.Users;
+                            ViewData["CurrencyId"] = dropdowns.Data.Currencies;
+                            ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                            ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
+                            ViewBag.CreatedByUserId = dropdowns.Data.Users;
+                            ViewBag.CurrencyId = dropdowns.Data.Currencies;
+                            ViewBag.ProductCategoryId = dropdowns.Data.Categories;
+                        }
+                        return View(product);
+                    }
+                }
+            }
+
+            // Set CreatedDate if not set
+            if (product.CreatedDate == default)
+            {
+                product.CreatedDate = DateTimeOffset.UtcNow;
+            }
+
+            // Remove all ModelState errors - validations removed
+            ModelState.Clear();
+
+            // Validations removed - directly save
             var result = await _productService.CreateAsync(product);
             if (!result.Success)
             {
@@ -101,6 +186,10 @@ namespace TpaSodManagement.Controllers
                     ViewData["CreatedByUserId"] = dropdowns.Data.Users;
                     ViewData["CurrencyId"] = dropdowns.Data.Currencies;
                     ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                    ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
+                    ViewBag.CreatedByUserId = dropdowns.Data.Users;
+                    ViewBag.CurrencyId = dropdowns.Data.Currencies;
+                    ViewBag.ProductCategoryId = dropdowns.Data.Categories;
                 }
                 return View(product);
             }
@@ -123,6 +212,12 @@ namespace TpaSodManagement.Controllers
                 ViewData["CreatedByUserId"] = dropdowns.Data.Users;
                 ViewData["CurrencyId"] = dropdowns.Data.Currencies;
                 ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
+                
+                // Add ViewBag for view compatibility
+                ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
+                ViewBag.CreatedByUserId = dropdowns.Data.Users;
+                ViewBag.CurrencyId = dropdowns.Data.Currencies;
+                ViewBag.ProductCategoryId = dropdowns.Data.Categories;
             }
 
             return View(result.Data);
@@ -134,12 +229,29 @@ namespace TpaSodManagement.Controllers
         {
             if (id != product.ProductId) return NotFound();
 
-            if (!ModelState.IsValid)
+            // Manually extract dropdown values if model binding failed
+            if (product.ProductCategoryId == 0 && Request.Form.TryGetValue("ProductCategoryId", out var categoryIdValue))
             {
-                await Edit(id); // reload dropdowns
-                return View(product);
+                if (int.TryParse(categoryIdValue.ToString(), out int categoryId) && categoryId > 0)
+                {
+                    product.ProductCategoryId = categoryId;
+                    ModelState.Remove("ProductCategoryId"); // Remove ModelState error
+                }
             }
 
+            if (product.CreatedByUserId == 0 && Request.Form.TryGetValue("CreatedByUserId", out var userIdValue))
+            {
+                if (long.TryParse(userIdValue.ToString(), out long userId) && userId > 0)
+                {
+                    product.CreatedByUserId = userId;
+                    ModelState.Remove("CreatedByUserId"); // Remove ModelState error
+                }
+            }
+
+            // Remove all ModelState errors - validations removed
+            ModelState.Clear();
+
+            // Validations removed - directly update
             var result = await _productService.UpdateAsync(product);
             if (!result.Success)
             {

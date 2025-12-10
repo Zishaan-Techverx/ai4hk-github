@@ -1,11 +1,10 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.AspNetCore.Mvc.Rendering; // ADD THIS for SelectList
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.ComponentModel.DataAnnotations;
 using TpaSodManagement.Areas.Identity.Data;
-using TpaSodManagement.Models.Db; 
+using TpaSodManagement.Services.Interfaces; 
 
 namespace TpaSodManagement.Areas.Identity.Pages.Account
 {
@@ -13,18 +12,18 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
     {
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ILogger<RegisterModel> _logger;
-        private readonly SodDbContext _context;
+        private readonly IRegistrationService _registrationService;
         private readonly SignInManager<TpaSodManagementUser> _signInManager; 
 
         public RegisterModel(
             UserManager<TpaSodManagementUser> userManager,
             ILogger<RegisterModel> logger,
-            SodDbContext context, 
+            IRegistrationService registrationService, 
             SignInManager<TpaSodManagementUser> signInManager) 
         {
             _userManager = userManager;
             _logger = logger;
-            _context = context;
+            _registrationService = registrationService;
             _signInManager = signInManager; 
         }
 
@@ -70,9 +69,7 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
             ReturnUrl = returnUrl;
             
             // Load ALL organizations for dropdown (no IsActive filter)
-            var organizations = await _context.Organizations
-                .OrderBy(o => o.OrganizationName)
-                .ToListAsync();
+            var organizations = await _registrationService.GetAllOrganizationsAsync();
             
             ViewData["Organizations"] = new SelectList(organizations, "OrganizationName", "OrganizationName");
         }
@@ -84,81 +81,66 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 // Validate Organization exists
-                var organization = await _context.Organizations
-                    .FirstOrDefaultAsync(o => o.OrganizationName.ToUpper() == Input.OrganizationName.ToUpper());
+                var organization = await _registrationService.GetOrganizationByNameAsync(Input.OrganizationName);
 
                 if (organization == null)
                 {
                     ModelState.AddModelError("Input.OrganizationName", "Organization does not exist. Please enter a valid organization name.");
                     // Reload organizations
-                    var organizations = await _context.Organizations
-                        .OrderBy(o => o.OrganizationName)
-                        .ToListAsync();
+                    var organizations = await _registrationService.GetAllOrganizationsAsync();
                     ViewData["Organizations"] = new SelectList(organizations, "OrganizationName", "OrganizationName");
                     return Page();
                 }
 
                 // Early Email Duplicate Check
-                var existingUserByEmail = await _userManager.FindByEmailAsync(Input.Email);
-                if (existingUserByEmail != null)
+                if (await _registrationService.IsEmailExistsAsync(Input.Email))
                 {
                     ModelState.AddModelError("Input.Email", $"An account with the email '{Input.Email}' already exists. Please use a different email address.");
                     // Reload organizations
-                    var organizations = await _context.Organizations
-                        .OrderBy(o => o.OrganizationName)
-                        .ToListAsync();
+                    var organizations = await _registrationService.GetAllOrganizationsAsync();
                     ViewData["Organizations"] = new SelectList(organizations, "OrganizationName", "OrganizationName");
                     return Page();
                 }
 
-                // Generate username (only if email is unique)
-                string rawOrgName = organization.OrganizationName.Replace(" ", "");
-                const int OrgPrefixLength = 5;
-                string orgPrefix = rawOrgName.Length >= OrgPrefixLength
-                                   ? rawOrgName.Substring(0, OrgPrefixLength)
-                                   : rawOrgName;
-
-                orgPrefix = orgPrefix.ToUpper();
-
-                string userInitials;
-                string[] nameParts = Input.FirstName.Split(' ', System.StringSplitOptions.RemoveEmptyEntries);
-
-                if (nameParts.Length >= 2)
-                {
-                    userInitials = (nameParts[0][0].ToString() + nameParts[^1][0].ToString()).ToUpper();
-                }
-                else if (Input.FirstName.Length >= 2)
-                {
-                    userInitials = Input.FirstName.Substring(0, 2).ToUpper();
-                }
-                else
-                {
-                    userInitials = Input.FirstName.ToUpper();
-                }
-
-                string baseUsername = $"{orgPrefix}-{userInitials}";
-                string finalUsername = baseUsername;
-                int counter = 1;
-
-                while (await _userManager.FindByNameAsync(finalUsername) != null)
-                {
-                    finalUsername = $"{baseUsername}{counter++}";
-                }
+                // Generate username
+                string finalUsername = await _registrationService.GenerateUsernameAsync(organization.OrganizationName, Input.FirstName);
 
                 var user = new TpaSodManagementUser
                 {
                     UserName = finalUsername,
                     Email = Input.Email,
-                    FirstName = Input.FirstName,
-                    LastName = Input.LastName,
                     OrganizationName = organization.OrganizationName
+                    // FirstName, LastName removed - will go to Person table
+                    // Address, State, Country, PostalCode removed - will go to Address table
                 };
 
-                var result = await _userManager.CreateAsync(user, Input.Password);
+                var result = await _registrationService.CreateUserAsync(user, Input.Password);
 
                 if (result.Succeeded)
                 {
                     _logger.LogInformation("Account created successfully for {Email} with username {Username}", Input.Email, finalUsername);
+
+                    // Create related records
+                    try
+                    {
+                        // Create Person record with FirstName and LastName from Input
+                        await _registrationService.CreatePersonForUserAsync(user, Input.FirstName, Input.LastName);
+                        
+                        // Create Address record (currently empty, but you can add address fields to InputModel if needed)
+                        await _registrationService.CreateAddressForUserAsync(user);
+                        
+                        // Create Website record
+                        await _registrationService.CreateWebsiteForUserAsync(user, finalUsername);
+                        
+                        // Create or Get Farm for Organization
+                        var farm = await _registrationService.CreateOrGetFarmForOrganizationAsync(organization.OrganizationId);
+                        user.FarmId = farm.FarmId;
+                        await _userManager.UpdateAsync(user);
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error creating related records for user {Email}", Input.Email);
+                    }
 
                     TempData["SuccessMessage"] = $"Registration successful! Your username is '{finalUsername}'. Please login to continue.";
                     return RedirectToPage("AuthPartial");
@@ -183,9 +165,7 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
             }
 
             // Reload organizations if validation fails
-            var orgs = await _context.Organizations
-                .OrderBy(o => o.OrganizationName)
-                .ToListAsync();
+            var orgs = await _registrationService.GetAllOrganizationsAsync();
             ViewData["Organizations"] = new SelectList(orgs, "OrganizationName", "OrganizationName", Input?.OrganizationName);
             
             return Page();

@@ -40,6 +40,9 @@ namespace TpaSodManagement.Controllers
                 ViewData["FarmId"] = dropdowns.Data.Farms;
                 ViewData["AreaTypeId"] = dropdowns.Data.AreaTypes;
                 ViewData["CreatedByUserId"] = dropdowns.Data.Users;
+                ViewBag.FarmId = dropdowns.Data.Farms;
+                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                ViewBag.CreatedByUserId = dropdowns.Data.Users;
             }
 
             ViewBag.IsDetailsView = true;
@@ -49,6 +52,9 @@ namespace TpaSodManagement.Controllers
 
         public async Task<IActionResult> Create()
         {
+            // Clear ModelState errors on GET request (page refresh)
+            ModelState.Clear();
+            
             var dropdowns = await _fieldService.GetDropdownDataAsync();
             if (dropdowns.Success)
             {
@@ -63,28 +69,14 @@ namespace TpaSodManagement.Controllers
             {
                 TempData["Error"] = dropdowns.Message;
             }
-            return View();
+            return View(); // Return empty View (no model)
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Field field)
         {
-            if (!ModelState.IsValid)
-            {
-                var dropdowns = await _fieldService.GetDropdownDataAsync();
-                if (dropdowns.Success)
-                {
-                    ViewData["FarmId"] = dropdowns.Data.Farms;
-                    ViewData["AreaTypeId"] = dropdowns.Data.AreaTypes;
-                    ViewData["CreatedByUserId"] = dropdowns.Data.Users;
-                    ViewBag.FarmId = dropdowns.Data.Farms;
-                    ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
-                    ViewBag.CreatedByUserId = dropdowns.Data.Users;
-                }
-                return View(field);
-            }
-
+            // Validations removed - directly save
             var result = await _fieldService.CreateAsync(field);
             if (!result.Success)
             {
@@ -92,9 +84,6 @@ namespace TpaSodManagement.Controllers
                 var dropdowns = await _fieldService.GetDropdownDataAsync();
                 if (dropdowns.Success)
                 {
-                    ViewData["FarmId"] = dropdowns.Data.Farms;
-                    ViewData["AreaTypeId"] = dropdowns.Data.AreaTypes;
-                    ViewData["CreatedByUserId"] = dropdowns.Data.Users;
                     ViewBag.FarmId = dropdowns.Data.Farms;
                     ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
                     ViewBag.CreatedByUserId = dropdowns.Data.Users;
@@ -110,6 +99,7 @@ namespace TpaSodManagement.Controllers
         {
             if (id == null) return NotFound();
 
+            ModelState.Clear();
             var result = await _fieldService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
@@ -119,6 +109,9 @@ namespace TpaSodManagement.Controllers
                 ViewData["FarmId"] = dropdowns.Data.Farms;
                 ViewData["AreaTypeId"] = dropdowns.Data.AreaTypes;
                 ViewData["CreatedByUserId"] = dropdowns.Data.Users;
+                ViewBag.FarmId = dropdowns.Data.Farms;
+                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
+                ViewBag.CreatedByUserId = dropdowns.Data.Users;
             }
 
             return View(result.Data);
@@ -130,17 +123,12 @@ namespace TpaSodManagement.Controllers
         {
             if (id != field.FieldId) return NotFound();
 
-            if (!ModelState.IsValid)
-            {
-                await Edit(id); // reload dropdowns
-                return View(field);
-            }
-
+            // Validations removed - directly update
             var result = await _fieldService.UpdateAsync(field);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                await Edit(id); // reload dropdowns
+                await Edit(id);
                 return View(field);
             }
 

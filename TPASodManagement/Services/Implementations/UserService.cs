@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.Models.Db;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -9,18 +10,23 @@ namespace TpaSodManagement.Services.Implementations
     {
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ILogger<UserService> _logger;
+        private readonly IRegistrationService _registrationService;
 
         public UserService(
             UserManager<TpaSodManagementUser> userManager,
-            ILogger<UserService> logger)
+            ILogger<UserService> logger,
+            IRegistrationService registrationService)
         {
             _userManager = userManager;
             _logger = logger;
+            _registrationService = registrationService;
         }
 
         public async Task<List<TpaSodManagementUser>> GetAllUsersAsync()
         {
-            return await _userManager.Users.ToListAsync();
+            // Include related data for better performance
+            return await _userManager.Users
+                .ToListAsync();
         }
 
         public async Task<TpaSodManagementUser> GetUserByIdAsync(string id)
@@ -91,23 +97,20 @@ namespace TpaSodManagement.Services.Implementations
                 // Store original username if we need to regenerate
                 string originalUsername = existingUser.UserName;
 
-                // Update all fields
-                existingUser.FirstName = user.FirstName;
-                existingUser.LastName = user.LastName;
+                // Update only remaining fields:
                 existingUser.Email = user.Email;
                 existingUser.PhoneNumber = user.PhoneNumber;
-                existingUser.PostalCode = user.PostalCode;
-                existingUser.Address = user.Address;
-                existingUser.State = user.State;
-                existingUser.Country = user.Country;
                 existingUser.IsActive = user.IsActive;
                 existingUser.PrimaryContact = user.PrimaryContact;
                 existingUser.OrganizationName = user.OrganizationName;
 
-                // Regenerate username if OrganizationName changed
+                // Regenerate username if OrganizationName changed - Get FirstName from Person table
                 if (organizationChanged && !string.IsNullOrEmpty(user.OrganizationName))
                 {
-                    var newUsername = await GenerateUsernameAsync(user.OrganizationName, user.FirstName);
+                    // Get Person to get FirstName
+                    var person = await _registrationService.GetUserPersonAsync(user.Id);
+                    var firstName = person?.FirstName ?? "";
+                    var newUsername = await GenerateUsernameAsync(user.OrganizationName, firstName);
                     existingUser.UserName = newUsername;
                     _logger.LogInformation("Username regenerated for user {UserId}: {OldUsername} -> {NewUsername}", 
                         user.Id, originalUsername, newUsername);

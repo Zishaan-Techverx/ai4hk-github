@@ -19,7 +19,7 @@ public partial class Address
 
     public string City { get; set; } = null!;
 
-    public int StateProvinceId { get; set; }
+    public int? StateProvinceId { get; set; } // Changed to nullable
 
     public string PostalCode { get; set; } = null!;
 
@@ -41,7 +41,7 @@ public partial class Address
 
     public virtual AddressType AddressType { get; set; } = null!;
 
-    public virtual StateProvince StateProvince { get; set; } = null!;
+    public virtual StateProvince? StateProvince { get; set; } // Changed to nullable
     
     public virtual TpaUser? TpaUser { get; set; }
 }

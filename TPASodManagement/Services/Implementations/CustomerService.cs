@@ -144,12 +144,39 @@ namespace TpaSodManagement.Services.Implementations
             try
             {
                 var orgs = await _context.Organizations
-                    .OrderBy(o => o.OrganizationName) // Sort by name
+                    .OrderBy(o => o.OrganizationName)
                     .ToListAsync();
-                var people = await _context.People.ToListAsync();
+            
+                var people = await _context.People
+                    .OrderBy(p => p.FirstName)
+                    .ThenBy(p => p.LastName)
+                    .ToListAsync();
+            
+                // Create SelectList for Organizations
+                var orgItems = orgs.Select(o => new SelectListItem
+                {
+                    Value = o.OrganizationId.ToString(),
+                    Text = o.OrganizationName
+                }).ToList();
+            
+                // Create SelectList for People with display name (FirstName LastName)
+                var peopleItems = people.Select(p =>
+                {
+                    var fullName = $"{p.FirstName} {p.LastName}".Trim();
+                    var displayName = string.IsNullOrEmpty(fullName) 
+                        ? $"Person #{p.PersonId}" 
+                        : fullName;
+                        
+                    return new SelectListItem
+                    {
+                        Value = p.PersonId.ToString(), // Backend par PersonId jayega
+                        Text = displayName // Dropdown mein name show hoga
+                    };
+                }).ToList();
+            
                 response.Data = (
-                    new SelectList(orgs, "OrganizationId", "OrganizationName"), // Changed: OrganizationName as text
-                    new SelectList(people, "PersonId", "PersonId")
+                    new SelectList(orgItems, "Value", "Text"),
+                    new SelectList(peopleItems, "Value", "Text")
                 );
             }
             catch (Exception ex)
