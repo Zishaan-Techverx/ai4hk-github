@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Models.Db;
 
@@ -47,7 +48,7 @@ public partial class Seeding
 
     public virtual TagRange TagRange { get; set; } = null!;
 
-    public virtual TpaUser User { get; set; } = null!;
+    public virtual TpaSodManagementUser User { get; set; } = null!;
 
     public virtual ICollection<Waste> Wastes { get; set; } = new List<Waste>();
 }

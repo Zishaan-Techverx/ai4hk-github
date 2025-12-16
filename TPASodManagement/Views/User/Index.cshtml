@@ -62,8 +62,8 @@
                             <tbody>
                                 @foreach (var user in Model)
                                 {
-                                    var person = await RegistrationService.GetUserPersonAsync(user.Id);
-                                    var address = await RegistrationService.GetUserAddressAsync(user.Id);
+                                    var person = await RegistrationService.GetUserPersonAsync(user.Id.ToString());
+                                    var address = await RegistrationService.GetUserAddressAsync(user.Id.ToString());
                                     
                                     <tr>
                                         <td>@user.UserName</td>

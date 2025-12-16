@@ -229,7 +229,7 @@ namespace TpaSodManagement.Services.Implementations
 
                     return new SelectListItem
                     {
-                        Value = u.Id,
+                        Value = u.Id.ToString(),
                         Text = displayName
                     };
                 }).ToList();

@@ -5,14 +5,14 @@ using System.Security.Claims;
 using TpaSodManagement.Data;
 using TpaSodManagement.Areas.Identity.Data; 
 
-public class AppClaimsPrincipalFactory : UserClaimsPrincipalFactory<TpaSodManagementUser, IdentityRole>
+public class AppClaimsPrincipalFactory : UserClaimsPrincipalFactory<TpaSodManagementUser, IdentityRole<long>>
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly UserManager<TpaSodManagementUser> _userManager;
 
     public AppClaimsPrincipalFactory(
         UserManager<TpaSodManagementUser> userManager, 
-        RoleManager<IdentityRole> roleManager,
+        RoleManager<IdentityRole<long>> roleManager,
         IOptions<IdentityOptions> optionsAccessor,
         ApplicationDbContext dbContext)
         : base(userManager, roleManager, optionsAccessor)

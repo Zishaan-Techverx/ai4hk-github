@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Models.Db;
 
@@ -45,7 +46,7 @@ public partial class Farm
 
     public virtual ICollection<Testimonial> Testimonials { get; set; } = new List<Testimonial>();
 
-    public virtual ICollection<TpaUser> TpaUsers { get; set; } = new List<TpaUser>();
+    public virtual ICollection<TpaSodManagementUser> TpaUsers { get; set; } = new List<TpaSodManagementUser>();
 
     public virtual ICollection<Waste> Wastes { get; set; } = new List<Waste>();
 }

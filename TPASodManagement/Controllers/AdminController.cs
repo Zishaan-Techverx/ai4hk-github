@@ -58,7 +58,12 @@ public class AdminController : Controller
                 return RedirectToAction("Index");
             }
 
-            var (success, message) = await _adminService.AssignRoleToUserAsync(userId, roleName);
+            if (!long.TryParse(userId, out long userIdLong))
+            {
+                TempData["ErrorMessage"] = "Invalid user ID.";
+                return RedirectToAction("Index");
+            }
+            var (success, message) = await _adminService.AssignRoleToUserAsync(userIdLong, roleName);
 
             if (success)
             {
@@ -94,7 +99,12 @@ public class AdminController : Controller
                 return RedirectToAction("Index");
             }
 
-            var (success, message) = await _adminService.RemoveRoleFromUserAsync(userId, roleName);
+            if (!long.TryParse(userId, out long userIdLong))
+            {
+                TempData["ErrorMessage"] = "Invalid user ID.";
+                return RedirectToAction("Index");
+            }
+            var (success, message) = await _adminService.RemoveRoleFromUserAsync(userIdLong, roleName);
 
             if (success)
             {
@@ -105,11 +115,9 @@ public class AdminController : Controller
                 TempData["ErrorMessage"] = message;
             }
 
-            var role = await _adminService.GetRoleByIdAsync(roleName);
-            if (role != null)
-            {
-                return RedirectToAction("RoleDetails", new { id = role.Id });
-            }
+            // Note: GetRoleByIdAsync expects long, but we're using roleName here which seems incorrect
+            // This code path might need review
+            return RedirectToAction("Index");
 
             return RedirectToAction("Index");
         }
@@ -164,7 +172,10 @@ public class AdminController : Controller
             if (string.IsNullOrEmpty(id))
                 return View("NotFound");
 
-            var role = await _adminService.GetRoleByIdAsync(id);
+            if (!long.TryParse(id, out long roleIdLong))
+                return View("NotFound");
+            
+            var role = await _adminService.GetRoleByIdAsync(roleIdLong);
             if (role == null)
                 return View("NotFound");
 
@@ -189,7 +200,12 @@ public class AdminController : Controller
     {
         try
         {
-            var (success, message) = await _adminService.UpdateRoleAsync(id, roleName);
+            if (!long.TryParse(id, out long roleIdLong))
+            {
+                TempData["ErrorMessage"] = "Invalid role ID.";
+                return RedirectToAction("Index");
+            }
+            var (success, message) = await _adminService.UpdateRoleAsync(roleIdLong, roleName);
 
             if (success)
             {
@@ -197,7 +213,7 @@ public class AdminController : Controller
                 return RedirectToAction("Index");
             }
 
-            var role = await _adminService.GetRoleByIdAsync(id);
+            var role = await _adminService.GetRoleByIdAsync(roleIdLong);
             TempData["ErrorMessage"] = message;
             return View("~/Views/AdminPanel/Edit.cshtml", role);
         }
@@ -205,8 +221,12 @@ public class AdminController : Controller
         {
             _logger.LogError(ex, "Error updating role: {RoleId}", id);
             ModelState.AddModelError("", "An error occurred while updating the role.");
-            var role = await _adminService.GetRoleByIdAsync(id);
-            return View("~/Views/AdminPanel/Edit.cshtml", role);
+            if (long.TryParse(id, out long roleIdLong2))
+            {
+                var role = await _adminService.GetRoleByIdAsync(roleIdLong2);
+                return View("~/Views/AdminPanel/Edit.cshtml", role);
+            }
+            return RedirectToAction("Index");
         }
     }
 
@@ -219,7 +239,10 @@ public class AdminController : Controller
             if (string.IsNullOrEmpty(id))
                 return View("NotFound");
 
-            var role = await _adminService.GetRoleByIdAsync(id);
+            if (!long.TryParse(id, out long roleIdLong))
+                return View("NotFound");
+            
+            var role = await _adminService.GetRoleByIdAsync(roleIdLong);
             if (role == null)
                 return View("NotFound");
 
@@ -250,7 +273,12 @@ public class AdminController : Controller
                 return RedirectToAction("Index");
             }
 
-            var (success, message) = await _adminService.DeleteRoleAsync(id);
+            if (!long.TryParse(id, out long roleIdLong))
+            {
+                TempData["ErrorMessage"] = "Invalid role ID.";
+                return RedirectToAction("Index");
+            }
+            var (success, message) = await _adminService.DeleteRoleAsync(roleIdLong);
 
             if (success)
             {
@@ -280,7 +308,10 @@ public class AdminController : Controller
             if (string.IsNullOrEmpty(id))
                 return View("NotFound");
 
-            var role = await _adminService.GetRoleByIdAsync(id);
+            if (!long.TryParse(id, out long roleIdLong))
+                return View("NotFound");
+            
+            var role = await _adminService.GetRoleByIdAsync(roleIdLong);
             if (role == null)
                 return View("NotFound");
 

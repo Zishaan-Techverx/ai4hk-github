@@ -32,7 +32,6 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(f => f.Farm)
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
-                    // CreatedByUser include remove karein (TpaSodManagementUser different context mein hai)
                     .OrderBy(f => f.FieldName)
                     .ToListAsync();
             }
@@ -53,7 +52,6 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(f => f.Farm)
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
-                    // CreatedByUser include remove karein
                     .FirstOrDefaultAsync(f => f.FieldId == id);
 
                 if (field == null)
@@ -163,18 +161,15 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(a => a.AreaTypeName)
                     .ToListAsync();
 
-                // TpaSodManagementUser se users fetch karein
                 var users = await _userManager.Users
                     .OrderBy(u => u.UserName)
                     .ToListAsync();
 
-                // Fetch all Person records for these users in one query (efficient batch loading)
                 var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId.Value).ToList();
                 var people = await _context.People
                     .Where(p => userIds.Contains(p.PersonId))
                     .ToDictionaryAsync(p => p.PersonId);
 
-                // Create SelectList for Farms with display name
                 var farmItems = farms.Select(f => new SelectListItem
                 {
                     Value = f.FarmId.ToString(),
@@ -183,14 +178,12 @@ namespace TpaSodManagement.Services.Implementations
                         : $"Farm #{f.FarmId} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
                 }).ToList();
 
-                // Create SelectList for AreaTypes
                 var areaTypeItems = areaTypes.Select(a => new SelectListItem
                 {
                     Value = a.AreaTypeId.ToString(),
                     Text = a.AreaTypeName
                 }).ToList();
 
-                // Create SelectList for Users with display name (FirstName LastName or UserName)
                 var userItems = users.Select(u =>
                 {
                     Person? person = null;
@@ -207,7 +200,7 @@ namespace TpaSodManagement.Services.Implementations
 
                     return new SelectListItem
                     {
-                        Value = u.Id,
+                        Value = u.Id.ToString(),
                         Text = displayName
                     };
                 }).ToList();
@@ -242,4 +235,3 @@ namespace TpaSodManagement.Services.Implementations
         }
     }
 }
-

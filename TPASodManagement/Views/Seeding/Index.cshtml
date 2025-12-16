@@ -111,19 +111,33 @@
                         @Html.DisplayFor(modelItem => item.CreatedDate)
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.AreaType.AreaTypeId)
+                        @(item.AreaType?.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Farm.FarmId)
+                        @if (!string.IsNullOrEmpty(item.Farm?.LicenseNumber))
+                        {
+                            @item.Farm.LicenseNumber
+                        }
+                        else
+                        {
+                            @($"Farm #{item.FarmId}")
+                        }
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Field.FieldId)
+                        @if (item.Field != null)
+                        {
+                            @item.Field.FieldName
+                        }
+                        else
+                        {
+                            <text>N/A</text>
+                        }
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.TagRange.TagRangeId)
+                        @(item.TagRange?.TagRangeCode ?? $"TagRange #{item.TagRangeId}")
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.User.UserId)
+                        @Html.DisplayFor(modelItem => item.User.UserName)
                     </td>
                     <td style="display: flex; gap: 8px; align-items: center;">
                         @if (User.HasPermission("Seeding.Edit"))

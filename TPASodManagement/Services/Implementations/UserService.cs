@@ -35,7 +35,7 @@ namespace TpaSodManagement.Services.Implementations
         }
 
         // Helper method to generate username (same logic as registration)
-        private async Task<string> GenerateUsernameAsync(string organizationName, string firstName)
+        private async Task<string> GenerateUsernameAsync(string organizationName, string firstName, long? excludeUserId = null)
         {
             string rawOrgName = organizationName?.Replace(" ", "") ?? "";
             const int OrgPrefixLength = 5;
@@ -70,10 +70,20 @@ namespace TpaSodManagement.Services.Implementations
             int counter = 1;
 
             // Check if username exists (excluding current user)
-            while (await _userManager.FindByNameAsync(finalUsername) != null)
+            while (true)
             {
                 var existingUser = await _userManager.FindByNameAsync(finalUsername);
-                // If it's the same user, we can reuse the username or append counter for new format
+                if (existingUser == null)
+                {
+                    // Username is available
+                    break;
+                }
+                // If it's the same user, we can reuse the username
+                if (excludeUserId.HasValue && existingUser.Id == excludeUserId.Value)
+                {
+                    break;
+                }
+                // Otherwise, try next variation
                 finalUsername = $"{baseUsername}{counter++}";
             }
 
@@ -84,7 +94,7 @@ namespace TpaSodManagement.Services.Implementations
         {
             try
             {
-                var existingUser = await _userManager.FindByIdAsync(user.Id);
+                var existingUser = await _userManager.FindByIdAsync(user.Id.ToString());
                 if (existingUser == null)
                     return (false, "User not found.");
 
@@ -93,6 +103,9 @@ namespace TpaSodManagement.Services.Implementations
 
                 // Check if OrganizationName changed
                 bool organizationChanged = !string.Equals(existingUser.OrganizationName, user.OrganizationName, StringComparison.OrdinalIgnoreCase);
+                
+                // Check if Email changed
+                bool emailChanged = !string.Equals(existingUser.Email, user.Email, StringComparison.OrdinalIgnoreCase);
                 
                 // Store original username if we need to regenerate
                 string originalUsername = existingUser.UserName;
@@ -104,14 +117,21 @@ namespace TpaSodManagement.Services.Implementations
                 existingUser.PrimaryContact = user.PrimaryContact;
                 existingUser.OrganizationName = user.OrganizationName;
 
+                // Update NormalizedEmail if Email changed
+                if (emailChanged)
+                {
+                    existingUser.NormalizedEmail = user.Email?.ToUpperInvariant();
+                }
+
                 // Regenerate username if OrganizationName changed - Get FirstName from Person table
                 if (organizationChanged && !string.IsNullOrEmpty(user.OrganizationName))
                 {
                     // Get Person to get FirstName
-                    var person = await _registrationService.GetUserPersonAsync(user.Id);
+                    var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
                     var firstName = person?.FirstName ?? "";
-                    var newUsername = await GenerateUsernameAsync(user.OrganizationName, firstName);
+                    var newUsername = await GenerateUsernameAsync(user.OrganizationName, firstName, user.Id);
                     existingUser.UserName = newUsername;
+                    existingUser.NormalizedUserName = newUsername?.ToUpperInvariant();
                     _logger.LogInformation("Username regenerated for user {UserId}: {OldUsername} -> {NewUsername}", 
                         user.Id, originalUsername, newUsername);
                 }

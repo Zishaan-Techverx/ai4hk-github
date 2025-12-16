@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Models.Db;
 
@@ -33,7 +34,7 @@ public partial class Product
 
     public virtual CertificateType? CertificateType { get; set; }
 
-    public virtual TpaUser CreatedByUser { get; set; } = null!;
+    public virtual TpaSodManagementUser CreatedByUser { get; set; } = null!;
 
     public virtual Currency? Currency { get; set; }
 

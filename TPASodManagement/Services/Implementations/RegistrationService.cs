@@ -82,15 +82,47 @@ namespace TpaSodManagement.Services.Implementations
 
         public async Task<IdentityResult> CreateUserAsync(TpaSodManagementUser user, string password)
         {
-            return await _userManager.CreateAsync(user, password);
+            try
+            {
+                // Ensure all required Identity fields are explicitly set to avoid NULL insertion errors
+                if (string.IsNullOrEmpty(user.PhoneNumber))
+                {
+                    user.PhoneNumber = string.Empty;
+                }
+
+                // Ensure boolean fields are explicitly set
+                if (user.IsActive == default(bool))
+                {
+                    user.IsActive = true;
+                }
+
+                // Explicitly set all Identity required fields to prevent NULL insertion
+                // Use direct assignment instead of || operator to ensure values are always set
+                user.EmailConfirmed = false;
+                user.PhoneNumberConfirmed = false;
+                user.TwoFactorEnabled = false;
+                user.LockoutEnabled = false;
+                user.AccessFailedCount = 0; // Explicitly set to 0, don't check for default
+
+                _logger.LogInformation("Creating user with AccessFailedCount: {Count}, EmailConfirmed: {EmailConfirmed}",
+                    user.AccessFailedCount, user.EmailConfirmed);
+
+                return await _userManager.CreateAsync(user, password);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error creating user: {Email}. Inner exception: {InnerException}",
+                    user.Email, ex.InnerException?.Message);
+                throw;
+            }
         }
 
         public async Task<Person> CreatePersonForUserAsync(TpaSodManagementUser user, string firstName, string lastName)
         {
             var person = new Person
             {
-                FirstName = firstName ?? "", 
-                LastName = lastName ?? "", 
+                FirstName = firstName ?? "",
+                LastName = lastName ?? "",
                 MiddleName = null,
                 DateOfBirth = null,
                 Gender = null,
@@ -112,10 +144,10 @@ namespace TpaSodManagement.Services.Implementations
         }
 
         public async Task<Address> CreateAddressForUserAsync(
-            TpaSodManagementUser user, 
-            string? addressLine1 = null, 
-            string? state = null, 
-            string? country = null, 
+            TpaSodManagementUser user,
+            string? addressLine1 = null,
+            string? state = null,
+            string? country = null,
             string? postalCode = null)
         {
             var defaultAddressType = await _context.AddressTypes
@@ -129,40 +161,40 @@ namespace TpaSodManagement.Services.Implementations
             // Find or Create StateProvince ONLY if state parameter is provided
             // During registration, StateProvinceId will be null by default
             StateProvince? stateProvince = null;
-            
+
             if (!string.IsNullOrWhiteSpace(state))
             {
                 stateProvince = await _context.StateProvinces
                     .FirstOrDefaultAsync(sp => sp.StateName.ToUpper() == state.ToUpper() && sp.IsActive);
-                
+
                 if (stateProvince == null)
                 {
                     stateProvince = await _context.StateProvinces
                         .FirstOrDefaultAsync(sp => sp.StateName.ToUpper() == state.ToUpper());
                 }
-                
+
                 if (stateProvince == null)
                 {
                     var defaultCountry = await _context.Countries
                         .FirstOrDefaultAsync(c => c.IsActive);
-                    
+
                     if (defaultCountry == null)
                     {
                         defaultCountry = await _context.Countries.FirstOrDefaultAsync();
                     }
-                    
+
                     // If country parameter is provided, try to find country by name
                     if (!string.IsNullOrWhiteSpace(country) && defaultCountry != null)
                     {
                         var countryByName = await _context.Countries
                             .FirstOrDefaultAsync(c => c.CountryName.ToUpper() == country.ToUpper());
-                        
+
                         if (countryByName != null)
                         {
                             defaultCountry = countryByName;
                         }
                     }
-                    
+
                     if (defaultCountry != null)
                     {
                         stateProvince = new StateProvince
@@ -178,17 +210,17 @@ namespace TpaSodManagement.Services.Implementations
                     }
                 }
             }
-            
+
             // Remove the default StateProvince fallback - keep StateProvinceId as null during registration
             // User can add it later during update
 
             var address = new Address
             {
-                AddressTypeId = defaultAddressType?.AddressTypeId ?? 1, 
-                AddressLine1 = addressLine1 ?? "", 
+                AddressTypeId = defaultAddressType?.AddressTypeId ?? 1,
+                AddressLine1 = addressLine1 ?? "",
                 City = "", // City separately
                 StateProvinceId = stateProvince?.StateProvinceId, // Will be null if state parameter not provided
-                PostalCode = postalCode ?? "", 
+                PostalCode = postalCode ?? "",
                 AddressLine2 = null,
                 Latitude = null,
                 Longitude = null,
@@ -205,7 +237,7 @@ namespace TpaSodManagement.Services.Implementations
             user.AddressId = address.AddressId;
             await _userManager.UpdateAsync(user);
 
-            _logger.LogInformation("Address record created successfully for user {Email} with StateProvinceId: {StateProvinceId}", 
+            _logger.LogInformation("Address record created successfully for user {Email} with StateProvinceId: {StateProvinceId}",
                 user.Email, address.StateProvinceId?.ToString() ?? "null");
 
             return address;
@@ -215,7 +247,7 @@ namespace TpaSodManagement.Services.Implementations
         {
             var website = new Website
             {
-                WebsiteUrl = "", 
+                WebsiteUrl = "",
                 WebsiteType = null,
                 IsPrimary = false,
                 IsActive = true,
@@ -225,7 +257,7 @@ namespace TpaSodManagement.Services.Implementations
             _context.Websites.Add(website);
             await _context.SaveChangesAsync();
 
-            
+
             user.WebsiteId = website.WebsiteId;
             await _userManager.UpdateAsync(user);
 
@@ -236,16 +268,16 @@ namespace TpaSodManagement.Services.Implementations
 
         public async Task<Farm> CreateOrGetFarmForOrganizationAsync(long organizationId)
         {
-            
+
             var farm = await _context.Farms
                 .FirstOrDefaultAsync(f => f.OrganizationId == organizationId);
 
             if (farm == null)
             {
-                
+
                 farm = new Farm
                 {
-                    OrganizationId = organizationId, 
+                    OrganizationId = organizationId,
                     TotalArea = null,
                     AreaTypeId = null,
                     OrganicCertified = false,
@@ -273,7 +305,7 @@ namespace TpaSodManagement.Services.Implementations
 
             if (user != null && user.AddressId.HasValue)
             {
-                
+
                 var address = await _context.Addresses
                     .Include(a => a.AddressType)
                     .Include(a => a.StateProvince)

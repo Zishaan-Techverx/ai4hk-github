@@ -86,7 +86,7 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
                 if (organization == null)
                 {
                     ModelState.AddModelError("Input.OrganizationName", "Organization does not exist. Please enter a valid organization name.");
-                    // Reload organizations
+                    
                     var organizations = await _registrationService.GetAllOrganizationsAsync();
                     ViewData["Organizations"] = new SelectList(organizations, "OrganizationName", "OrganizationName");
                     return Page();
@@ -96,7 +96,7 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
                 if (await _registrationService.IsEmailExistsAsync(Input.Email))
                 {
                     ModelState.AddModelError("Input.Email", $"An account with the email '{Input.Email}' already exists. Please use a different email address.");
-                    // Reload organizations
+                    
                     var organizations = await _registrationService.GetAllOrganizationsAsync();
                     ViewData["Organizations"] = new SelectList(organizations, "OrganizationName", "OrganizationName");
                     return Page();
@@ -109,9 +109,14 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
                 {
                     UserName = finalUsername,
                     Email = Input.Email,
-                    OrganizationName = organization.OrganizationName
-                    // FirstName, LastName removed - will go to Person table
-                    // Address, State, Country, PostalCode removed - will go to Address table
+                    OrganizationName = organization.OrganizationName,
+                    IsActive = true, 
+                    PhoneNumber = string.Empty,
+                    EmailConfirmed = false,
+                    PhoneNumberConfirmed = false,
+                    TwoFactorEnabled = false,
+                    LockoutEnabled = false,
+                    AccessFailedCount = 0,
                 };
 
                 var result = await _registrationService.CreateUserAsync(user, Input.Password);

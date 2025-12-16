@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using System;
 
 namespace TpaSodManagement.Controllers
 {
@@ -87,12 +88,13 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Seeding seeding)
         {
-            if (!ModelState.IsValid)
-            {
-                await Create(); // reload dropdowns
-                return View(seeding);
-            }
-
+            // Set automatic fields
+            seeding.CreatedDate = DateTimeOffset.UtcNow;
+            
+            // Remove all ModelState errors - validations removed (same as SaleController and ProductController)
+            ModelState.Clear();
+            
+            // Validations removed - directly save
             var result = await _seedingService.CreateAsync(seeding);
             if (!result.Success)
             {
@@ -137,12 +139,10 @@ namespace TpaSodManagement.Controllers
         {
             if (id != seeding.SeedingId) return NotFound();
 
-            if (!ModelState.IsValid)
-            {
-                await Edit(id); // reload dropdowns
-                return View(seeding);
-            }
-
+            // Remove all ModelState errors - validations removed (same as ProductController)
+            ModelState.Clear();
+            
+            // Validations removed - directly update
             var result = await _seedingService.UpdateAsync(seeding);
             if (!result.Success)
             {

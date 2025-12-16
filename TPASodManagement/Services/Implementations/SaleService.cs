@@ -180,7 +180,7 @@ namespace TpaSodManagement.Services.Implementations
 
                     return new SelectListItem
                     {
-                        Value = u.Id,
+                        Value = u.Id.ToString(),
                         Text = displayName
                     };
                 }).ToList();
@@ -338,11 +338,13 @@ namespace TpaSodManagement.Services.Implementations
                     ["FarmId"] = farmItems,
 
                     ["SaleTypeId"] = await _context.SaleTypes
-                        .Select(x => new SelectListItem { Value = x.SaleTypeId.ToString(), Text = x.SaleTypeId.ToString() })
+                        .Where(x => x.IsActive) // Optional: only show active sale types
+                        .Select(x => new SelectListItem { Value = x.SaleTypeId.ToString(), Text = x.SaleTypeName })
                         .ToListAsync(),
 
                     ["StatusId"] = await _context.Statuses
-                        .Select(x => new SelectListItem { Value = x.StatusId.ToString(), Text = x.StatusId.ToString() })
+                        .Where(x => x.IsActive) // Optional: only show active statuses
+                        .Select(x => new SelectListItem { Value = x.StatusId.ToString(), Text = x.StatusName })
                         .ToListAsync(),
 
                     ["UpdatedByUserId"] = userItems, 

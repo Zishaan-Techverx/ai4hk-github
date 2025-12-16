@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Models.Db;
 
@@ -55,7 +56,7 @@ public partial class Certificate
 
     public virtual Status Status { get; set; } = null!;
 
-    public virtual TpaUser User { get; set; } = null!;
+    public virtual TpaSodManagementUser User { get; set; } = null!;
 
     public virtual ICollection<WasteCertificate> WasteCertificates { get; set; } = new List<WasteCertificate>();
 }

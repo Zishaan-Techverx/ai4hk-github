@@ -26,7 +26,7 @@ builder.Services.AddDefaultIdentity<TpaSodManagementUser>(options =>
     options.Password.RequireUppercase = false;
     options.Password.RequireLowercase = false;
 })
-.AddRoles<IdentityRole>()
+.AddRoles<IdentityRole<long>>()
 .AddEntityFrameworkStores<ApplicationDbContext>();
 
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<TpaSodManagementUser>, AppClaimsPrincipalFactory>();

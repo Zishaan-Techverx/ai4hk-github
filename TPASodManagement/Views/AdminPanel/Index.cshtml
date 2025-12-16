@@ -4,7 +4,7 @@
 @{
 
     ViewData["Title"] = "Roles Management";
-    var roles = Model.Roles as List<Microsoft.AspNetCore.Identity.IdentityRole>;
+    var roles = Model.Roles as List<Microsoft.AspNetCore.Identity.IdentityRole<long>>;
     var users = Model.Users as List<TpaSodManagement.Areas.Identity.Data.TpaSodManagementUser>;
 }
 

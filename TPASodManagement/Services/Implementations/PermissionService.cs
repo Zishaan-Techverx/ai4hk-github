@@ -10,12 +10,12 @@ namespace TpaSodManagement.Services.Implementations
     public class PermissionService : IPermissionService
     {
         private readonly ApplicationDbContext _context;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly RoleManager<IdentityRole<long>> _roleManager;
         private readonly ILogger<PermissionService> _logger;
 
         public PermissionService(
             ApplicationDbContext context,
-            RoleManager<IdentityRole> roleManager,
+            RoleManager<IdentityRole<long>> roleManager,
             ILogger<PermissionService> logger)
         {
             _context = context;
@@ -29,7 +29,7 @@ namespace TpaSodManagement.Services.Implementations
             return await _context.Permissions.ToListAsync();
         }
 
-        public async Task<List<RolePermission>> GetRolePermissionsAsync(string roleId)
+        public async Task<List<RolePermission>> GetRolePermissionsAsync(long roleId)
         {
             return await _context.RolePermissions
                 .Include(rp => rp.Permission)
@@ -39,7 +39,7 @@ namespace TpaSodManagement.Services.Implementations
 
         // PermissionService.cs
 
-        public async Task<bool> UpdateRolePermissionsAsync(string roleId, List<RolePermission> permissions)
+        public async Task<bool> UpdateRolePermissionsAsync(long roleId, List<RolePermission> permissions)
         {
             var existingPermissions = await _context.RolePermissions
                 .Where(rp => rp.RoleId == roleId)

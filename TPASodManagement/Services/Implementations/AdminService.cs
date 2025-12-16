@@ -7,12 +7,12 @@ namespace TpaSodManagement.Services.Implementations
 {
     public class AdminService : IAdminService
     {
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly RoleManager<IdentityRole<long>> _roleManager;
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ILogger<AdminService> _logger;
 
         public AdminService(
-            RoleManager<IdentityRole> roleManager,
+            RoleManager<IdentityRole<long>> roleManager,
             UserManager<TpaSodManagementUser> userManager,
             ILogger<AdminService> logger)
         {
@@ -22,7 +22,7 @@ namespace TpaSodManagement.Services.Implementations
         }
 
 
-        public async Task<List<IdentityRole>> GetAllRolesAsync()
+        public async Task<List<IdentityRole<long>>> GetAllRolesAsync()
         {
             return await _roleManager.Roles.ToListAsync();
         }
@@ -32,9 +32,9 @@ namespace TpaSodManagement.Services.Implementations
             return await _userManager.Users.ToListAsync();
         }
 
-        public async Task<IdentityRole> GetRoleByIdAsync(string id)
+        public async Task<IdentityRole<long>> GetRoleByIdAsync(long id)
         {
-            return await _roleManager.FindByIdAsync(id);
+            return await _roleManager.FindByIdAsync(id.ToString());
         }
 
         public async Task<List<TpaSodManagementUser>> GetUsersInRoleAsync(string roleName)
@@ -42,11 +42,11 @@ namespace TpaSodManagement.Services.Implementations
             return (await _userManager.GetUsersInRoleAsync(roleName)).ToList();
         }
         
-        public async Task<List<string>> GetUserRolesAsync(string userId)
+        public async Task<List<string>> GetUserRolesAsync(long userId)
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await _userManager.FindByIdAsync(userId.ToString());
                 if (user == null)
                     return new List<string>();
 
@@ -60,11 +60,11 @@ namespace TpaSodManagement.Services.Implementations
             }
         }
 
-        public async Task<(bool success, string message)> AssignRoleToUserAsync(string userId, string roleName)
+        public async Task<(bool success, string message)> AssignRoleToUserAsync(long userId, string roleName)
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await _userManager.FindByIdAsync(userId.ToString());
                 if (user == null)
                     return (false, "User not found.");
 
@@ -106,11 +106,11 @@ namespace TpaSodManagement.Services.Implementations
             }
         }
         
-        public async Task<(bool success, string message)> RemoveRoleFromUserAsync(string userId, string roleName)
+        public async Task<(bool success, string message)> RemoveRoleFromUserAsync(long userId, string roleName)
         {
             try
             {
-                var user = await _userManager.FindByIdAsync(userId);
+                var user = await _userManager.FindByIdAsync(userId.ToString());
                 if (user == null)
                     return (false, "User not found.");
 
@@ -149,7 +149,7 @@ namespace TpaSodManagement.Services.Implementations
                 if (roleExist)
                     return (false, "Role already exists!");
 
-                var result = await _roleManager.CreateAsync(new IdentityRole(roleName.Trim()));
+                var result = await _roleManager.CreateAsync(new IdentityRole<long>(roleName.Trim()));
 
                 return result.Succeeded
                     ? (true, "Role created successfully!")
@@ -162,14 +162,14 @@ namespace TpaSodManagement.Services.Implementations
             }
         }
 
-        public async Task<(bool success, string message)> UpdateRoleAsync(string id, string roleName)
+        public async Task<(bool success, string message)> UpdateRoleAsync(long id, string roleName)
         {
             try
             {
                 if (string.IsNullOrWhiteSpace(roleName))
                     return (false, "Role name is required!");
 
-                var role = await _roleManager.FindByIdAsync(id);
+                var role = await _roleManager.FindByIdAsync(id.ToString());
                 if (role == null)
                     return (false, "Role not found!");
 
@@ -187,11 +187,11 @@ namespace TpaSodManagement.Services.Implementations
             }
         }
 
-        public async Task<(bool success, string message)> DeleteRoleAsync(string id)
+        public async Task<(bool success, string message)> DeleteRoleAsync(long id)
         {
             try
             {
-                var role = await _roleManager.FindByIdAsync(id);
+                var role = await _roleManager.FindByIdAsync(id.ToString());
                 if (role == null)
                 {
                     return (false, "Role not found.");

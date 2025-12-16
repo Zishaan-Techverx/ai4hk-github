@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Models.Db;
 
@@ -43,5 +44,5 @@ public partial class Address
 
     public virtual StateProvince? StateProvince { get; set; } // Changed to nullable
     
-    public virtual TpaUser? TpaUser { get; set; }
+    public virtual TpaSodManagementUser? TpaUser { get; set; }
 }

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Models.Db;
 
@@ -61,7 +62,7 @@ public partial class Sale
 
     public virtual Status Status { get; set; } = null!;
 
-    public virtual TpaUser UpdatedByUser { get; set; } = null!;
+    public virtual TpaSodManagementUser UpdatedByUser { get; set; } = null!;
 
-    public virtual TpaUser User { get; set; } = null!;
+    public virtual TpaSodManagementUser User { get; set; } = null!;
 }

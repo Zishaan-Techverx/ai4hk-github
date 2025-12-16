@@ -5,14 +5,13 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TpaSodManagement.Areas.Identity.Data;
 
-public class TpaSodManagementUser : IdentityUser
+public class TpaSodManagementUser : IdentityUser<long>
 {
-    public string PhoneNumber { get; set; } = string.Empty; // Changed from int to string
-    public string? PrimaryContact { get; set; } // Changed from int? to string?
+    public string? PrimaryContact { get; set; }
     public bool IsActive { get; set; }
 
     [StringLength(100)]
-    public string OrganizationName { get; set; }
+    public string? OrganizationName { get; set; }
     
     public long? AddressId { get; set; }
     public long? PersonId { get; set; }

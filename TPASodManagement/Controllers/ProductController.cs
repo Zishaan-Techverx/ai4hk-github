@@ -102,7 +102,7 @@ namespace TpaSodManagement.Controllers
                 }
             }
 
-            // Auto-set CreatedByUserId - get current logged in user's TpaUser
+            // Auto-set CreatedByUserId - get current logged in user's TpaSodManagementUser
             if (product.CreatedByUserId == 0)
             {
                 if (Request.Form.TryGetValue("CreatedByUserId", out var userIdValue))
@@ -117,33 +117,9 @@ namespace TpaSodManagement.Controllers
                     // Get current logged in TpaSodManagementUser
                     var currentIdentityUser = await _userManager.GetUserAsync(HttpContext.User);
                     
-                    if (currentIdentityUser != null && !string.IsNullOrEmpty(currentIdentityUser.Email))
+                    if (currentIdentityUser != null)
                     {
-                        // Find TpaUser by Email
-                        var tpaUser = await _context.TpaUsers
-                            .FirstOrDefaultAsync(u => u.Email == currentIdentityUser.Email);
-                        
-                        if (tpaUser != null)
-                        {
-                            product.CreatedByUserId = tpaUser.UserId;
-                        }
-                        else
-                        {
-                            TempData["Error"] = "User not found in TpaUser table. Please contact administrator.";
-                            var dropdowns = await _productService.GetDropdownDataAsync();
-                            if (dropdowns.Success)
-                            {
-                                ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
-                                ViewData["CreatedByUserId"] = dropdowns.Data.Users;
-                                ViewData["CurrencyId"] = dropdowns.Data.Currencies;
-                                ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
-                                ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
-                                ViewBag.CreatedByUserId = dropdowns.Data.Users;
-                                ViewBag.CurrencyId = dropdowns.Data.Currencies;
-                                ViewBag.ProductCategoryId = dropdowns.Data.Categories;
-                            }
-                            return View(product);
-                        }
+                        product.CreatedByUserId = currentIdentityUser.Id;
                     }
                     else
                     {

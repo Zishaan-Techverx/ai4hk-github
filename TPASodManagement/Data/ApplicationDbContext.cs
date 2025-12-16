@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Reflection.Emit;
@@ -7,7 +8,7 @@ using TpaSodManagement.Models;
 
 namespace TpaSodManagement.Data;
 
-public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser>
+public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, IdentityRole<long>, long>
 {
     public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options)
         : base(options)
@@ -72,7 +73,8 @@ public class IdentityTestUserEntityConfiguration : IEntityTypeConfiguration<TpaS
 {
     public void Configure(EntityTypeBuilder<TpaSodManagementUser> builder)
     {
-        builder.Property(u => u.PhoneNumber).HasMaxLength(20);
+        // PhoneNumber is already in IdentityUser<long>, set default to empty string to avoid NULL insertion errors
+        builder.Property(u => u.PhoneNumber).HasDefaultValue(string.Empty);
         builder.Property(u => u.PrimaryContact).HasMaxLength(20);
         builder.Property(u => u.IsActive).HasDefaultValue(false);
         builder.Property(u => u.OrganizationName).HasMaxLength(200);
@@ -80,5 +82,12 @@ public class IdentityTestUserEntityConfiguration : IEntityTypeConfiguration<TpaS
         builder.Property(u => u.PersonId);
         builder.Property(u => u.WebsiteId);
         builder.Property(u => u.FarmId);
+        
+        // Ensure Identity required fields have default values to prevent NULL insertion errors
+        builder.Property(u => u.EmailConfirmed).HasDefaultValue(false);
+        builder.Property(u => u.PhoneNumberConfirmed).HasDefaultValue(false);
+        builder.Property(u => u.TwoFactorEnabled).HasDefaultValue(false);
+        builder.Property(u => u.LockoutEnabled).HasDefaultValue(false);
+        builder.Property(u => u.AccessFailedCount).HasDefaultValue(0);
     }
 }

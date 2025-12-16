@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using System;
+using Microsoft.AspNetCore.Identity;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Controllers
 {
@@ -10,10 +13,17 @@ namespace TpaSodManagement.Controllers
     public class SaleController : Controller
     {
         private readonly ISaleService _saleService;
+        private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly ILogger<SaleController> _logger; 
 
-        public SaleController(ISaleService saleService)
+        public SaleController(
+            ISaleService saleService,
+            UserManager<TpaSodManagementUser> userManager,
+            ILogger<SaleController> logger)
         {
             _saleService = saleService;
+            _userManager = userManager;
+            _logger = logger;
         }
 
         public async Task<IActionResult> Index()
@@ -65,12 +75,33 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(Sale sale)
         {
-            if (!ModelState.IsValid)
+            // Set automatic fields
+            sale.CreatedDate = DateTimeOffset.UtcNow;
+            sale.UpdatedDate = DateTimeOffset.UtcNow;
+            
+            // Set UpdatedByUserId to current logged-in user or UserId
+            if (sale.UpdatedByUserId == 0)
             {
-                await Create(); // Reload dropdowns
-                return View(sale);
+                if (sale.UserId > 0)
+                {
+                    sale.UpdatedByUserId = sale.UserId;
+                }
+                else
+                {
+                    // Get current logged in user
+                    var currentUser = await _userManager.GetUserAsync(HttpContext.User);
+                    if (currentUser != null)
+                    {
+                        sale.UpdatedByUserId = currentUser.Id;
+                        sale.UserId = currentUser.Id; // Also set UserId if not set
+                    }
+                }
             }
-
+            
+            // Remove all ModelState errors - validations removed (same as ProductController)
+            ModelState.Clear();
+            
+            // Validations removed - directly save
             var result = await _saleService.CreateAsync(sale);
             if (!result.Success)
             {

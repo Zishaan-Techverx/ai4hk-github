@@ -1,20 +1,25 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using TpaSodManagement.Data;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Services.Implementations
 {
     public class ProductService : IProductService
     {
         private readonly SodDbContext _context;
+        private readonly UserManager<TpaSodManagementUser> _userManager;
 
-        public ProductService(SodDbContext context)
+        public ProductService(SodDbContext context, UserManager<TpaSodManagementUser> userManager)
         {
             _context = context;
+            _userManager = userManager;
         }
 
         public async Task<ServiceResponse<List<Product>>> GetAllAsync()
@@ -148,8 +153,9 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(c => c.CertificateTypeId)
                     .ToListAsync();
                     
-                var users = await _context.TpaUsers
-                    .OrderBy(u => u.Username)
+                // Use UserManager instead of _context.TpaUsers
+                var users = await _userManager.Users
+                    .OrderBy(u => u.UserName)
                     .ToListAsync();
                     
                 var categories = await _context.ProductCategories
@@ -171,10 +177,11 @@ namespace TpaSodManagement.Services.Implementations
                 }).ToList();
 
                 // Create SelectList for Users
+                // Note: TpaSodManagementUser uses Id (string) and UserName, not UserId and Username
                 var userItems = users.Select(u => new SelectListItem
                 {
-                    Value = u.UserId.ToString(),
-                    Text = u.Username ?? $"User #{u.UserId}"
+                    Value = u.Id.ToString(),
+                    Text = u.UserName ?? $"User #{u.Id}"
                 }).ToList();
 
                 // Create SelectList for Categories

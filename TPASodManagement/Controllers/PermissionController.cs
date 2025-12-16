@@ -11,12 +11,12 @@ namespace TpaSodManagement.Controllers
     public class PermissionController : Controller
     {
         private readonly IPermissionService _permissionService;
-        private readonly RoleManager<IdentityRole> _roleManager;
+        private readonly RoleManager<IdentityRole<long>> _roleManager;
         private readonly ILogger<PermissionController> _logger;
 
         public PermissionController(
             IPermissionService permissionService,
-            RoleManager<IdentityRole> roleManager,
+            RoleManager<IdentityRole<long>> roleManager,
             ILogger<PermissionController> logger)
         {
             _permissionService = permissionService;
@@ -41,14 +41,11 @@ namespace TpaSodManagement.Controllers
         }
 
         // GET: Permission/Manage/{roleId}
-        public async Task<IActionResult> Manage(string roleId)
+        public async Task<IActionResult> Manage(long roleId)
         {
             try
             {
-                if (string.IsNullOrEmpty(roleId))
-                    return View("NotFound");
-
-                var role = await _roleManager.FindByIdAsync(roleId);
+                var role = await _roleManager.FindByIdAsync(roleId.ToString());
                 if (role == null)
                     return View("NotFound");
 
@@ -74,16 +71,10 @@ namespace TpaSodManagement.Controllers
 
         // POST: Permission/Manage
         [HttpPost]
-        public async Task<IActionResult> Manage(string roleId, Dictionary<int, RolePermission> permissions)
+        public async Task<IActionResult> Manage(long roleId, Dictionary<int, RolePermission> permissions)
         {
             try
             {
-                if (string.IsNullOrEmpty(roleId))
-                {
-                    TempData["ErrorMessage"] = "Role ID is required.";
-                    return RedirectToAction("Index");
-                }
-
                 var permissionList = permissions?.Values.ToList() ?? new List<RolePermission>();
                 var success = await _permissionService.UpdateRolePermissionsAsync(roleId, permissionList);
 
@@ -109,7 +100,7 @@ namespace TpaSodManagement.Controllers
 
     public class ManagePermissionsViewModel
     {
-        public IdentityRole Role { get; set; }
+        public IdentityRole<long> Role { get; set; }
         public List<Permission> AllPermissions { get; set; }
         public List<RolePermission> RolePermissions { get; set; }
     }

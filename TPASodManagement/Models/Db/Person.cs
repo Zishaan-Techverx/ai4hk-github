@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Models.Db;
 
@@ -29,7 +30,7 @@ public partial class Person
 
     public virtual ICollection<Testimonial> Testimonials { get; set; } = new List<Testimonial>();
 
-    public virtual TpaUser? TpaUser { get; set; }
+    public virtual TpaSodManagementUser? TpaUser { get; set; }
     
     public bool IsPrimaryContact { get;  set; }
 }

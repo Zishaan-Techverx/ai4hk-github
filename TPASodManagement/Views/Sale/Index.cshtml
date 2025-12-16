@@ -146,25 +146,43 @@
                             @Html.DisplayFor(modelItem => item.UpdatedDate)
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => item.Currency.CurrencyId)
+                            @Html.DisplayFor(modelItem => item.Currency.CurrencyName)
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => item.Customer.CustomerId)
+                            @if (item.Customer?.Person != null)
+                            {
+                                @($"{item.Customer.Person.FirstName} {item.Customer.Person.LastName}".Trim())
+                            }
+                            else if (!string.IsNullOrEmpty(item.Customer?.CustomerCode))
+                            {
+                                @item.Customer.CustomerCode
+                            }
+                            else
+                            {
+                                @($"Customer #{item.CustomerId}")
+                            }
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => item.Farm.FarmId)
+                            @if (!string.IsNullOrEmpty(item.Farm?.LicenseNumber))
+                            {
+                                @item.Farm.LicenseNumber
+                            }
+                            else
+                            {
+                                @($"Farm #{item.FarmId}")
+                            }
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => item.SaleType.SaleTypeId)
+                            @Html.DisplayFor(modelItem => item.SaleType.SaleTypeName)
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => item.Status.StatusId)
+                            @Html.DisplayFor(modelItem => item.Status.StatusName)
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => item.UpdatedByUser.UserId)
+                            @Html.DisplayFor(modelItem => item.UpdatedByUser.UserName)
                         </td>
                         <td>
-                            @Html.DisplayFor(modelItem => item.User.UserId)
+                            @Html.DisplayFor(modelItem => item.User.UserName)
                         </td>
                         <td style="display: flex; gap: 8px; align-items: center;">
                             @if (User.HasPermission("Sale.Edit"))

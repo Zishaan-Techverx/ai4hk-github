@@ -138,7 +138,7 @@ namespace TpaSodManagement.Controllers
             if (string.IsNullOrEmpty(id))
                 return NotFound();
 
-            if (id != user.Id)
+            if (id != user.Id.ToString())
             {
                 ModelState.AddModelError("", "User ID mismatch.");
                 return View(user);
@@ -161,6 +161,28 @@ namespace TpaSodManagement.Controllers
             {
                 try
                 {
+                    // Get existing user to preserve fields that might not be posted (if disabled)
+                    var existingUserForMerge = await _userService.GetUserByIdAsync(id);
+                    if (existingUserForMerge == null)
+                    {
+                        TempData["ErrorMessage"] = "User not found.";
+                        return RedirectToAction(nameof(Index));
+                    }
+
+                    // Preserve fields that might not be posted if they're disabled
+                    if (string.IsNullOrEmpty(user.Email))
+                    {
+                        user.Email = existingUserForMerge.Email;
+                    }
+                    if (string.IsNullOrEmpty(user.UserName))
+                    {
+                        user.UserName = existingUserForMerge.UserName;
+                    }
+                    if (string.IsNullOrEmpty(user.PhoneNumber))
+                    {
+                        user.PhoneNumber = existingUserForMerge.PhoneNumber ?? string.Empty;
+                    }
+
                     // Update Person
                     var person = await _registrationService.GetUserPersonAsync(id);
                     if (person != null)
@@ -226,12 +248,14 @@ namespace TpaSodManagement.Controllers
                         TempData["SuccessMessage"] = result.message;
                         return RedirectToAction(nameof(Index));
                     }
-                    TempData["ErrorMessage"] = result.message;
+                    TempData["ErrorMessage"] = result.message ?? "An error occurred while updating the user.";
+                    _logger.LogError("User update failed: {UserId}, Error: {Error}", user.Id, result.message);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error updating user: {UserId}", user.Id);
-                    TempData["ErrorMessage"] = "An error occurred while updating the user.";
+                    _logger.LogError(ex, "Error updating user: {UserId}, Exception: {ExceptionMessage}, InnerException: {InnerException}", 
+                        user.Id, ex.Message, ex.InnerException?.Message);
+                    TempData["ErrorMessage"] = $"An error occurred while updating the user: {ex.Message}";
                 }
             }
             else
