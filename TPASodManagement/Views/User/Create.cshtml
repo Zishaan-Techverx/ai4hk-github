@@ -1,0 +1,292 @@
+@model TpaSodManagement.Areas.Identity.Data.TpaSodManagementUser
+@using TpaSodManagement.Models.Db
+
+@{
+    ViewData["Title"] = "Create User";
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Create User</h5>
+                </div>
+
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <strong>Success!</strong> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @TempData["ErrorMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Create" method="post">
+                        @Html.AntiForgeryToken()
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">First Name <span class="text-danger">*</span></label>
+                                <input name="firstName" class="form-control" required />
+                                <span class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Last Name <span class="text-danger">*</span></label>
+                                <input name="lastName" class="form-control" required />
+                                <span class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="Email" class="form-label">Email <span class="text-danger">*</span></label>
+                                <input asp-for="Email" type="email" class="form-control" required />
+                                <span asp-validation-for="Email" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="OrganizationName" class="form-label">Organization Name <span class="text-danger">*</span></label>
+                                <select asp-for="OrganizationName" class="form-select" asp-items="ViewBag.Organizations" required>
+                                    <option value="">-- Select Organization --</option>
+                                </select>
+                                <span asp-validation-for="OrganizationName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Password <span class="text-danger">*</span></label>
+                                <input name="password" type="password" class="form-control" required minlength="6" />
+                                <small class="form-text text-muted">Minimum 6 characters required</small>
+                                <span class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Confirm Password <span class="text-danger">*</span></label>
+                                <input name="confirmPassword" type="password" class="form-control" required minlength="6" />
+                                <span class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PrimaryContact" class="form-label">Primary Contact</label>
+                                <input asp-for="PrimaryContact" class="form-control" />
+                                <span asp-validation-for="PrimaryContact" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="PhoneNumber" class="form-label">Phone Number</label>
+                                <input asp-for="PhoneNumber" class="form-control" />
+                                <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">User Name</label>
+                                <input asp-for="UserName" class="form-control" readonly style="background-color: #e9ecef; cursor: not-allowed;" />
+                                <small class="form-text text-muted">Auto-generated based on Organization and First Name</small>
+                                <span asp-validation-for="UserName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        @* Address Fields *@
+                        <h6 class="mt-4 mb-3">Address Information (Optional)</h6>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Address Type</label>
+                                <select name="addressTypeId" class="form-select" asp-items="ViewBag.AddressTypes">
+                                    <option value="">-- Select Address Type --</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">State/Province</label>
+                                <input list="stateProvinceList" name="stateProvinceName" id="stateProvinceInput" 
+                                       class="form-control" 
+                                       placeholder="Type to search State/Province..." />
+                                <datalist id="stateProvinceList">
+                                    @if (ViewBag.StateProvinces != null)
+                                    {
+                                        foreach (var item in (SelectList)ViewBag.StateProvinces)
+                                        {
+                                            <option value="@item.Text" data-id="@item.Value">@item.Text</option>
+                                        }
+                                    }
+                                </datalist>
+                                <input type="hidden" name="stateProvinceId" id="stateProvinceIdHidden" value="" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label">Address Line 1</label>
+                            <input name="addressLine1" class="form-control" />
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">City</label>
+                                <input name="city" class="form-control" />
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Postal Code</label>
+                                <input name="postalCode" class="form-control" />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label me-3 mb-0">Is Active</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input asp-for="IsActive" type="checkbox" class="form-check-input" checked />
+                            </div>
+                        </div>
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">Cancel</a>
+                            <button type="submit" class="btn btn-primary">Create</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const stateProvinceInput = document.getElementById('stateProvinceInput');
+            const stateProvinceIdHidden = document.getElementById('stateProvinceIdHidden');
+            
+            // Map StateName to StateProvinceId
+            const stateProvinceMap = {};
+            @if (ViewBag.StateProvinces != null)
+            {
+                foreach (var item in (SelectList)ViewBag.StateProvinces)
+                {
+                    <text>
+                    stateProvinceMap['@item.Text'] = '@item.Value';
+                    </text>
+                }
+            }
+            
+            // When user selects from datalist or types and matches
+            if (stateProvinceInput) {
+                stateProvinceInput.addEventListener('input', function() {
+                    const selectedName = this.value;
+                    if (stateProvinceMap[selectedName]) {
+                        stateProvinceIdHidden.value = stateProvinceMap[selectedName];
+                    } else {
+                        stateProvinceIdHidden.value = '';
+                    }
+                });
+                
+                stateProvinceInput.addEventListener('change', function() {
+                    const selectedName = this.value;
+                    if (stateProvinceMap[selectedName]) {
+                        stateProvinceIdHidden.value = stateProvinceMap[selectedName];
+                    }
+                });
+            }
+
+            // Auto-generate username based on Organization and First Name
+            const organizationSelect = document.querySelector('select[name="OrganizationName"]');
+            const firstNameInput = document.querySelector('input[name="firstName"]');
+            const userNameInput = document.querySelector('input[name="UserName"]');
+            
+            function generateUsername(organizationName, firstName) {
+                if (!organizationName || !firstName) {
+                    return '';
+                }
+                
+                const rawOrgName = organizationName.replace(/\s+/g, '');
+                const orgPrefixLength = 5;
+                const orgPrefix = rawOrgName.length >= orgPrefixLength 
+                    ? rawOrgName.substring(0, orgPrefixLength).toUpperCase()
+                    : rawOrgName.toUpperCase();
+                
+                const nameParts = firstName.trim().split(/\s+/);
+                let userInitials;
+                
+                if (nameParts.length >= 2) {
+                    userInitials = (nameParts[0][0] + nameParts[nameParts.length - 1][0]).toUpperCase();
+                } else if (firstName.length >= 2) {
+                    userInitials = firstName.substring(0, 2).toUpperCase();
+                } else {
+                    userInitials = firstName.toUpperCase();
+                }
+                
+                return `${orgPrefix}-${userInitials}`;
+            }
+            
+            function updateUsername() {
+                if (!organizationSelect || !firstNameInput || !userNameInput) return;
+                
+                const orgName = organizationSelect.value;
+                const firstName = firstNameInput.value;
+                
+                if (orgName && firstName) {
+                    const newUsername = generateUsername(orgName, firstName);
+                    userNameInput.value = newUsername;
+                }
+            }
+            
+            if (organizationSelect) {
+                organizationSelect.addEventListener('change', updateUsername);
+            }
+            
+            if (firstNameInput) {
+                firstNameInput.addEventListener('input', updateUsername);
+                firstNameInput.addEventListener('change', updateUsername);
+            }
+
+            // Password confirmation validation
+            const passwordInput = document.querySelector('input[name="password"]');
+            const confirmPasswordInput = document.querySelector('input[name="confirmPassword"]');
+            
+            if (passwordInput && confirmPasswordInput) {
+                function validatePasswordMatch() {
+                    if (confirmPasswordInput.value && passwordInput.value !== confirmPasswordInput.value) {
+                        confirmPasswordInput.setCustomValidity('Passwords do not match');
+                    } else {
+                        confirmPasswordInput.setCustomValidity('');
+                    }
+                }
+                
+                passwordInput.addEventListener('input', validatePasswordMatch);
+                confirmPasswordInput.addEventListener('input', validatePasswordMatch);
+            }
+        });
+    </script>
+}

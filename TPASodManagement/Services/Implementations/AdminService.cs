@@ -29,7 +29,23 @@ namespace TpaSodManagement.Services.Implementations
 
         public async Task<List<TpaSodManagementUser>> GetAllUsersAsync()
         {
-            return await _userManager.Users.ToListAsync();
+            // Get all users
+            var allUsers = await _userManager.Users.ToListAsync();
+            
+            // Filter out users with SuperAdmin role
+            var filteredUsers = new List<TpaSodManagementUser>();
+            
+            foreach (var user in allUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                // Exclude users with SuperAdmin role
+                if (!roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase))
+                {
+                    filteredUsers.Add(user);
+                }
+            }
+            
+            return filteredUsers;
         }
 
         public async Task<IdentityRole<long>> GetRoleByIdAsync(long id)
@@ -93,7 +109,7 @@ namespace TpaSodManagement.Services.Implementations
 
                 if (addResult.Succeeded)
                 {
-                    return (true, $"Role '{roleName}' successfully assigned to user '{user.UserName}'. Existing roles were removed.");
+                    return (true, $"Role '{roleName}' successfully assigned to user '{user.UserName}'.");
                 }
                 
                 _logger.LogError("Failed to assign new role '{RoleName}' to user {UserId}: {Errors}", roleName, userId, string.Join(", ", addResult.Errors.Select(e => e.Description)));
@@ -173,6 +189,12 @@ namespace TpaSodManagement.Services.Implementations
                 if (role == null)
                     return (false, "Role not found!");
 
+                // Check if role is SuperAdmin
+                if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "SuperAdmin role cannot be edited.");
+                }
+
                 role.Name = roleName;
                 var result = await _roleManager.UpdateAsync(role);
 
@@ -195,6 +217,12 @@ namespace TpaSodManagement.Services.Implementations
                 if (role == null)
                 {
                     return (false, "Role not found.");
+                }
+
+                // Check if role is SuperAdmin
+                if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                {
+                    return (false, "SuperAdmin role cannot be deleted.");
                 }
 
                 var users = await _userManager.GetUsersInRoleAsync(role.Name);

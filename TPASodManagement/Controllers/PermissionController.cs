@@ -49,6 +49,13 @@ namespace TpaSodManagement.Controllers
                 if (role == null)
                     return View("NotFound");
 
+                // Check if role is SuperAdmin
+                if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                {
+                    TempData["ErrorMessage"] = "SuperAdmin role permissions cannot be managed.";
+                    return RedirectToAction("Index");
+                }
+
                 var permissions = await _permissionService.GetAllPermissionsAsync();
                 var rolePermissions = await _permissionService.GetRolePermissionsAsync(roleId);
 
@@ -75,6 +82,20 @@ namespace TpaSodManagement.Controllers
         {
             try
             {
+                var role = await _roleManager.FindByIdAsync(roleId.ToString());
+                if (role == null)
+                {
+                    TempData["ErrorMessage"] = "Role not found.";
+                    return RedirectToAction("Index");
+                }
+
+                // Check if role is SuperAdmin
+                if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                {
+                    TempData["ErrorMessage"] = "SuperAdmin role permissions cannot be managed.";
+                    return RedirectToAction("Index");
+                }
+
                 var permissionList = permissions?.Values.ToList() ?? new List<RolePermission>();
                 var success = await _permissionService.UpdateRolePermissionsAsync(roleId, permissionList);
 

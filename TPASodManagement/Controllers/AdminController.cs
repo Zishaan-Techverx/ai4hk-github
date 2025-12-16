@@ -205,6 +205,15 @@ public class AdminController : Controller
                 TempData["ErrorMessage"] = "Invalid role ID.";
                 return RedirectToAction("Index");
             }
+
+            // Check if role is SuperAdmin
+            var checkRole = await _adminService.GetRoleByIdAsync(roleIdLong);
+            if (checkRole != null && checkRole.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "SuperAdmin role cannot be edited.";
+                return RedirectToAction("Index");
+            }
+
             var (success, message) = await _adminService.UpdateRoleAsync(roleIdLong, roleName);
 
             if (success)
@@ -278,6 +287,15 @@ public class AdminController : Controller
                 TempData["ErrorMessage"] = "Invalid role ID.";
                 return RedirectToAction("Index");
             }
+
+            // Check if role is SuperAdmin
+            var role = await _adminService.GetRoleByIdAsync(roleIdLong);
+            if (role != null && role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "SuperAdmin role cannot be deleted.";
+                return RedirectToAction("Index");
+            }
+
             var (success, message) = await _adminService.DeleteRoleAsync(roleIdLong);
 
             if (success)

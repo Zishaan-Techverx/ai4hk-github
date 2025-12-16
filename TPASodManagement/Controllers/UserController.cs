@@ -58,6 +58,14 @@ namespace TpaSodManagement.Controllers
             if (user == null)
                 return NotFound();
 
+            // Check if user has SuperAdmin role
+            var roles = await _adminService.GetUserRolesAsync(user.Id);
+            if (roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "SuperAdmin users cannot be edited.";
+                return RedirectToAction(nameof(Index));
+            }
+
             // Load Person and Address data
             var person = await _registrationService.GetUserPersonAsync(id);
             var address = await _registrationService.GetUserAddressAsync(id);
@@ -98,6 +106,14 @@ namespace TpaSodManagement.Controllers
             if (user == null)
                 return NotFound();
 
+            // Check if user has SuperAdmin role
+            var roles = await _adminService.GetUserRolesAsync(user.Id);
+            if (roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "SuperAdmin users cannot be viewed.";
+                return RedirectToAction(nameof(Index));
+            }
+
             // Load Person and Address data
             var person = await _registrationService.GetUserPersonAsync(id);
             var address = await _registrationService.GetUserAddressAsync(id);
@@ -129,6 +145,135 @@ namespace TpaSodManagement.Controllers
             return View("Edit", user);
         }
 
+        public async Task<IActionResult> Create()
+        {
+            // Load dropdowns
+            var organizations = await _organizationService.GetAllOrganizationsAsync();
+            ViewBag.Organizations = new SelectList(organizations, "OrganizationName", "OrganizationName");
+
+            // Load AddressTypes for dropdown
+            var addressTypes = await _context.AddressTypes
+                .Where(at => at.IsActive)
+                .OrderBy(at => at.AddressTypeName)
+                .ToListAsync();
+            ViewBag.AddressTypes = new SelectList(addressTypes, "AddressTypeId", "AddressTypeName");
+
+            // Load StateProvinces for dropdown
+            var stateProvinces = await _context.StateProvinces
+                .Include(sp => sp.Country)
+                .Where(sp => sp.IsActive)
+                .OrderBy(sp => sp.StateName)
+                .ToListAsync();
+            ViewBag.StateProvinces = new SelectList(stateProvinces, "StateProvinceId", "StateName");
+
+            return View();
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Create(
+            TpaSodManagementUser user,
+            string firstName,
+            string lastName,
+            string password,
+            string confirmPassword,
+            string addressLine1,
+            string city,
+            int? stateProvinceId,
+            string postalCode,
+            int? addressTypeId)
+        {
+            // Validate password match
+            if (password != confirmPassword)
+            {
+                ModelState.AddModelError("", "Password and Confirm Password do not match.");
+            }
+
+            // Remove validation for fields that will be set automatically
+            ModelState.Remove("Id");
+            ModelState.Remove("UserName");
+            ModelState.Remove("EmailConfirmed");
+            ModelState.Remove("PhoneNumberConfirmed");
+            ModelState.Remove("TwoFactorEnabled");
+            ModelState.Remove("LockoutEnabled");
+            ModelState.Remove("AccessFailedCount");
+            ModelState.Remove("SecurityStamp");
+            ModelState.Remove("ConcurrencyStamp");
+            ModelState.Remove("NormalizedEmail");
+            ModelState.Remove("NormalizedUserName");
+
+            if (ModelState.IsValid)
+            {
+                try
+                {
+                    // Generate username
+                    var organization = await _organizationService.GetOrganizationByNameAsync(user.OrganizationName);
+                    if (organization == null)
+                    {
+                        TempData["ErrorMessage"] = "Selected organization not found.";
+                        await Create();
+                        return View(user);
+                    }
+
+                    var finalUsername = await _registrationService.GenerateUsernameAsync(organization.OrganizationName, firstName);
+
+                    // Set user properties
+                    user.UserName = finalUsername;
+                    user.NormalizedUserName = finalUsername.ToUpperInvariant();
+                    user.NormalizedEmail = user.Email?.ToUpperInvariant();
+                    user.IsActive = true;
+                    user.PhoneNumber = user.PhoneNumber ?? string.Empty;
+                    user.EmailConfirmed = false;
+                    user.PhoneNumberConfirmed = false;
+                    user.TwoFactorEnabled = false;
+                    user.LockoutEnabled = false;
+                    user.AccessFailedCount = 0;
+
+                    // Create user
+                    var createResult = await _registrationService.CreateUserAsync(user, password);
+                    if (!createResult.Succeeded)
+                    {
+                        TempData["ErrorMessage"] = string.Join(", ", createResult.Errors.Select(e => e.Description));
+                        await Create();
+                        return View(user);
+                    }
+
+                    // Create Person record
+                    await _registrationService.CreatePersonForUserAsync(user, firstName, lastName);
+
+                    // Create Address record if address fields provided
+                    if (!string.IsNullOrEmpty(addressLine1) || !string.IsNullOrEmpty(city) || stateProvinceId.HasValue)
+                    {
+                        var address = await _registrationService.CreateAddressForUserAsync(user);
+                        address.AddressLine1 = addressLine1 ?? "";
+                        address.City = city ?? "";
+                        address.PostalCode = postalCode ?? "";
+                        if (stateProvinceId.HasValue)
+                            address.StateProvinceId = stateProvinceId.Value;
+                        if (addressTypeId.HasValue)
+                            address.AddressTypeId = addressTypeId.Value;
+                        address.UpdatedDate = DateTimeOffset.UtcNow;
+                        _context.Addresses.Update(address);
+                        await _context.SaveChangesAsync();
+                    }
+
+                    TempData["SuccessMessage"] = $"User created successfully! Username: {finalUsername}";
+                    return RedirectToAction(nameof(Index));
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error creating user");
+                    TempData["ErrorMessage"] = $"An error occurred while creating the user: {ex.Message}";
+                    await Create();
+                    return View(user);
+                }
+            }
+
+            // Reload dropdowns for error view
+            await Create();
+            return View(user);
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Edit(string id, TpaSodManagementUser user, 
@@ -137,6 +282,18 @@ namespace TpaSodManagement.Controllers
         {
             if (string.IsNullOrEmpty(id))
                 return NotFound();
+
+            // Check if user has SuperAdmin role
+            var existingUser = await _userService.GetUserByIdAsync(id);
+            if (existingUser != null)
+            {
+                var roles = await _adminService.GetUserRolesAsync(existingUser.Id);
+                if (roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase))
+                {
+                    TempData["ErrorMessage"] = "SuperAdmin users cannot be edited.";
+                    return RedirectToAction(nameof(Index));
+                }
+            }
 
             if (id != user.Id.ToString())
             {
@@ -196,10 +353,10 @@ namespace TpaSodManagement.Controllers
                     else
                     {
                         // Create Person if doesn't exist
-                        var existingUser = await _userService.GetUserByIdAsync(id);
-                        if (existingUser != null)
+                        var userForPerson = await _userService.GetUserByIdAsync(id);
+                        if (userForPerson != null)
                         {
-                            person = await _registrationService.CreatePersonForUserAsync(existingUser, firstName ?? "", lastName ?? "");
+                            person = await _registrationService.CreatePersonForUserAsync(userForPerson, firstName ?? "", lastName ?? "");
                             person.UpdatedDate = DateTimeOffset.UtcNow;
                             _context.People.Update(person);
                             await _context.SaveChangesAsync();
@@ -224,10 +381,10 @@ namespace TpaSodManagement.Controllers
                     else
                     {
                         // Create Address if doesn't exist
-                        var existingUser = await _userService.GetUserByIdAsync(id);
-                        if (existingUser != null)
+                        var userForAddress = await _userService.GetUserByIdAsync(id);
+                        if (userForAddress != null)
                         {
-                            address = await _registrationService.CreateAddressForUserAsync(existingUser);
+                            address = await _registrationService.CreateAddressForUserAsync(userForAddress);
                             address.AddressLine1 = addressLine1 ?? "";
                             address.City = city ?? "";
                             address.PostalCode = postalCode ?? "";
@@ -309,6 +466,17 @@ namespace TpaSodManagement.Controllers
 
             try
             {
+                // Check if user has SuperAdmin role
+                var user = await _userService.GetUserByIdAsync(id);
+                if (user != null)
+                {
+                    var roles = await _adminService.GetUserRolesAsync(user.Id);
+                    if (roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase))
+                    {
+                        return BadRequest(new { success = false, message = "SuperAdmin users cannot be deleted." });
+                    }
+                }
+
                 var result = await _userService.DeleteUserAsync(id);
                 if (result.success)
                 {

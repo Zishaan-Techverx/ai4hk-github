@@ -47,6 +47,12 @@
                             <tbody>
                                 @foreach (var role in Model)
                                 {
+                                    // Skip SuperAdmin role
+                                    @if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        continue;
+                                    }
+                                    
                                     <tr>
                                         <td>@role.Name</td>
                                         <td>Manage permissions for @role.Name role</td>

@@ -24,9 +24,23 @@ namespace TpaSodManagement.Services.Implementations
 
         public async Task<List<TpaSodManagementUser>> GetAllUsersAsync()
         {
-            // Include related data for better performance
-            return await _userManager.Users
-                .ToListAsync();
+            // Get all users
+            var allUsers = await _userManager.Users.ToListAsync();
+            
+            // Filter out users with SuperAdmin role
+            var filteredUsers = new List<TpaSodManagementUser>();
+            
+            foreach (var user in allUsers)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                // Exclude users with SuperAdmin role
+                if (!roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase))
+                {
+                    filteredUsers.Add(user);
+                }
+            }
+            
+            return filteredUsers;
         }
 
         public async Task<TpaSodManagementUser> GetUserByIdAsync(string id)

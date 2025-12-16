@@ -56,6 +56,12 @@
                             <tbody>
                                 @foreach (var role in roles)
                                 {
+                                    // Skip SuperAdmin role from listing
+                                    @if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                                    {
+                                        continue;
+                                    }
+                                    
                                     <tr>
                                         <td>@role.Name</td>
                                         <td>
@@ -124,7 +130,11 @@
                                     <option value="">-- Select Role --</option>
                                     @foreach (var role in roles)
                                     {
-                                        <option value="@role.Name">@role.Name</option>
+                                        // Skip SuperAdmin role from dropdown
+                                        @if (!role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                                        {
+                                            <option value="@role.Name">@role.Name</option>
+                                        }
                                     }
                                 </select>
                             </div>
