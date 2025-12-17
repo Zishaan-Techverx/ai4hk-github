@@ -1,4 +1,4 @@
-@model TpaSodManagement.Models.Db.Sale
+@model TpaSodManagement.ViewModels.Sale.SaleEditViewModel
 
 @{
     ViewData["Title"] = "Create Sale";
@@ -43,7 +43,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="UserId" class="form-label">User</label>
-                                <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserId">
+                                <select asp-for="UserId" class="form-select" asp-items="Model.Users">
                                     <option value="">-- Select User --</option>
                                 </select>
                                 <span asp-validation-for="UserId" class="text-danger"></span>
@@ -51,7 +51,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="FarmId" class="form-label">Farm</label>
-                                <select asp-for="FarmId" class="form-select" asp-items="ViewBag.FarmId">
+                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms">
                                     <option value="">-- Select Farm --</option>
                                 </select>
                                 <span asp-validation-for="FarmId" class="text-danger"></span>
@@ -61,7 +61,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CustomerId" class="form-label">Customer</label>
-                                <select asp-for="CustomerId" class="form-select" asp-items="ViewBag.CustomerId">
+                                <select asp-for="CustomerId" class="form-select" asp-items="Model.Customers">
                                     <option value="">-- Select Customer --</option>
                                 </select>
                                 <span asp-validation-for="CustomerId" class="text-danger"></span>
@@ -69,7 +69,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="SaleTypeId" class="form-label">Sale Type</label>
-                                <select asp-for="SaleTypeId" class="form-select" asp-items="ViewBag.SaleTypeId">
+                                <select asp-for="SaleTypeId" class="form-select" asp-items="Model.SaleTypes">
                                     <option value="">-- Select Sale Type --</option>
                                 </select>
                                 <span asp-validation-for="SaleTypeId" class="text-danger"></span>
@@ -99,7 +99,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CurrencyId" class="form-label">Currency</label>
-                                <select asp-for="CurrencyId" class="form-select" asp-items="ViewBag.CurrencyId">
+                                <select asp-for="CurrencyId" class="form-select" asp-items="Model.Currencies">
                                     <option value="">-- Select Currency --</option>
                                 </select>
                                 <span asp-validation-for="CurrencyId" class="text-danger"></span>
@@ -157,7 +157,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="StatusId" class="form-label">Status</label>
-                                <select asp-for="StatusId" class="form-select" asp-items="ViewBag.StatusId">
+                                <select asp-for="StatusId" class="form-select" asp-items="Model.Statuses">
                                     <option value="">-- Select Status --</option>
                                 </select>
                                 <span asp-validation-for="StatusId" class="text-danger"></span>

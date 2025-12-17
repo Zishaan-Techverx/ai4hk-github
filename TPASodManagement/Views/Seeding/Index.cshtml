@@ -1,4 +1,4 @@
-@model IEnumerable<TpaSodManagement.Models.Db.Seeding>
+@model IEnumerable<TpaSodManagement.ViewModels.Seeding.SeedingItemViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -111,33 +111,19 @@
                         @Html.DisplayFor(modelItem => item.CreatedDate)
                     </td>
                     <td>
-                        @(item.AreaType?.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")
+                        @(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")
                     </td>
                     <td>
-                        @if (!string.IsNullOrEmpty(item.Farm?.LicenseNumber))
-                        {
-                            @item.Farm.LicenseNumber
-                        }
-                        else
-                        {
-                            @($"Farm #{item.FarmId}")
-                        }
+                        @(item.FarmDisplay ?? $"Farm #{item.FarmId}")
                     </td>
                     <td>
-                        @if (item.Field != null)
-                        {
-                            @item.Field.FieldName
-                        }
-                        else
-                        {
-                            <text>N/A</text>
-                        }
+                        @(item.FieldName ?? "N/A")
                     </td>
                     <td>
-                        @(item.TagRange?.TagRangeCode ?? $"TagRange #{item.TagRangeId}")
+                        @(item.TagRangeCode ?? $"TagRange #{item.TagRangeId}")
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.User.UserName)
+                        @(item.UserName ?? "N/A")
                     </td>
                     <td style="display: flex; gap: 8px; align-items: center;">
                         @if (User.HasPermission("Seeding.Edit"))

@@ -1,4 +1,4 @@
-@model TpaSodManagement.Models.Db.Field
+@model TpaSodManagement.ViewModels.Field.FieldEditViewModel
 
 @{
     ViewData["Title"] = "Create Field";
@@ -57,7 +57,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="FarmId" class="form-label">Farm *</label>
-                                <select asp-for="FarmId" class="form-select" asp-items="ViewBag.FarmId">
+                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms">
                                     <option value="">-- Select Farm --</option>
                                 </select>
                                 <span asp-validation-for="FarmId" class="text-danger"></span>
@@ -65,7 +65,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="AreaTypeId" class="form-label">Area Type *</label>
-                                <select asp-for="AreaTypeId" class="form-select" asp-items="ViewBag.AreaTypeId">
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="Model.AreaTypes">
                                     <option value="">-- Select Area Type --</option>
                                 </select>
                                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>
@@ -81,7 +81,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CreatedByUserId" class="form-label">Created By User *</label>
-                                <select asp-for="CreatedByUserId" class="form-select" asp-items="ViewBag.CreatedByUserId">
+                                <select asp-for="CreatedByUserId" class="form-select" asp-items="Model.Users">
                                     <option value="">-- Select User --</option>
                                 </select>
                                 <span asp-validation-for="CreatedByUserId" class="text-danger"></span>

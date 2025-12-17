@@ -62,9 +62,6 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
                 .HasConstraintName("FK_RolePermission_Permission");
         });
         base.OnModelCreating(builder);
-        // Customize the ASP.NET Identity model and override the defaults if needed.
-        // For example, you can rename the ASP.NET Identity table names and more.
-        // Add your customizations after calling base.OnModelCreating(builder);
         builder.ApplyConfiguration(new IdentityTestUserEntityConfiguration());
     }
 }
@@ -73,7 +70,6 @@ public class IdentityTestUserEntityConfiguration : IEntityTypeConfiguration<TpaS
 {
     public void Configure(EntityTypeBuilder<TpaSodManagementUser> builder)
     {
-        // PhoneNumber is already in IdentityUser<long>, set default to empty string to avoid NULL insertion errors
         builder.Property(u => u.PhoneNumber).HasDefaultValue(string.Empty);
         builder.Property(u => u.PrimaryContact).HasMaxLength(20);
         builder.Property(u => u.IsActive).HasDefaultValue(false);
@@ -83,7 +79,6 @@ public class IdentityTestUserEntityConfiguration : IEntityTypeConfiguration<TpaS
         builder.Property(u => u.WebsiteId);
         builder.Property(u => u.FarmId);
         
-        // Ensure Identity required fields have default values to prevent NULL insertion errors
         builder.Property(u => u.EmailConfirmed).HasDefaultValue(false);
         builder.Property(u => u.PhoneNumberConfirmed).HasDefaultValue(false);
         builder.Property(u => u.TwoFactorEnabled).HasDefaultValue(false);

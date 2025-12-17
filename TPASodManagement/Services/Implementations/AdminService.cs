@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.ViewModels.Admin;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -48,7 +49,7 @@ namespace TpaSodManagement.Services.Implementations
             return filteredUsers;
         }
 
-        public async Task<IdentityRole<long>> GetRoleByIdAsync(long id)
+        public async Task<IdentityRole<long>?> GetRoleByIdAsync(long id)
         {
             return await _roleManager.FindByIdAsync(id.ToString());
         }
@@ -190,7 +191,7 @@ namespace TpaSodManagement.Services.Implementations
                     return (false, "Role not found!");
 
                 // Check if role is SuperAdmin
-                if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(role.Name, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
                 {
                     return (false, "SuperAdmin role cannot be edited.");
                 }
@@ -220,20 +221,26 @@ namespace TpaSodManagement.Services.Implementations
                 }
 
                 // Check if role is SuperAdmin
-                if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(role.Name, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
                 {
                     return (false, "SuperAdmin role cannot be deleted.");
                 }
 
-                var users = await _userManager.GetUsersInRoleAsync(role.Name);
+                var roleName = role.Name ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(roleName))
+                {
+                    return (false, "Role name is invalid.");
+                }
+
+                var users = await _userManager.GetUsersInRoleAsync(roleName);
                 int usersRemovedCount = 0;
 
                 foreach (var user in users)
                 {
-                    var removeResult = await _userManager.RemoveFromRoleAsync(user, role.Name);
+                    var removeResult = await _userManager.RemoveFromRoleAsync(user, roleName);
                     if (!removeResult.Succeeded)
                     {
-                        _logger.LogError("Failed to remove role '{RoleName}' from user '{UserEmail}' during deletion attempt.", role.Name, user.Email);
+                        _logger.LogError("Failed to remove role '{RoleName}' from user '{UserEmail}' during deletion attempt.", roleName, user.Email);
                         return (false, $"Failed to remove role from user {user.Email}. Role deletion cancelled.");
                     }
                     usersRemovedCount++;
@@ -256,6 +263,95 @@ namespace TpaSodManagement.Services.Implementations
                 _logger.LogError(ex, "Error deleting role: {RoleId}", id);
                 return (false, "An error occurred while deleting the role.");
             }
+        }
+
+        public async Task<AdminIndexViewModel> GetAdminIndexViewModelAsync()
+        {
+            var roles = await GetAllRolesAsync();
+            var users = await GetAllUsersAsync();
+
+            var roleViewModels = roles
+                .Select(r => new RoleItemViewModel
+                {
+                    Id = r.Id,
+                    Name = r.Name ?? string.Empty
+                })
+                .ToList();
+
+            var userViewModels = new List<UserItemViewModel>();
+            foreach (var user in users)
+            {
+                var userRoles = await _userManager.GetRolesAsync(user);
+                userViewModels.Add(new UserItemViewModel
+                {
+                    Id = user.Id,
+                    UserName = user.UserName ?? string.Empty,
+                    Email = user.Email ?? string.Empty,
+                    Roles = userRoles.ToList()
+                });
+            }
+
+            return new AdminIndexViewModel
+            {
+                Roles = roleViewModels,
+                Users = userViewModels
+            };
+        }
+
+        public async Task<EditRoleViewModel?> GetEditRoleViewModelAsync(long roleId)
+        {
+            var role = await GetRoleByIdAsync(roleId);
+            if (role == null)
+            {
+                return null;
+            }
+
+            var roleName = role.Name ?? string.Empty;
+            var usersInRole = string.IsNullOrEmpty(roleName)
+                ? new List<TpaSodManagementUser>()
+                : await GetUsersInRoleAsync(roleName);
+
+            return new EditRoleViewModel
+            {
+                Id = role.Id,
+                Name = role.Name ?? string.Empty,
+                UsersInRole = usersInRole.Select(u => u.UserName ?? string.Empty).ToList()
+            };
+        }
+
+        public async Task<RoleDetailsViewModel?> GetRoleDetailsViewModelAsync(long roleId)
+        {
+            var role = await GetRoleByIdAsync(roleId);
+            if (role == null)
+            {
+                return null;
+            }
+
+            var roleName = role.Name ?? string.Empty;
+            var usersInRole = string.IsNullOrEmpty(roleName)
+                ? new List<TpaSodManagementUser>()
+                : await GetUsersInRoleAsync(roleName);
+            var usersWithRoles = new List<UserRolesViewModel>();
+
+            foreach (var user in usersInRole)
+            {
+                var roles = await _userManager.GetRolesAsync(user);
+                usersWithRoles.Add(new UserRolesViewModel
+                {
+                    Id = user.Id,
+                    UserName = user.UserName ?? string.Empty,
+                    Email = user.Email ?? string.Empty,
+                    Roles = roles.ToList()
+                });
+            }
+
+            return new RoleDetailsViewModel
+            {
+                Id = role.Id,
+                Name = role.Name ?? string.Empty,
+                NormalizedName = role.NormalizedName,
+                UsersWithRoles = usersWithRoles
+            };
         }
     }
 }

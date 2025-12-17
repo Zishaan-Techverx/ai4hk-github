@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Models;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.ViewModels.Permission;
 
 namespace TpaSodManagement.Controllers
 {
@@ -30,7 +31,16 @@ namespace TpaSodManagement.Controllers
             try
             {
                 var roles = await _roleManager.Roles.ToListAsync();
-                return View(roles);
+                var vm = new PermissionIndexViewModel
+                {
+                    Roles = roles.Select(r => new RoleListItemViewModel
+                    {
+                        Id = r.Id,
+                        Name = r.Name,
+                        NormalizedName = r.NormalizedName
+                    }).ToList()
+                };
+                return View(vm);
             }
             catch (Exception ex)
             {
@@ -50,7 +60,7 @@ namespace TpaSodManagement.Controllers
                     return View("NotFound");
 
                 // Check if role is SuperAdmin
-                if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                if (role.Name != null && role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
                 {
                     TempData["ErrorMessage"] = "SuperAdmin role permissions cannot be managed.";
                     return RedirectToAction("Index");
@@ -61,7 +71,8 @@ namespace TpaSodManagement.Controllers
 
                 var model = new ManagePermissionsViewModel
                 {
-                    Role = role,
+                    RoleId = role.Id,
+                    RoleName = role.Name ?? string.Empty,
                     AllPermissions = permissions,
                     RolePermissions = rolePermissions
                 };
@@ -90,7 +101,7 @@ namespace TpaSodManagement.Controllers
                 }
 
                 // Check if role is SuperAdmin
-                if (role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+                if (role.Name != null && role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
                 {
                     TempData["ErrorMessage"] = "SuperAdmin role permissions cannot be managed.";
                     return RedirectToAction("Index");
@@ -117,12 +128,5 @@ namespace TpaSodManagement.Controllers
                 return RedirectToAction("Manage", new { roleId });
             }
         }
-    }
-
-    public class ManagePermissionsViewModel
-    {
-        public IdentityRole<long> Role { get; set; }
-        public List<Permission> AllPermissions { get; set; }
-        public List<RolePermission> RolePermissions { get; set; }
     }
 }

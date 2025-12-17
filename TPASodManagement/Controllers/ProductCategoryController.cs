@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.ViewModels.ProductCategory;
 
 namespace TpaSodManagement.Controllers
 {
@@ -22,9 +23,10 @@ namespace TpaSodManagement.Controllers
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                return View(new List<ProductCategory>());
+                return View(new List<ProductCategoryItemViewModel>());
             }
-            return View(result.Data);
+            var vm = result.Data?.Select(MapToItemViewModel).ToList() ?? new List<ProductCategoryItemViewModel>();
+            return View(vm);
         }
 
         // GET: ProductCategory/Details/{id}
@@ -35,30 +37,32 @@ namespace TpaSodManagement.Controllers
             var result = await _productCategoryService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
+            var vm = MapToEditViewModel(result.Data, isDetailsView: true);
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Product Category Details";
-            return View("Edit", result.Data);
+            return View("Edit", vm);
         }
 
         public IActionResult Create()
         {
-            return View();
+            return View(new ProductCategoryEditViewModel { IsActive = true });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(ProductCategory productCategory)
+        public async Task<IActionResult> Create(ProductCategoryEditViewModel productCategoryVm)
         {
             if (!ModelState.IsValid)
             {
-                return View(productCategory);
+                return View(productCategoryVm);
             }
 
-            var result = await _productCategoryService.CreateAsync(productCategory);
+            var entity = MapToEntity(productCategoryVm);
+            var result = await _productCategoryService.CreateAsync(entity);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                return View(productCategory);
+                return View(productCategoryVm);
             }
 
             TempData["SuccessMessage"] = "Product category created successfully.";
@@ -72,26 +76,28 @@ namespace TpaSodManagement.Controllers
             var result = await _productCategoryService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
+            var vm = MapToEditViewModel(result.Data);
             ViewBag.IsDetailsView = false;
-            return View(result.Data);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, ProductCategory productCategory)
+        public async Task<IActionResult> Edit(int id, ProductCategoryEditViewModel productCategoryVm)
         {
-            if (id != productCategory.ProductCategoryId) return NotFound();
+            if (id != productCategoryVm.ProductCategoryId) return NotFound();
 
             if (!ModelState.IsValid)
             {
-                return View(productCategory);
+                return View(productCategoryVm);
             }
 
-            var result = await _productCategoryService.UpdateAsync(productCategory);
+            var entity = MapToEntity(productCategoryVm);
+            var result = await _productCategoryService.UpdateAsync(entity);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                return View(productCategory);
+                return View(productCategoryVm);
             }
 
             TempData["SuccessMessage"] = "Product category updated successfully.";
@@ -108,6 +114,46 @@ namespace TpaSodManagement.Controllers
                 return Json(new { success = false, message = result.Message });
             }
             return Json(new { success = true, message = "Product category deleted successfully." });
+        }
+
+        private static ProductCategoryItemViewModel MapToItemViewModel(ProductCategory entity)
+        {
+            return new ProductCategoryItemViewModel
+            {
+                ProductCategoryId = entity.ProductCategoryId,
+                CategoryCode = entity.CategoryCode,
+                CategoryName = entity.CategoryName,
+                Description = entity.Description,
+                IsActive = entity.IsActive,
+                CreatedDate = entity.CreatedDate
+            };
+        }
+
+        private static ProductCategoryEditViewModel MapToEditViewModel(ProductCategory entity, bool isDetailsView = false)
+        {
+            return new ProductCategoryEditViewModel
+            {
+                ProductCategoryId = entity.ProductCategoryId,
+                CategoryCode = entity.CategoryCode,
+                CategoryName = entity.CategoryName,
+                Description = entity.Description,
+                IsActive = entity.IsActive,
+                CreatedDate = entity.CreatedDate,
+                IsDetailsView = isDetailsView
+            };
+        }
+
+        private static ProductCategory MapToEntity(ProductCategoryEditViewModel vm)
+        {
+            return new ProductCategory
+            {
+                ProductCategoryId = vm.ProductCategoryId,
+                CategoryCode = vm.CategoryCode,
+                CategoryName = vm.CategoryName,
+                Description = vm.Description,
+                IsActive = vm.IsActive,
+                CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow
+            };
         }
     }
 }

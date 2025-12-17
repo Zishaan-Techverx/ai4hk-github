@@ -1,4 +1,4 @@
-@model IEnumerable<TpaSodManagement.Models.Db.Farm>
+@model IEnumerable<TpaSodManagement.ViewModels.Farm.FarmItemViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -111,10 +111,10 @@
                         @Html.DisplayFor(modelItem => item.ClimateZone)
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.AreaType.AreaTypeName)
+                        @(item.AreaTypeName ?? "N/A")
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Organization.OrganizationName)
+                        @(item.OrganizationName ?? "N/A")
                     </td>
                     <td style="display: flex; gap: 8px; align-items: center; padding: 20px;">
                         @if (User.HasPermission("Farm.Edit"))

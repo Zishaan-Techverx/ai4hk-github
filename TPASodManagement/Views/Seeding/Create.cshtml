@@ -1,4 +1,4 @@
-@model TpaSodManagement.Models.Db.Seeding
+@model TpaSodManagement.ViewModels.Seeding.SeedingEditViewModel
 
 @{
     ViewData["Title"] = "Create Seeding";
@@ -43,7 +43,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="UserId" class="form-label">User</label>
-                                <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserId">
+                                <select asp-for="UserId" class="form-select" asp-items="Model.Users">
                                     <option value="">-- Select User --</option>
                                 </select>
                                 <span asp-validation-for="UserId" class="text-danger"></span>
@@ -51,7 +51,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="FarmId" class="form-label">Farm</label>
-                                <select asp-for="FarmId" class="form-select" asp-items="ViewBag.FarmId">
+                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms">
                                     <option value="">-- Select Farm --</option>
                                 </select>
                                 <span asp-validation-for="FarmId" class="text-danger"></span>
@@ -61,7 +61,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="FieldId" class="form-label">Field</label>
-                                <select asp-for="FieldId" class="form-select" asp-items="ViewBag.FieldId">
+                                <select asp-for="FieldId" class="form-select" asp-items="Model.Fields">
                                     <option value="">-- Select Field --</option>
                                 </select>
                                 <span asp-validation-for="FieldId" class="text-danger"></span>
@@ -69,7 +69,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="TagRangeId" class="form-label">Tag Range</label>
-                                <select asp-for="TagRangeId" class="form-select" asp-items="ViewBag.TagRangeId">
+                                <select asp-for="TagRangeId" class="form-select" asp-items="Model.TagRanges">
                                     <option value="">-- Select Tag Range --</option>
                                 </select>
                                 <span asp-validation-for="TagRangeId" class="text-danger"></span>
@@ -85,7 +85,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="AreaTypeId" class="form-label">Area Type</label>
-                                <select asp-for="AreaTypeId" class="form-select" asp-items="ViewBag.AreaTypeId">
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="Model.AreaTypes">
                                     <option value="">-- Select Area Type --</option>
                                 </select>
                                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>

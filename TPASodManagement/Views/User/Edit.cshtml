@@ -1,12 +1,9 @@
-@model TpaSodManagement.Areas.Identity.Data.TpaSodManagementUser
-@using TpaSodManagement.Models.Db
+@model TpaSodManagement.ViewModels.User.UserEditViewModel
 
 @{
-    bool isDetailsView = ViewBag.IsDetailsView ?? false;
+    bool isDetailsView = ViewBag.IsDetailsView ?? Model.IsDetailsView;
     ViewData["Title"] = isDetailsView ? "User Details" : "Edit User";
     string disabledAttr = isDetailsView ? "disabled" : null;
-    Person? person = ViewBag.Person as Person;
-    Address? address = ViewBag.Address as Address;
 }
 
 <br />
@@ -56,14 +53,7 @@
 
                         @Html.AntiForgeryToken()
 
-                        @* Hidden Fields *@
                         <input type="hidden" asp-for="Id" />
-                        <input type="hidden" asp-for="UserName" />
-                        <input type="hidden" asp-for="EmailConfirmed" />
-                        <input type="hidden" asp-for="PhoneNumberConfirmed" />
-                        <input type="hidden" asp-for="TwoFactorEnabled" />
-                        <input type="hidden" asp-for="LockoutEnabled" />
-                        <input type="hidden" asp-for="AccessFailedCount" />
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -82,15 +72,15 @@
                         @* Person Fields (FirstName, LastName) *@
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">First Name</label>
-                                <input name="firstName" class="form-control" value="@(person?.FirstName ?? "")" disabled="@disabledAttr" />
-                                <span class="text-danger"></span>
+                                <label asp-for="FirstName" class="form-label"></label>
+                                <input asp-for="FirstName" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="FirstName" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label class="form-label">Last Name</label>
-                                <input name="lastName" class="form-control" value="@(person?.LastName ?? "")" disabled="@disabledAttr" />
-                                <span class="text-danger"></span>
+                                <label asp-for="LastName" class="form-label"></label>
+                                <input asp-for="LastName" class="form-control" disabled="@disabledAttr" />
+                                <span asp-validation-for="LastName" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -103,7 +93,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="OrganizationName" class="form-label">Organization Name</label>
-                                <select asp-for="OrganizationName" class="form-select" asp-items="ViewBag.Organizations" disabled="@disabledAttr">
+                                <select asp-for="OrganizationName" class="form-select" asp-items="Model.Organizations" disabled="@disabledAttr">
                                     <option value="">-- Select Organization --</option>
                                 </select>
                                 <span asp-validation-for="OrganizationName" class="text-danger"></span>
@@ -124,7 +114,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Address Type</label>
-                                <select name="addressTypeId" class="form-select" asp-items="ViewBag.AddressTypes" disabled="@disabledAttr">
+                                <select asp-for="AddressTypeId" class="form-select" asp-items="Model.AddressTypes" disabled="@disabledAttr">
                                     <option value="">-- Select Address Type --</option>
                                 </select>
                             </div>
@@ -133,36 +123,36 @@
                                 <label class="form-label">State/Province</label>
                                 <input list="stateProvinceList" name="stateProvinceName" id="stateProvinceInput" 
                                        class="form-control" 
-                                       value="@(address?.StateProvince?.StateName ?? "")"
+                                       value="@(Model.StateProvinceName ?? "")"
                                        placeholder="Type to search State/Province..." 
                                        disabled="@disabledAttr" />
                                 <datalist id="stateProvinceList">
-                                    @if (ViewBag.StateProvinces != null)
+                                    @if (Model.StateProvinces != null)
                                     {
-                                        foreach (var item in (SelectList)ViewBag.StateProvinces)
+                                        foreach (var item in Model.StateProvinces)
                                         {
                                             <option value="@item.Text" data-id="@item.Value">@item.Text</option>
                                         }
                                     }
                                 </datalist>
-                                <input type="hidden" name="stateProvinceId" id="stateProvinceIdHidden" value="@(address?.StateProvinceId?.ToString() ?? "")" />
+                                <input type="hidden" asp-for="StateProvinceId" id="stateProvinceIdHidden" value="@(Model.StateProvinceId?.ToString() ?? "")" />
                             </div>
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label">Address Line 1</label>
-                            <input name="addressLine1" class="form-control" value="@(address?.AddressLine1 ?? "")" disabled="@disabledAttr" />
+                            <input asp-for="AddressLine1" class="form-control" disabled="@disabledAttr" />
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">City</label>
-                                <input name="city" class="form-control" value="@(address?.City ?? "")" disabled="@disabledAttr" />
+                                <input asp-for="City" class="form-control" disabled="@disabledAttr" />
                             </div>
 
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Postal Code</label>
-                                <input name="postalCode" class="form-control" value="@(address?.PostalCode ?? "")" disabled="@disabledAttr" />
+                                <input asp-for="PostalCode" class="form-control" disabled="@disabledAttr" />
                             </div>
                         </div>
 
@@ -215,9 +205,9 @@
                 
                 // Map StateName to StateProvinceId
                 const stateProvinceMap = {};
-                @if (ViewBag.StateProvinces != null)
+                @if (Model.StateProvinces != null)
                 {
-                    foreach (var item in (SelectList)ViewBag.StateProvinces)
+                    foreach (var item in (SelectList)Model.StateProvinces)
                     {
                         <text>
                         stateProvinceMap['@item.Text'] = '@item.Value';
@@ -226,42 +216,28 @@
                 }
                 
                 // When user selects from datalist or types and matches
-                stateProvinceInput.addEventListener('input', function() {
-                    const selectedName = this.value;
-                    if (stateProvinceMap[selectedName]) {
-                        stateProvinceIdHidden.value = stateProvinceMap[selectedName];
-                    } else {
-                        // If user types something that doesn't match, clear the hidden field
-                        stateProvinceIdHidden.value = '';
-                    }
-                });
-                
-                // Handle datalist selection
-                stateProvinceInput.addEventListener('change', function() {
-                    const selectedName = this.value;
-                    if (stateProvinceMap[selectedName]) {
-                        stateProvinceIdHidden.value = stateProvinceMap[selectedName];
-                    }
-                });
-
-                // Initialize Select2 for State/Province dropdown
-                $('#stateProvinceSelect').select2({
-                    theme: 'bootstrap-5',
-                    placeholder: '-- Select State/Province --',
-                    allowClear: true,
-                    width: '100%'
-                });
-
-                // Handle disabled state
-                @if (isDetailsView)
-                {
-                    <text>
-                    $('#stateProvinceSelect').prop('disabled', true).trigger('change');
-                    </text>
+                if (stateProvinceInput && stateProvinceIdHidden) {
+                    stateProvinceInput.addEventListener('input', function() {
+                        const selectedName = this.value;
+                        if (stateProvinceMap[selectedName]) {
+                            stateProvinceIdHidden.value = stateProvinceMap[selectedName];
+                        } else {
+                            // If user types something that doesn't match, clear the hidden field
+                            stateProvinceIdHidden.value = '';
+                        }
+                    });
+                    
+                    // Handle datalist selection
+                    stateProvinceInput.addEventListener('change', function() {
+                        const selectedName = this.value;
+                        if (stateProvinceMap[selectedName]) {
+                            stateProvinceIdHidden.value = stateProvinceMap[selectedName];
+                        }
+                    });
                 }
 
                 const organizationSelect = document.querySelector('select[name="OrganizationName"]');
-                const firstNameInput = document.querySelector('input[name="firstName"]');
+                const firstNameInput = document.querySelector('input[name="FirstName"]');
                 const userNameInput = document.querySelector('input[name="UserName"]');
                 
                 const originalUsername = userNameInput ? userNameInput.value : '';

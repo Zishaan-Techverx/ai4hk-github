@@ -1,4 +1,4 @@
-@model IEnumerable<TpaSodManagement.Models.Db.Product>
+@model IEnumerable<TpaSodManagement.ViewModels.Product.ProductItemViewModel>
 
 @{
     ViewData["Title"] = "Index";
@@ -104,16 +104,16 @@
                         @Html.DisplayFor(modelItem => item.CreatedDate)
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.CertificateType.CertificateTypeId)
+                        @(item.CertificateTypeName ?? "N/A")
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.CreatedByUser.UserName)
+                        @(item.CreatedByUserName ?? "N/A")
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.Currency)
+                        @(item.CurrencyCode ?? "N/A")
                     </td>
                     <td>
-                        @Html.DisplayFor(modelItem => item.ProductCategory.ProductCategoryId)
+                        @(item.ProductCategoryName ?? "N/A")
                     </td>
                     <td style="display: flex; gap: 8px; align-items: center;">
                         @if (User.HasPermission("Product.Edit"))

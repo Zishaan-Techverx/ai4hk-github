@@ -1,4 +1,4 @@
-﻿@model IEnumerable<TpaSodManagement.Models.Db.Organization>
+﻿@model IEnumerable<TpaSodManagement.ViewModels.Organization.OrganizationItemViewModel>
 
 @{
     ViewData["Title"] = "Organizations";
@@ -53,7 +53,7 @@
                     <td>@Html.DisplayFor(modelItem => item.OrganizationName)</td>
                     <td>@Html.DisplayFor(modelItem => item.OrganizationType)</td>
                     <td>
-                        @if (item.LogoBytes != null && item.LogoBytes.Length > 0)
+                        @if (item.HasLogo)
                         {
                             <img src="@Url.Action("GetLogo", "Organization", new { id = item.OrganizationId })"
                                  alt="Logo"

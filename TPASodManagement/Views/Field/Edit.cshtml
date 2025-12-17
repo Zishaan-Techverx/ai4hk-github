@@ -1,4 +1,4 @@
-@model TpaSodManagement.Models.Db.Field
+@model TpaSodManagement.ViewModels.Field.FieldEditViewModel
 
 @{
     bool isDetailsView = ViewBag.IsDetailsView ?? false;
@@ -68,7 +68,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="FarmId" class="form-label">Farm *</label>
-                                <select asp-for="FarmId" class="form-select" asp-items="ViewBag.FarmId" disabled="@(disabledAttr)">
+                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms" disabled="@(disabledAttr)">
                                     <option value="">-- Select Farm --</option>
                                 </select>
                                 <span asp-validation-for="FarmId" class="text-danger"></span>
@@ -76,7 +76,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="AreaTypeId" class="form-label">Area Type *</label>
-                                <select asp-for="AreaTypeId" class="form-select" asp-items="ViewBag.AreaTypeId" disabled="@(disabledAttr)">
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="Model.AreaTypes" disabled="@(disabledAttr)">
                                     <option value="">-- Select Area Type --</option>
                                 </select>
                                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>
@@ -92,7 +92,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CreatedByUserId" class="form-label">Created By User *</label>
-                                <select asp-for="CreatedByUserId" class="form-select" asp-items="ViewBag.CreatedByUserId" disabled="@(disabledAttr)">
+                                <select asp-for="CreatedByUserId" class="form-select" asp-items="Model.Users" disabled="@(disabledAttr)">
                                     <option value="">-- Select User --</option>
                                 </select>
                                 <span asp-validation-for="CreatedByUserId" class="text-danger"></span>

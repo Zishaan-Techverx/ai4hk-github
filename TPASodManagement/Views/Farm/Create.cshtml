@@ -1,4 +1,4 @@
-@model TpaSodManagement.Models.Db.Farm
+@model TpaSodManagement.ViewModels.Farm.FarmEditViewModel
 
 @{
     ViewData["Title"] = "Create Farm";
@@ -45,7 +45,7 @@
                                 <label asp-for="OrganizationId" class="form-label">Organization</label>
                                 <select asp-for="OrganizationId" 
                                         class="form-select" 
-                                        asp-items="ViewBag.OrganizationId"
+                                        asp-items="Model.Organizations"
                                         name="OrganizationId"
                                         id="OrganizationId">
                                     <option value="">-- Select Organization --</option>
@@ -63,7 +63,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="AreaTypeId" class="form-label">Area Type</label>
-                                <select asp-for="AreaTypeId" class="form-select" asp-items="ViewBag.AreaTypeId">
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="Model.AreaTypes">
                                     <option value="">-- Select Area Type --</option>
                                 </select>
                                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>

@@ -5,6 +5,7 @@ using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.Areas.Identity.Data; // TpaSodManagementUser ke liye
 using System.Collections.Generic; // List aur Tuple ke liye
 using System.Linq; // LINQ use karne ke liye
+using TpaSodManagement.ViewModels.Admin;
 
 [Authorize]
 public class AdminController : Controller
@@ -24,15 +25,7 @@ public class AdminController : Controller
     {
         try
         {
-            var roles = await _adminService.GetAllRolesAsync();
-            var users = await _adminService.GetAllUsersAsync();
-
-            var model = new
-            {
-                Roles = roles,
-                Users = users
-            };
-
+            var model = await _adminService.GetAdminIndexViewModelAsync();
             return View("~/Views/AdminPanel/Index.cshtml", model);
         }
         catch (Exception ex)
@@ -44,7 +37,6 @@ public class AdminController : Controller
     }
 
     // POST: Admin/AssignRoleToUser
-    // UPDATED: Single role assignment logic ko use karega.
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "CanEditAdmin")]
@@ -85,7 +77,6 @@ public class AdminController : Controller
     }
 
     // POST: Admin/RemoveRoleFromUser
-    // NEW: User se ek specific role hatane ke liye
     [HttpPost]
     [ValidateAntiForgeryToken]
     [Authorize(Policy = "CanEditAdmin")]
@@ -114,10 +105,6 @@ public class AdminController : Controller
             {
                 TempData["ErrorMessage"] = message;
             }
-
-            // Note: GetRoleByIdAsync expects long, but we're using roleName here which seems incorrect
-            // This code path might need review
-            return RedirectToAction("Index");
 
             return RedirectToAction("Index");
         }
@@ -175,15 +162,18 @@ public class AdminController : Controller
             if (!long.TryParse(id, out long roleIdLong))
                 return View("NotFound");
             
-            var role = await _adminService.GetRoleByIdAsync(roleIdLong);
-            if (role == null)
+            var roleVm = await _adminService.GetEditRoleViewModelAsync(roleIdLong);
+            if (roleVm == null)
                 return View("NotFound");
 
-            var usersInRole = await _adminService.GetUsersInRoleAsync(role.Name);
-            ViewBag.UsersInRole = usersInRole.Select(u => u.UserName).ToList();
-            ViewBag.RoleName = role.Name;
+            // Block SuperAdmin edit (behavior unchanged)
+            if (roleVm.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+            {
+                TempData["ErrorMessage"] = "SuperAdmin role cannot be edited.";
+                return RedirectToAction("Index");
+            }
 
-            return View("~/Views/AdminPanel/Edit.cshtml", role);
+            return View("~/Views/AdminPanel/Edit.cshtml", roleVm);
         }
         catch (Exception ex)
         {
@@ -208,7 +198,7 @@ public class AdminController : Controller
 
             // Check if role is SuperAdmin
             var checkRole = await _adminService.GetRoleByIdAsync(roleIdLong);
-            if (checkRole != null && checkRole.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+            if (checkRole != null && string.Equals(checkRole.Name, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["ErrorMessage"] = "SuperAdmin role cannot be edited.";
                 return RedirectToAction("Index");
@@ -222,9 +212,9 @@ public class AdminController : Controller
                 return RedirectToAction("Index");
             }
 
-            var role = await _adminService.GetRoleByIdAsync(roleIdLong);
+            var roleVm = await _adminService.GetEditRoleViewModelAsync(roleIdLong);
             TempData["ErrorMessage"] = message;
-            return View("~/Views/AdminPanel/Edit.cshtml", role);
+            return View("~/Views/AdminPanel/Edit.cshtml", roleVm);
         }
         catch (Exception ex)
         {
@@ -232,8 +222,8 @@ public class AdminController : Controller
             ModelState.AddModelError("", "An error occurred while updating the role.");
             if (long.TryParse(id, out long roleIdLong2))
             {
-                var role = await _adminService.GetRoleByIdAsync(roleIdLong2);
-                return View("~/Views/AdminPanel/Edit.cshtml", role);
+                var roleVm = await _adminService.GetEditRoleViewModelAsync(roleIdLong2);
+                return View("~/Views/AdminPanel/Edit.cshtml", roleVm);
             }
             return RedirectToAction("Index");
         }
@@ -253,6 +243,9 @@ public class AdminController : Controller
             
             var role = await _adminService.GetRoleByIdAsync(roleIdLong);
             if (role == null)
+                return View("NotFound");
+
+            if (string.IsNullOrWhiteSpace(role.Name))
                 return View("NotFound");
 
             var usersInRole = await _adminService.GetUsersInRoleAsync(role.Name);
@@ -290,7 +283,7 @@ public class AdminController : Controller
 
             // Check if role is SuperAdmin
             var role = await _adminService.GetRoleByIdAsync(roleIdLong);
-            if (role != null && role.Name.Equals("SuperAdmin", StringComparison.OrdinalIgnoreCase))
+            if (role != null && string.Equals(role.Name, "SuperAdmin", StringComparison.OrdinalIgnoreCase))
             {
                 TempData["ErrorMessage"] = "SuperAdmin role cannot be deleted.";
                 return RedirectToAction("Index");
@@ -329,24 +322,11 @@ public class AdminController : Controller
             if (!long.TryParse(id, out long roleIdLong))
                 return View("NotFound");
             
-            var role = await _adminService.GetRoleByIdAsync(roleIdLong);
-            if (role == null)
+            var roleDetails = await _adminService.GetRoleDetailsViewModelAsync(roleIdLong);
+            if (roleDetails == null)
                 return View("NotFound");
 
-            var usersInRole = await _adminService.GetUsersInRoleAsync(role.Name);
-
-            var usersWithRoles = new List<(TpaSodManagementUser user, List<string> roles)>();
-            foreach (var user in usersInRole)
-            {
-                var roles = await _adminService.GetUserRolesAsync(user.Id);
-                usersWithRoles.Add((user, roles));
-            }
-
-            ViewBag.UsersInRole = usersWithRoles;
-            ViewBag.RoleName = role.Name;
-            ViewBag.RoleId = role.Id;
-
-            return View("~/Views/AdminPanel/Detail.cshtml", role);
+            return View("~/Views/AdminPanel/Detail.cshtml", roleDetails);
         }
         catch (Exception ex)
         {

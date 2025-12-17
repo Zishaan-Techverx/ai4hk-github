@@ -1,4 +1,4 @@
-@model TpaSodManagement.Models.Db.Product
+@model TpaSodManagement.ViewModels.Product.ProductEditViewModel
 
 @{
     ViewData["Title"] = "Create Product";
@@ -57,7 +57,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="ProductCategoryId" class="form-label">Product Category</label>
-                                <select asp-for="ProductCategoryId" class="form-select" asp-items="ViewBag.ProductCategoryId">
+                                <select asp-for="ProductCategoryId" class="form-select" asp-items="Model.Categories">
                                     <option value="">-- Select Category --</option>
                                 </select>
                                 <span asp-validation-for="ProductCategoryId" class="text-danger"></span>
@@ -79,7 +79,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CurrencyId" class="form-label">Currency</label>
-                                <select asp-for="CurrencyId" class="form-select" asp-items="ViewBag.CurrencyId">
+                                <select asp-for="CurrencyId" class="form-select" asp-items="Model.Currencies">
                                     <option value="">-- Select Currency --</option>
                                 </select>
                                 <span asp-validation-for="CurrencyId" class="text-danger"></span>
@@ -89,7 +89,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CertificateTypeId" class="form-label">Certificate Type</label>
-                                <select asp-for="CertificateTypeId" class="form-select" asp-items="ViewBag.CertificateTypeId">
+                                <select asp-for="CertificateTypeId" class="form-select" asp-items="Model.CertificateTypes">
                                     <option value="">-- Select Certificate Type --</option>
                                 </select>
                                 <span asp-validation-for="CertificateTypeId" class="text-danger"></span>

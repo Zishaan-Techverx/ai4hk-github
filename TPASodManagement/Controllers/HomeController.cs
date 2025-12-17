@@ -1,49 +1,45 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using System.Diagnostics;
 using System.Threading.Tasks;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Models;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Services.Interfaces;
 
 namespace TsaSodManagement.Controllers;
 
 public class HomeController : Controller
 {
     private readonly ILogger<HomeController> _logger;
-    private readonly SodDbContext _context;
     private readonly UserManager<TpaSodManagementUser> _userManager;
     private readonly SignInManager<TpaSodManagementUser> _signInManager;
+    private readonly IHomeService _homeService;
 
     public HomeController(
         ILogger<HomeController> logger,
-        SodDbContext context,
         UserManager<TpaSodManagementUser> userManager,
-        SignInManager<TpaSodManagementUser> signInManager)
+        SignInManager<TpaSodManagementUser> signInManager,
+        IHomeService homeService)
     {
         _logger = logger;
-        _context = context;
         _userManager = userManager; 
         _signInManager = signInManager;
+        _homeService = homeService;
     }
 
     public async Task<IActionResult> Index()
     {
-        // Load ALL organizations for _AuthPartial dropdown (no IsActive filter)
-        var organizations = await _context.Organizations
-            .OrderBy(o => o.OrganizationName)
-            .ToListAsync();
-        
-        ViewData["Organizations"] = organizations;
+        var vm = await _homeService.GetHomeIndexViewModelAsync(User.Identity?.IsAuthenticated ?? false);
 
-        if (User.Identity.IsAuthenticated)
+        // Preserve existing ViewData/ViewBag usage to avoid view changes
+        ViewData["Organizations"] = vm.Organizations;
+
+        if (vm.IsAuthenticated)
         {
-            ViewBag.FarmCount = await _context.Farms.CountAsync();
-            ViewBag.CustomerCount = await _context.Customers.CountAsync();
-            ViewBag.ProductCount = await _context.Products.CountAsync();
-            ViewBag.SaleCount = await _context.Sales.CountAsync();
+            ViewBag.FarmCount = vm.FarmCount;
+            ViewBag.CustomerCount = vm.CustomerCount;
+            ViewBag.ProductCount = vm.ProductCount;
+            ViewBag.SaleCount = vm.SaleCount;
 
             if (TempData.ContainsKey("ShowWelcomePopup"))
             {
@@ -74,7 +70,7 @@ public class HomeController : Controller
         {
             var user = await _userManager.FindByEmailAsync(Input_Email);
 
-            if (user != null)
+            if (user != null && !string.IsNullOrEmpty(user.UserName))
             {
                 result = await _signInManager.PasswordSignInAsync(user.UserName, Input_Password, Input_RememberMe, lockoutOnFailure: false);
             }

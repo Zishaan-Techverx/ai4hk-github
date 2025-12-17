@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.ViewModels.Farm;
 
 namespace TpaSodManagement.Controllers
 {
@@ -23,9 +24,10 @@ namespace TpaSodManagement.Controllers
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                return View(new List<Farm>());
+                return View(new List<FarmItemViewModel>());
             }
-            return View(result.Data);
+            var vm = result.Data?.Select(MapToItemViewModel).ToList() ?? new List<FarmItemViewModel>();
+            return View(vm);
         }
 
         public async Task<IActionResult> Details(long? id)
@@ -35,16 +37,11 @@ namespace TpaSodManagement.Controllers
             var result = await _farmService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
-            var dropdowns = await _farmService.GetDropdownDataAsync();
-            if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
-            {
-                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
-                ViewBag.OrganizationId = dropdowns.Data.Organizations;
-            }
-
+            var vm = MapToEditViewModel(result.Data, isDetailsView: true);
+            await PopulateDropdowns(vm, result.Data.OrganizationId, result.Data.AreaTypeId);
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Farm Details";
-            return View("Edit", result.Data);
+            return View("Edit", vm);
         }
 
         public async Task<IActionResult> Create()
@@ -52,35 +49,23 @@ namespace TpaSodManagement.Controllers
             // Clear any existing ModelState errors on page load
             ModelState.Clear();
             
-            var result = await _farmService.GetDropdownDataAsync();
-            if (result.Success && result.Data.AreaTypes != null && result.Data.Organizations != null)
-            {
-                ViewBag.AreaTypeId = result.Data.AreaTypes;
-                ViewBag.OrganizationId = result.Data.Organizations;
-            }
-            else
-            {
-                TempData["Error"] = result.Message;
-            }
-            return View();
+            var vm = new FarmEditViewModel();
+            await PopulateDropdowns(vm);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Farm farm)
+        public async Task<IActionResult> Create(FarmEditViewModel farmVm)
         {
             // Validations removed - directly save
+            var farm = MapToEntity(farmVm);
             var result = await _farmService.CreateAsync(farm);
             if (!result.Success)
             {
                 TempData["ErrorMessage"] = result.Message;
-                var dropdowns = await _farmService.GetDropdownDataAsync();
-                if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
-                {
-                    ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
-                    ViewBag.OrganizationId = dropdowns.Data.Organizations;
-                }
-                return View(farm);
+                await PopulateDropdowns(farmVm);
+                return View(farmVm);
             }
 
             TempData["SuccessMessage"] = "Farm created successfully.";
@@ -94,38 +79,25 @@ namespace TpaSodManagement.Controllers
             var result = await _farmService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
-            // Pass the farm's OrganizationId and AreaTypeId to preserve selected values
-            var dropdowns = await _farmService.GetDropdownDataAsync(
-                result.Data.OrganizationId, 
-                result.Data.AreaTypeId
-            );
-            if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
-            {
-                ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
-                ViewBag.OrganizationId = dropdowns.Data.Organizations;
-            }
-
-            return View(result.Data);
+            var vm = MapToEditViewModel(result.Data);
+            await PopulateDropdowns(vm, result.Data.OrganizationId, result.Data.AreaTypeId);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(long id, Farm farm)
+        public async Task<IActionResult> Edit(long id, FarmEditViewModel farmVm)
         {
-            if (id != farm.FarmId) return NotFound();
+            if (id != farmVm.FarmId) return NotFound();
 
             // Validations removed - directly update
+            var farm = MapToEntity(farmVm);
             var result = await _farmService.UpdateAsync(farm);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                var dropdowns = await _farmService.GetDropdownDataAsync(farm.OrganizationId, farm.AreaTypeId);
-                if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
-                {
-                    ViewBag.AreaTypeId = dropdowns.Data.AreaTypes;
-                    ViewBag.OrganizationId = dropdowns.Data.Organizations;
-                }
-                return View(farm);
+                await PopulateDropdowns(farmVm, farmVm.OrganizationId, farmVm.AreaTypeId);
+                return View(farmVm);
             }
 
             TempData["SuccessMessage"] = "Farm updated successfully.";
@@ -142,6 +114,83 @@ namespace TpaSodManagement.Controllers
                 return Json(new { success = false, message = result.Message });
             }
             return Json(new { success = true, message = "Farm deleted successfully." });
+        }
+
+        private static FarmItemViewModel MapToItemViewModel(Farm entity)
+        {
+            return new FarmItemViewModel
+            {
+                FarmId = entity.FarmId,
+                TotalArea = entity.TotalArea,
+                OrganicCertified = entity.OrganicCertified,
+                LicenseNumber = entity.LicenseNumber,
+                CertificationDetails = entity.CertificationDetails,
+                Latitude = entity.Latitude,
+                Longitude = entity.Longitude,
+                ElevationMeters = entity.ElevationMeters,
+                SoilType = entity.SoilType,
+                IrrigationType = entity.IrrigationType,
+                ClimateZone = entity.ClimateZone,
+                AreaTypeName = entity.AreaType?.AreaTypeName,
+                OrganizationName = entity.Organization?.OrganizationName
+            };
+        }
+
+        private static FarmEditViewModel MapToEditViewModel(Farm entity, bool isDetailsView = false)
+        {
+            return new FarmEditViewModel
+            {
+                FarmId = entity.FarmId,
+                TotalArea = entity.TotalArea,
+                OrganicCertified = entity.OrganicCertified,
+                LicenseNumber = entity.LicenseNumber,
+                CertificationDetails = entity.CertificationDetails,
+                Latitude = entity.Latitude,
+                Longitude = entity.Longitude,
+                ElevationMeters = entity.ElevationMeters,
+                SoilType = entity.SoilType,
+                IrrigationType = entity.IrrigationType,
+                ClimateZone = entity.ClimateZone,
+                AreaTypeId = entity.AreaTypeId,
+                OrganizationId = entity.OrganizationId,
+                IsDetailsView = isDetailsView
+            };
+        }
+
+        private static Farm MapToEntity(FarmEditViewModel vm)
+        {
+            return new Farm
+            {
+                FarmId = vm.FarmId,
+                TotalArea = vm.TotalArea,
+                OrganicCertified = vm.OrganicCertified,
+                LicenseNumber = vm.LicenseNumber,
+                CertificationDetails = vm.CertificationDetails,
+                Latitude = vm.Latitude,
+                Longitude = vm.Longitude,
+                ElevationMeters = vm.ElevationMeters,
+                SoilType = vm.SoilType,
+                IrrigationType = vm.IrrigationType,
+                ClimateZone = vm.ClimateZone,
+                AreaTypeId = vm.AreaTypeId.HasValue ? (int?)vm.AreaTypeId.Value : null,
+                OrganizationId = vm.OrganizationId ?? 0
+            };
+        }
+
+        private async Task PopulateDropdowns(FarmEditViewModel vm, long? organizationId = null, long? areaTypeId = null)
+        {
+            var dropdowns = await _farmService.GetDropdownDataAsync(organizationId, areaTypeId.HasValue ? (int?)areaTypeId.Value : null);
+            if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
+            {
+                vm.AreaTypes = dropdowns.Data.AreaTypes;
+                vm.Organizations = dropdowns.Data.Organizations;
+            }
+            else
+            {
+                vm.AreaTypes = Enumerable.Empty<SelectListItem>();
+                vm.Organizations = Enumerable.Empty<SelectListItem>();
+                TempData["Error"] = dropdowns.Message;
+            }
         }
     }
 }

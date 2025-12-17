@@ -1,8 +1,4 @@
-﻿@model List<TpaSodManagement.Areas.Identity.Data.TpaSodManagementUser>
-@using TpaSodManagement.Services.Interfaces
-@using TpaSodManagement.Models.Db
-@inject IAdminService AdminService
-@inject IRegistrationService RegistrationService
+﻿@model List<TpaSodManagement.ViewModels.User.UserItemViewModel>
 
 @{
     ViewData["Title"] = "User Management";
@@ -62,19 +58,16 @@
                             <tbody>
                                 @foreach (var user in Model)
                                 {
-                                    var person = await RegistrationService.GetUserPersonAsync(user.Id.ToString());
-                                    var address = await RegistrationService.GetUserAddressAsync(user.Id.ToString());
-                                    
                                     <tr>
                                         <td>@user.UserName</td>
                                         <td>@user.Email</td>
-                                        <td>@(person?.FirstName ?? "N/A")</td>
-                                        <td>@(person?.LastName ?? "N/A")</td>
+                                        <td>@(user.FirstName ?? "N/A")</td>
+                                        <td>@(user.LastName ?? "N/A")</td>
                                         <td>@user.PhoneNumber</td>
-                                        <td>@(address?.AddressLine1 ?? "N/A")</td>
-                                        <td>@(address?.City ?? "N/A")</td>
-                                        <td>@(address?.StateProvince?.StateName ?? "N/A")</td>
-                                        <td>@(address?.PostalCode ?? "N/A")</td>
+                                        <td>@(user.AddressLine1 ?? "N/A")</td>
+                                        <td>@(user.City ?? "N/A")</td>
+                                        <td>@(user.StateName ?? "N/A")</td>
+                                        <td>@(user.PostalCode ?? "N/A")</td>
                                         <td>
                                             @if (user.IsActive)
                                             {

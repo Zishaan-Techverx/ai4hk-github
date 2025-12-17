@@ -1,11 +1,8 @@
-﻿@using TpaSodManagement.Services.Interfaces
-@inject IAdminService AdminService
-@model dynamic
+﻿@model TpaSodManagement.ViewModels.Admin.AdminIndexViewModel
 @{
-
     ViewData["Title"] = "Roles Management";
-    var roles = Model.Roles as List<Microsoft.AspNetCore.Identity.IdentityRole<long>>;
-    var users = Model.Users as List<TpaSodManagement.Areas.Identity.Data.TpaSodManagementUser>;
+    var roles = Model.Roles;
+    var users = Model.Users;
 }
 
 <br />
@@ -168,13 +165,10 @@
                                         <td>@user.UserName</td>
                                         <td>@user.Email</td>
                                         <td>
-                                            @{
-                                                var userRoles = await AdminService.GetUserRolesAsync(user.Id);
-                                            }
-                                            @if (userRoles.Any())
+                                            @if (user.Roles.Any())
                                             {
                                                 <div class="d-flex flex-column">
-                                                    @foreach (var role in userRoles)
+                                                    @foreach (var role in user.Roles)
                                                     {
                                                         <div class="d-flex align-items-center mb-1">
                                                             <span class="badge bg-success me-2">@role</span>
@@ -201,7 +195,7 @@
                                             }
                                         </td>
                                         <td>
-                                            @if (userRoles.Any())
+                                            @if (user.Roles.Any())
                                             {
                                                 <span class="text-success">
                                                     <i class="fas fa-check-circle"></i> Has roles

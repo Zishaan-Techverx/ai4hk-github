@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.ViewModels.Currency;
 
 namespace TpaSodManagement.Controllers
 {
@@ -25,9 +26,10 @@ namespace TpaSodManagement.Controllers
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                return View(new List<Currency>());
+            return View(new List<CurrencyItemViewModel>());
             }
-            return View(result.Data);
+        var vm = result.Data?.Select(MapToItemViewModel).ToList() ?? new List<CurrencyItemViewModel>();
+        return View(vm);
         }
 
         // GET: Currency/Details/{id}
@@ -40,33 +42,35 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null)
                 return NotFound();
 
-            ViewBag.IsDetailsView = true;
-            ViewBag.Title = "Currency Details";
-            return View("Edit", result.Data); // Same Edit view use karein
+        var vm = MapToEditViewModel(result.Data, isDetailsView: true);
+        ViewBag.IsDetailsView = true;
+        ViewBag.Title = "Currency Details";
+        return View("Edit", vm); // Same Edit view use karein
         }
 
         public IActionResult Create()
         {
-            return View();
+        return View(new CurrencyEditViewModel { IsActive = true, DecimalPlaces = 2 });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Currency currency)
+    public async Task<IActionResult> Create(CurrencyEditViewModel currencyVm)
         {
             if (ModelState.IsValid)
             {
-                var result = await _currencyService.CreateAsync(currency);
+            var currency = MapToEntity(currencyVm);
+            var result = await _currencyService.CreateAsync(currency);
                 if (!result.Success)
                 {
                     TempData["ErrorMessage"] = result.Message;
-                    return View(currency);
+                return View(currencyVm);
                 }
 
                 TempData["SuccessMessage"] = "Currency created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            return View(currency);
+        return View(currencyVm);
         }
 
         public async Task<IActionResult> Edit(int? id)
@@ -78,32 +82,34 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null)
                 return NotFound();
 
-            return View(result.Data);
+        var vm = MapToEditViewModel(result.Data);
+        return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, Currency currency)
+    public async Task<IActionResult> Edit(int id, CurrencyEditViewModel currencyVm)
         {
-            if (id != currency.CurrencyId)
+        if (id != currencyVm.CurrencyId)
                 return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
-                    var result = await _currencyService.UpdateAsync(currency);
+                var currency = MapToEntity(currencyVm);
+                var result = await _currencyService.UpdateAsync(currency);
                     if (!result.Success)
                     {
                         TempData["ErrorMessage"] = result.Message;
-                        return View(currency);
+                    return View(currencyVm);
                     }
 
                     TempData["SuccessMessage"] = "Currency updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    var exists = await _currencyService.ExisTpasync(currency.CurrencyId);
+                var exists = await _currencyService.ExisTpasync(currencyVm.CurrencyId);
                     if (!exists.Data)
                         return NotFound();
                     else
@@ -111,7 +117,7 @@ namespace TpaSodManagement.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(currency);
+        return View(currencyVm);
         }
 
         [HttpPost]
@@ -125,5 +131,47 @@ namespace TpaSodManagement.Controllers
             }
             return Json(new { success = true, message = "Currency deleted successfully." });
         }
+
+    private static CurrencyItemViewModel MapToItemViewModel(Currency entity)
+    {
+        return new CurrencyItemViewModel
+        {
+            CurrencyId = entity.CurrencyId,
+            CurrencyCode = entity.CurrencyCode ?? string.Empty,
+            CurrencyName = entity.CurrencyName ?? string.Empty,
+            CurrencySymbol = entity.CurrencySymbol,
+            DecimalPlaces = entity.DecimalPlaces,
+            IsActive = entity.IsActive
+        };
+    }
+
+    private static CurrencyEditViewModel MapToEditViewModel(Currency entity, bool isDetailsView = false)
+    {
+        return new CurrencyEditViewModel
+        {
+            CurrencyId = entity.CurrencyId,
+            CurrencyCode = entity.CurrencyCode ?? string.Empty,
+            CurrencyName = entity.CurrencyName ?? string.Empty,
+            CurrencySymbol = entity.CurrencySymbol,
+            DecimalPlaces = entity.DecimalPlaces,
+            IsActive = entity.IsActive,
+            CreatedDate = entity.CreatedDate,
+            IsDetailsView = isDetailsView
+        };
+    }
+
+    private static Currency MapToEntity(CurrencyEditViewModel vm)
+    {
+        return new Currency
+        {
+            CurrencyId = vm.CurrencyId,
+            CurrencyCode = vm.CurrencyCode,
+            CurrencyName = vm.CurrencyName,
+            CurrencySymbol = vm.CurrencySymbol,
+                DecimalPlaces = (byte)vm.DecimalPlaces,
+            IsActive = vm.IsActive,
+            CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow
+        };
+    }
     }
 }

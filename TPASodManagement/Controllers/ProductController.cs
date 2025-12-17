@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.ViewModels.Product;
 
 namespace TpaSodManagement.Controllers
 {
@@ -33,9 +34,10 @@ namespace TpaSodManagement.Controllers
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                return View(new List<Product>());
+                return View(new List<ProductItemViewModel>());
             }
-            return View(result.Data);
+            var vm = result.Data?.Select(MapToItemViewModel).ToList() ?? new List<ProductItemViewModel>();
+            return View(vm);
         }
 
         public async Task<IActionResult> Details(long? id)
@@ -45,129 +47,56 @@ namespace TpaSodManagement.Controllers
             var result = await _productService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
-            var dropdowns = await _productService.GetDropdownDataAsync();
-            if (dropdowns.Success)
-            {
-                ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
-                ViewData["CreatedByUserId"] = dropdowns.Data.Users;
-                ViewData["CurrencyId"] = dropdowns.Data.Currencies;
-                ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
-                
-                // Add ViewBag for view compatibility
-                ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
-                ViewBag.CreatedByUserId = dropdowns.Data.Users;
-                ViewBag.CurrencyId = dropdowns.Data.Currencies;
-                ViewBag.ProductCategoryId = dropdowns.Data.Categories;
-            }
-
+            var vm = MapToEditViewModel(result.Data, isDetailsView: true);
+            await PopulateDropdowns(vm);
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Product Details";
-            return View("Edit", result.Data);
+            return View("Edit", vm);
         }
 
         public async Task<IActionResult> Create()
         {
-            var dropdowns = await _productService.GetDropdownDataAsync();
-            if (dropdowns.Success)
-            {
-                ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
-                ViewData["CreatedByUserId"] = dropdowns.Data.Users;
-                ViewData["CurrencyId"] = dropdowns.Data.Currencies;
-                ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
-                
-                // Add ViewBag for view compatibility (Customer module pattern)
-                ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
-                ViewBag.CreatedByUserId = dropdowns.Data.Users;
-                ViewBag.CurrencyId = dropdowns.Data.Currencies;
-                ViewBag.ProductCategoryId = dropdowns.Data.Categories;
-            }
-            else
-            {
-                TempData["Error"] = dropdowns.Message;
-            }
-            return View();
+            var vm = new ProductEditViewModel { IsActive = true };
+            await PopulateDropdowns(vm);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(Product product)
+        public async Task<IActionResult> Create(ProductEditViewModel productVm)
         {
-            // Manually extract dropdown values if model binding failed
-            if (product.ProductCategoryId == 0 && Request.Form.TryGetValue("ProductCategoryId", out var categoryIdValue))
-            {
-                if (int.TryParse(categoryIdValue.ToString(), out int categoryId) && categoryId > 0)
-                {
-                    product.ProductCategoryId = categoryId;
-                    ModelState.Remove("ProductCategoryId");
-                }
-            }
-
             // Auto-set CreatedByUserId - get current logged in user's TpaSodManagementUser
-            if (product.CreatedByUserId == 0)
+            if (productVm.CreatedByUserId == null || productVm.CreatedByUserId == 0)
             {
-                if (Request.Form.TryGetValue("CreatedByUserId", out var userIdValue))
+                var currentIdentityUser = await _userManager.GetUserAsync(HttpContext.User);
+                if (currentIdentityUser != null)
                 {
-                    if (long.TryParse(userIdValue.ToString(), out long userId) && userId > 0)
-                    {
-                        product.CreatedByUserId = userId;
-                    }
+                    productVm.CreatedByUserId = currentIdentityUser.Id;
                 }
                 else
                 {
-                    // Get current logged in TpaSodManagementUser
-                    var currentIdentityUser = await _userManager.GetUserAsync(HttpContext.User);
-                    
-                    if (currentIdentityUser != null)
-                    {
-                        product.CreatedByUserId = currentIdentityUser.Id;
-                    }
-                    else
-                    {
-                        TempData["Error"] = "User not authenticated. Please login again.";
-                        var dropdowns = await _productService.GetDropdownDataAsync();
-                        if (dropdowns.Success)
-                        {
-                            ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
-                            ViewData["CreatedByUserId"] = dropdowns.Data.Users;
-                            ViewData["CurrencyId"] = dropdowns.Data.Currencies;
-                            ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
-                            ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
-                            ViewBag.CreatedByUserId = dropdowns.Data.Users;
-                            ViewBag.CurrencyId = dropdowns.Data.Currencies;
-                            ViewBag.ProductCategoryId = dropdowns.Data.Categories;
-                        }
-                        return View(product);
-                    }
+                    TempData["Error"] = "User not authenticated. Please login again.";
+                    await PopulateDropdowns(productVm);
+                    return View(productVm);
                 }
             }
 
             // Set CreatedDate if not set
-            if (product.CreatedDate == default)
+            if (productVm.CreatedDate == null || productVm.CreatedDate == default)
             {
-                product.CreatedDate = DateTimeOffset.UtcNow;
+                productVm.CreatedDate = DateTimeOffset.UtcNow;
             }
 
             // Remove all ModelState errors - validations removed
             ModelState.Clear();
 
-            // Validations removed - directly save
-            var result = await _productService.CreateAsync(product);
+            var entity = MapToEntity(productVm);
+            var result = await _productService.CreateAsync(entity);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                var dropdowns = await _productService.GetDropdownDataAsync();
-                if (dropdowns.Success)
-                {
-                    ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
-                    ViewData["CreatedByUserId"] = dropdowns.Data.Users;
-                    ViewData["CurrencyId"] = dropdowns.Data.Currencies;
-                    ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
-                    ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
-                    ViewBag.CreatedByUserId = dropdowns.Data.Users;
-                    ViewBag.CurrencyId = dropdowns.Data.Currencies;
-                    ViewBag.ProductCategoryId = dropdowns.Data.Categories;
-                }
-                return View(product);
+                await PopulateDropdowns(productVm);
+                return View(productVm);
             }
 
             TempData["SuccessMessage"] = "Product created successfully.";
@@ -181,59 +110,37 @@ namespace TpaSodManagement.Controllers
             var result = await _productService.GetByIdAsync(id.Value);
             if (!result.Success || result.Data == null) return NotFound();
 
-            var dropdowns = await _productService.GetDropdownDataAsync();
-            if (dropdowns.Success)
-            {
-                ViewData["CertificateTypeId"] = dropdowns.Data.CertificateTypes;
-                ViewData["CreatedByUserId"] = dropdowns.Data.Users;
-                ViewData["CurrencyId"] = dropdowns.Data.Currencies;
-                ViewData["ProductCategoryId"] = dropdowns.Data.Categories;
-                
-                // Add ViewBag for view compatibility
-                ViewBag.CertificateTypeId = dropdowns.Data.CertificateTypes;
-                ViewBag.CreatedByUserId = dropdowns.Data.Users;
-                ViewBag.CurrencyId = dropdowns.Data.Currencies;
-                ViewBag.ProductCategoryId = dropdowns.Data.Categories;
-            }
-
-            return View(result.Data);
+            var vm = MapToEditViewModel(result.Data);
+            await PopulateDropdowns(vm);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(long id, Product product)
+        public async Task<IActionResult> Edit(long id, ProductEditViewModel productVm)
         {
-            if (id != product.ProductId) return NotFound();
+            if (id != productVm.ProductId) return NotFound();
 
-            // Manually extract dropdown values if model binding failed
-            if (product.ProductCategoryId == 0 && Request.Form.TryGetValue("ProductCategoryId", out var categoryIdValue))
+            // Auto-set CreatedByUserId if missing
+            if (productVm.CreatedByUserId == null || productVm.CreatedByUserId == 0)
             {
-                if (int.TryParse(categoryIdValue.ToString(), out int categoryId) && categoryId > 0)
+                var currentIdentityUser = await _userManager.GetUserAsync(HttpContext.User);
+                if (currentIdentityUser != null)
                 {
-                    product.ProductCategoryId = categoryId;
-                    ModelState.Remove("ProductCategoryId"); // Remove ModelState error
-                }
-            }
-
-            if (product.CreatedByUserId == 0 && Request.Form.TryGetValue("CreatedByUserId", out var userIdValue))
-            {
-                if (long.TryParse(userIdValue.ToString(), out long userId) && userId > 0)
-                {
-                    product.CreatedByUserId = userId;
-                    ModelState.Remove("CreatedByUserId"); // Remove ModelState error
+                    productVm.CreatedByUserId = currentIdentityUser.Id;
                 }
             }
 
             // Remove all ModelState errors - validations removed
             ModelState.Clear();
 
-            // Validations removed - directly update
-            var result = await _productService.UpdateAsync(product);
+            var entity = MapToEntity(productVm);
+            var result = await _productService.UpdateAsync(entity);
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                await Edit(id); // reload dropdowns
-                return View(product);
+                await PopulateDropdowns(productVm);
+                return View(productVm);
             }
 
             return RedirectToAction(nameof(Index));
@@ -249,6 +156,87 @@ namespace TpaSodManagement.Controllers
                 return Json(new { success = false, message = result.Message });
             }
             return Json(new { success = true, message = "Product deleted successfully." });
+        }
+
+        private static ProductItemViewModel MapToItemViewModel(Product entity)
+        {
+            return new ProductItemViewModel
+            {
+                ProductId = entity.ProductId,
+                ProductCode = entity.ProductCode,
+                ProductName = entity.ProductName,
+                UnitOfMeasure = entity.UnitOfMeasure,
+                StandardPrice = entity.StandardPrice,
+                RequiresCertificate = entity.RequiresCertificate,
+                Description = entity.Description,
+                IsActive = entity.IsActive,
+                CreatedDate = entity.CreatedDate,
+                CertificateTypeName = entity.CertificateType?.CertificateTypeName,
+                CreatedByUserName = entity.CreatedByUser?.UserName,
+                CurrencyCode = entity.Currency?.CurrencyCode,
+                ProductCategoryName = entity.ProductCategory?.CategoryName
+            };
+        }
+
+        private static ProductEditViewModel MapToEditViewModel(Product entity, bool isDetailsView = false)
+        {
+            return new ProductEditViewModel
+            {
+                ProductId = entity.ProductId,
+                ProductCode = entity.ProductCode,
+                ProductName = entity.ProductName,
+                UnitOfMeasure = entity.UnitOfMeasure,
+                StandardPrice = entity.StandardPrice,
+                RequiresCertificate = entity.RequiresCertificate,
+                Description = entity.Description,
+                IsActive = entity.IsActive,
+                CertificateTypeId = entity.CertificateTypeId,
+                CreatedByUserId = entity.CreatedByUserId,
+                CurrencyId = entity.CurrencyId,
+                ProductCategoryId = entity.ProductCategoryId,
+                CreatedDate = entity.CreatedDate,
+                IsDetailsView = isDetailsView
+            };
+        }
+
+        private static Product MapToEntity(ProductEditViewModel vm)
+        {
+            return new Product
+            {
+                ProductId = vm.ProductId,
+                ProductCode = vm.ProductCode,
+                ProductName = vm.ProductName,
+                UnitOfMeasure = vm.UnitOfMeasure,
+                StandardPrice = vm.StandardPrice,
+                RequiresCertificate = vm.RequiresCertificate,
+                Description = vm.Description,
+                IsActive = vm.IsActive,
+                CertificateTypeId = vm.CertificateTypeId,
+                CreatedByUserId = vm.CreatedByUserId ?? 0,
+                CurrencyId = vm.CurrencyId ?? 0,
+                ProductCategoryId = vm.ProductCategoryId ?? 0,
+                CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow
+            };
+        }
+
+        private async Task PopulateDropdowns(ProductEditViewModel vm)
+        {
+            var dropdowns = await _productService.GetDropdownDataAsync();
+            if (dropdowns.Success)
+            {
+                vm.CertificateTypes = dropdowns.Data.CertificateTypes ?? Enumerable.Empty<SelectListItem>();
+                vm.Users = dropdowns.Data.Users ?? Enumerable.Empty<SelectListItem>();
+                vm.Currencies = dropdowns.Data.Currencies ?? Enumerable.Empty<SelectListItem>();
+                vm.Categories = dropdowns.Data.Categories ?? Enumerable.Empty<SelectListItem>();
+            }
+            else
+            {
+                vm.CertificateTypes = Enumerable.Empty<SelectListItem>();
+                vm.Users = Enumerable.Empty<SelectListItem>();
+                vm.Currencies = Enumerable.Empty<SelectListItem>();
+                vm.Categories = Enumerable.Empty<SelectListItem>();
+                TempData["Error"] = dropdowns.Message;
+            }
         }
     }
 }

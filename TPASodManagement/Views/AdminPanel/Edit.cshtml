@@ -1,10 +1,8 @@
-﻿@model Microsoft.AspNetCore.Identity.IdentityRole<long>
+﻿@model TpaSodManagement.ViewModels.Admin.EditRoleViewModel
 @using TpaSodManagement.Areas.Identity.Data
 
 @{
     ViewData["Title"] = "Edit Role";
-    var usersInRole = ViewBag.UsersInRole as List<string>;
-    var roleName = ViewBag.RoleName as string;
 }
 
 <br />
@@ -32,16 +30,16 @@
 
                         <div class="mb-3">
                             <label for="roleName" class="form-label">Role Name</label>
-                            <input type="text" class="form-control" id="roleName" name="roleName" value="@roleName" required>
+                            <input type="text" class="form-control" id="roleName" name="roleName" value="@Model.Name" required>
                         </div>
 
-                        @if (usersInRole != null && usersInRole.Any())
+                        @if (Model.UsersInRole != null && Model.UsersInRole.Any())
                         {
                             <div class="mb-3">
-                                <label class="form-label">Users in this Role (@usersInRole.Count users)</label>
+                                <label class="form-label">Users in this Role (@Model.UsersInRole.Count users)</label>
                                 <div class="alert alert-info">
                                     <ul class="mb-0">
-                                        @foreach (var user in usersInRole)
+                                        @foreach (var user in Model.UsersInRole)
                                         {
                                             <li>@user</li>
                                         }

@@ -1,4 +1,4 @@
-@model IEnumerable<TpaSodManagement.Models.Db.Customer>
+@model IEnumerable<TpaSodManagement.ViewModels.Customer.CustomerItemViewModel>
 
 @{
     ViewData["Title"] = "Customers";
@@ -107,13 +107,12 @@
                         @Html.DisplayFor(modelItem => item.UpdatedDate)
                     </td>
                     <td>
-                        @(item.Organization?.OrganizationName ?? "N/A")
+                        @(item.OrganizationName ?? "N/A")
                     </td>
                     <td>
-                        @if (item.Person != null)
+                        @if (!string.IsNullOrEmpty(item.PersonFullName))
                         {
-                            var fullName = $"{item.Person.FirstName} {item.Person.LastName}".Trim();
-                            @(string.IsNullOrEmpty(fullName) ? "N/A" : fullName)
+                            @item.PersonFullName
                         }
                         else
                         {

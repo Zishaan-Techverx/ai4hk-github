@@ -1,4 +1,4 @@
-@model IEnumerable<TpaSodManagement.Models.Db.Field>
+@model IEnumerable<TpaSodManagement.ViewModels.Field.FieldItemViewModel>
 
 @{
     ViewData["Title"] = "Fields";
@@ -52,8 +52,8 @@
                     <td>@Html.DisplayFor(modelItem => item.FieldName)</td>
                     <td>@Html.DisplayFor(modelItem => item.FieldCode)</td>
                     <td>@Html.DisplayFor(modelItem => item.AreaAmount)</td>
-                    <td>@Html.DisplayFor(modelItem => item.AreaType.AreaTypeName)</td>
-                    <td>@(item.Farm != null && !string.IsNullOrEmpty(item.Farm.LicenseNumber) ? item.Farm.LicenseNumber : $"Farm #{item.FarmId}")</td>
+                    <td>@(item.AreaTypeName ?? "N/A")</td>
+                    <td>@(!string.IsNullOrEmpty(item.FarmLicenseNumber) ? item.FarmLicenseNumber : $"Farm #{item.FarmId}")</td>
                     <td>@Html.DisplayFor(modelItem => item.SoilType)</td>
                     <td>
                         @if (item.IrrigationAvailable)

@@ -1,4 +1,4 @@
-@model TpaSodManagement.Models.Db.Farm
+@model TpaSodManagement.ViewModels.Farm.FarmEditViewModel
 
 @{
     bool isDetailsView = ViewBag.IsDetailsView ?? false;
@@ -55,7 +55,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="OrganizationId" class="form-label">Organization</label>
-                                <select asp-for="OrganizationId" class="form-select" asp-items="ViewBag.OrganizationId" disabled="@disabledAttr">
+                                <select asp-for="OrganizationId" class="form-select" asp-items="Model.Organizations" disabled="@disabledAttr">
                                     <option value="">-- Select Organization --</option>
                                 </select>
                                 @* Hidden field sirf Details view mein rakhein, Edit view mein bilkul nahi *@
@@ -76,7 +76,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="AreaTypeId" class="form-label">Area Type</label>
-                                <select asp-for="AreaTypeId" class="form-select" asp-items="ViewBag.AreaTypeId" disabled="@disabledAttr">
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="Model.AreaTypes" disabled="@disabledAttr">
                                 </select>
                                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>
                             </div>

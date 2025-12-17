@@ -1,4 +1,4 @@
-@model TpaSodManagement.Models.Db.Customer
+@model TpaSodManagement.ViewModels.Customer.CustomerEditViewModel
 
 @{
     bool isDetailsView = ViewBag.IsDetailsView ?? false;
@@ -69,7 +69,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="PersonId" class="form-label">Person</label>
-                                <select asp-for="PersonId" class="form-select" asp-items="ViewBag.PersonId" disabled="@disabledAttr">
+                                <select asp-for="PersonId" class="form-select" asp-items="Model.People" disabled="@disabledAttr">
                                     <option value="">-- Select Person --</option>
                                 </select>
                                 <span asp-validation-for="PersonId" class="text-danger"></span>
@@ -77,7 +77,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="OrganizationId" class="form-label">Organization</label>
-                                <select asp-for="OrganizationId" class="form-select" asp-items="ViewBag.OrganizationId" disabled="@disabledAttr">
+                                <select asp-for="OrganizationId" class="form-select" asp-items="Model.Organizations" disabled="@disabledAttr">
                                     <option value="">-- Select Organization --</option>
                                 </select>
                                 <span asp-validation-for="OrganizationId" class="text-danger"></span>

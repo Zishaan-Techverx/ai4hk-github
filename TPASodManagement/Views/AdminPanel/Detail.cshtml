@@ -1,9 +1,8 @@
-﻿@model Microsoft.AspNetCore.Identity.IdentityRole<long>
+﻿@model TpaSodManagement.ViewModels.Admin.RoleDetailsViewModel
 @using TpaSodManagement.Areas.Identity.Data
 
 @{
     ViewData["Title"] = "Role Details";
-    var usersInRole = ViewBag.UsersInRole as List<TpaSodManagementUser>;
 }
 
 <br />
@@ -34,6 +33,31 @@
                         <dt class="col-sm-3">Normalized Name:</dt>
                         <dd class="col-sm-9">@Model.NormalizedName</dd>
                     </dl>
+
+                    @if (Model.UsersWithRoles != null && Model.UsersWithRoles.Any())
+                    {
+                        <div class="mt-4">
+                            <h5>Users in this Role</h5>
+                            <ul class="list-group">
+                                @foreach (var user in Model.UsersWithRoles)
+                                {
+                                    <li class="list-group-item">
+                                        <div class="fw-semibold">@user.UserName (@user.Email)</div>
+                                        @if (user.Roles.Any())
+                                        {
+                                            <div class="small text-muted">Roles: @string.Join(", ", user.Roles)</div>
+                                        }
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="alert alert-warning mt-3">
+                            No users are currently assigned to this role.
+                        </div>
+                    }
 
                     <div class="mb-3">
                         <a href="@Url.Action("Index")" class="btn btn-danger">Cancel</a>

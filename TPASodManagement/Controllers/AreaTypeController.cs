@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.ViewModels.AreaType;
 
 namespace TpaSodManagement.Controllers
 {
@@ -22,9 +23,10 @@ namespace TpaSodManagement.Controllers
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                return View(new List<AreaType>());
+                return View(new List<AreaTypeItemViewModel>());
             }
-            return View(result.Data);
+            var vm = result.Data?.Select(MapToItemViewModel).ToList() ?? new List<AreaTypeItemViewModel>();
+            return View(vm);
         }
 
         // GET: AreaType/Details/{id}
@@ -37,33 +39,35 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null)
                 return NotFound();
 
+            var vm = MapToEditViewModel(result.Data, isDetailsView: true);
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Area Type Details";
-            return View("Edit", result.Data);
+            return View("Edit", vm);
         }
 
         public IActionResult Create()
         {
-            return View();
+            return View(new AreaTypeEditViewModel { IsActive = true });
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(AreaType areaType)
+        public async Task<IActionResult> Create(AreaTypeEditViewModel areaTypeVm)
         {
             if (ModelState.IsValid)
             {
+                var areaType = MapToEntity(areaTypeVm);
                 var result = await _areaTypeService.CreateAsync(areaType);
                 if (!result.Success)
                 {
                     TempData["ErrorMessage"] = result.Message;
-                    return View(areaType);
+                    return View(areaTypeVm);
                 }
 
                 TempData["SuccessMessage"] = "Area type created successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            return View(areaType);
+            return View(areaTypeVm);
         }
 
         public async Task<IActionResult> Edit(int? id)
@@ -75,32 +79,34 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null)
                 return NotFound();
 
-            return View(result.Data);
+            var vm = MapToEditViewModel(result.Data);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, AreaType areaType)
+        public async Task<IActionResult> Edit(int id, AreaTypeEditViewModel areaTypeVm)
         {
-            if (id != areaType.AreaTypeId)
+            if (id != areaTypeVm.AreaTypeId)
                 return NotFound();
 
             if (ModelState.IsValid)
             {
                 try
                 {
+                    var areaType = MapToEntity(areaTypeVm);
                     var result = await _areaTypeService.UpdateAsync(areaType);
                     if (!result.Success)
                     {
                         TempData["ErrorMessage"] = result.Message;
-                        return View(areaType);
+                        return View(areaTypeVm);
                     }
 
                     TempData["SuccessMessage"] = "Area type updated successfully.";
                 }
                 catch (DbUpdateConcurrencyException)
                 {
-                    var exists = await _areaTypeService.ExisTpasync(areaType.AreaTypeId);
+                    var exists = await _areaTypeService.ExisTpasync(areaTypeVm.AreaTypeId);
                     if (!exists.Data)
                         return NotFound();
                     else
@@ -108,7 +114,7 @@ namespace TpaSodManagement.Controllers
                 }
                 return RedirectToAction(nameof(Index));
             }
-            return View(areaType);
+            return View(areaTypeVm);
         }
 
         [HttpPost]
@@ -121,6 +127,50 @@ namespace TpaSodManagement.Controllers
                 return Json(new { success = false, message = result.Message });
             }
             return Json(new { success = true, message = "Area type deleted successfully." });
+        }
+
+        private static AreaTypeItemViewModel MapToItemViewModel(AreaType entity)
+        {
+            return new AreaTypeItemViewModel
+            {
+                AreaTypeId = entity.AreaTypeId,
+                AreaTypeName = entity.AreaTypeName,
+                UnitAbbreviation = entity.UnitAbbreviation,
+                UnitSystem = entity.UnitSystem,
+                ConversionToSquareMeters = entity.ConversionToSquareMeters,
+                IsActive = entity.IsActive
+            };
+        }
+
+        private static AreaTypeEditViewModel MapToEditViewModel(AreaType entity, bool isDetailsView = false)
+        {
+            return new AreaTypeEditViewModel
+            {
+                AreaTypeId = entity.AreaTypeId,
+                AreaTypeName = entity.AreaTypeName,
+                UnitAbbreviation = entity.UnitAbbreviation,
+                UnitSystem = entity.UnitSystem,
+                ConversionToSquareMeters = entity.ConversionToSquareMeters,
+                Description = entity.Description,
+                IsActive = entity.IsActive,
+                CreatedDate = entity.CreatedDate,
+                IsDetailsView = isDetailsView
+            };
+        }
+
+        private static AreaType MapToEntity(AreaTypeEditViewModel vm)
+        {
+            return new AreaType
+            {
+                AreaTypeId = vm.AreaTypeId,
+                AreaTypeName = vm.AreaTypeName,
+                UnitAbbreviation = vm.UnitAbbreviation,
+                UnitSystem = vm.UnitSystem,
+                ConversionToSquareMeters = vm.ConversionToSquareMeters ?? 0,
+                Description = vm.Description,
+                IsActive = vm.IsActive,
+                CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow
+            };
         }
     }
 }

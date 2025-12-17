@@ -1,7 +1,7 @@
-@model TpaSodManagement.Models.Db.Seeding
+@model TpaSodManagement.ViewModels.Seeding.SeedingEditViewModel
 
 @{
-    bool isDetailsView = ViewBag.IsDetailsView ?? false;
+    bool isDetailsView = ViewBag.IsDetailsView ?? Model.IsDetailsView;
     ViewData["Title"] = isDetailsView ? "Seeding Details" : "Edit Seeding";
     string disabledAttr = isDetailsView ? "disabled" : null;
 }
@@ -55,7 +55,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="UserId" class="form-label">User</label>
-                                <select asp-for="UserId" class="form-select" asp-items="ViewBag.UserId" disabled="@disabledAttr">
+                                <select asp-for="UserId" class="form-select" asp-items="Model.Users" disabled="@disabledAttr">
                                     <option value="">-- Select User --</option>
                                 </select>
                                 <span asp-validation-for="UserId" class="text-danger"></span>
@@ -63,7 +63,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="FarmId" class="form-label">Farm</label>
-                                <select asp-for="FarmId" class="form-select" asp-items="ViewBag.FarmId" disabled="@disabledAttr">
+                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms" disabled="@disabledAttr">
                                     <option value="">-- Select Farm --</option>
                                 </select>
                                 <span asp-validation-for="FarmId" class="text-danger"></span>
@@ -73,7 +73,7 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="FieldId" class="form-label">Field</label>
-                                <select asp-for="FieldId" class="form-select" asp-items="ViewBag.FieldId" disabled="@disabledAttr">
+                                <select asp-for="FieldId" class="form-select" asp-items="Model.Fields" disabled="@disabledAttr">
                                     <option value="">-- Select Field (Optional) --</option>
                                 </select>
                                 <span asp-validation-for="FieldId" class="text-danger"></span>
@@ -81,7 +81,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="TagRangeId" class="form-label">Tag Range</label>
-                                <select asp-for="TagRangeId" class="form-select" asp-items="ViewBag.TagRangeId" disabled="@disabledAttr">
+                                <select asp-for="TagRangeId" class="form-select" asp-items="Model.TagRanges" disabled="@disabledAttr">
                                     <option value="">-- Select Tag Range --</option>
                                 </select>
                                 <span asp-validation-for="TagRangeId" class="text-danger"></span>
@@ -97,7 +97,7 @@
 
                             <div class="col-md-6 mb-3">
                                 <label asp-for="AreaTypeId" class="form-label">Area Type</label>
-                                <select asp-for="AreaTypeId" class="form-select" asp-items="ViewBag.AreaTypeId" disabled="@disabledAttr">
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="Model.AreaTypes" disabled="@disabledAttr">
                                     <option value="">-- Select Area Type --</option>
                                 </select>
                                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>
