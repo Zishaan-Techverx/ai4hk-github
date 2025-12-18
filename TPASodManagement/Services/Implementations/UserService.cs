@@ -22,10 +22,19 @@ namespace TpaSodManagement.Services.Implementations
             _registrationService = registrationService;
         }
 
-        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync()
+        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(string? organizationName = null)
         {
             // Get all users
             var allUsers = await _userManager.Users.ToListAsync();
+            
+            // Filter by organization if provided
+            if (!string.IsNullOrWhiteSpace(organizationName))
+            {
+                allUsers = allUsers
+                    .Where(u => !string.IsNullOrWhiteSpace(u.OrganizationName) && 
+                               u.OrganizationName.Equals(organizationName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
             
             // Filter out users with SuperAdmin role
             var filteredUsers = new List<TpaSodManagementUser>();

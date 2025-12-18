@@ -19,10 +19,21 @@
 </div>
 <br />
 
+<!-- Column Filter and Page Size Controls -->
 <div class="row mb-3">
     <div class="col-md-6">
+        <label for="columnFilterSelect" class="form-label">Hide Columns</label>
+        <div class="d-flex align-items-start gap-2">
+            <select id="columnFilterSelect" class="form-select" style="width: auto; min-width: 200px;">
+                <option value="">-- Select Column to Hide --</option>
+            </select>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="clearColumnFilter()">Show All</button>
+        </div>
+        <div id="hiddenColumnsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
+    </div>
+    <div class="col-md-6 text-end">
         <label for="pageSizeSelect" class="form-label">Page Size</label>
-        <select id="pageSizeSelect" class="form-select" style="width: auto; display: inline-block;"
+        <select id="pageSizeSelect" class="form-select d-inline-block" style="width: auto;"
             onchange="changePageSize(this.value)">
             <option value="10" selected="@(pageSize == 10)">10</option>
             <option value="15" selected="@(pageSize == 15)">15</option>
@@ -36,136 +47,56 @@
 
 <div class="card card-body shadow-sm">
     <div class="table-responsive">
-        <table class="table">
+        <table class="table" id="dataTable">
             <thead>
                 <tr>
-                    <th>
-                        Sale Number
-                    </th>
-                    <th>
-                        Invoice Number
-                    </th>
-                    <th>
-                        Purchase Order Number
-                    </th>
-                    <th>
-                        Sale Date
-                    </th>
-                    <th>
-                        Due Date
-                    </th>
-                    <th>
-                        Subtotal Amount
-                    </th>
-                    <th>
-                        Tax Amount
-                    </th>
-                    <th>
-                        Discount Amount
-                    </th>
-                    <th>
-                        Total Amount
-                    </th>
-                    <th>
-                        Payment Terms Days
-                    </th>
-                    <th>
-                        Notes
-                    </th>
-                    <th>
-                        Created Date
-                    </th>
-                    <th>
-                        Updated Date
-                    </th>
-                    <th>
-                        Currency
-                    </th>
-                    <th>
-                        Customer
-                    </th>
-                    <th>
-                        Farm
-                    </th>
-                    <th>
-                        Sale Type
-                    </th>
-                    <th>
-                        Status
-                    </th>
-                    <th>
-                        Updated By User
-                    </th>
-                    <th>
-                        User
-                    </th>
-                    <th></th>
+                    <th data-column="SaleNumber">Sale Number</th>
+                    <th data-column="InvoiceNumber">Invoice Number</th>
+                    <th data-column="PurchaseOrderNumber">Purchase Order Number</th>
+                    <th data-column="SaleDate">Sale Date</th>
+                    <th data-column="DueDate">Due Date</th>
+                    <th data-column="SubtotalAmount">Subtotal Amount</th>
+                    <th data-column="TaxAmount">Tax Amount</th>
+                    <th data-column="DiscountAmount">Discount Amount</th>
+                    <th data-column="TotalAmount">Total Amount</th>
+                    <th data-column="PaymentTermsDays">Payment Terms Days</th>
+                    <th data-column="Notes">Notes</th>
+                    <th data-column="CreatedDate">Created Date</th>
+                    <th data-column="UpdatedDate">Updated Date</th>
+                    <th data-column="Currency">Currency</th>
+                    <th data-column="Customer">Customer</th>
+                    <th data-column="Farm">Farm</th>
+                    <th data-column="SaleType">Sale Type</th>
+                    <th data-column="Status">Status</th>
+                    <th data-column="UpdatedByUser">Updated By User</th>
+                    <th data-column="User">User</th>
+                    <th data-column="Actions" class="no-hide-column">Actions</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach (var item in Model)
                 {
                     <tr id="row-@item.SaleId">
-                        <td>
-                            @Html.DisplayFor(modelItem => item.SaleNumber)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.InvoiceNumber)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.PurchaseOrderNumber)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.SaleDate)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.DueDate)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.SubtotalAmount)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.TaxAmount)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.DiscountAmount)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.TotalAmount)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.PaymentTermsDays)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.Notes)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.CreatedDate)
-                        </td>
-                        <td>
-                            @Html.DisplayFor(modelItem => item.UpdatedDate)
-                        </td>
-                        <td>
-                        @(item.CurrencyName ?? "N/A")
-                        </td>
-                        <td>
-                            @(item.CustomerDisplay ?? $"Customer #{item.CustomerId}")
-                        </td>
-                        <td>
-                            @(item.FarmDisplay ?? $"Farm #{item.FarmId}")
-                        </td>
-                        <td>
-                            @(item.SaleTypeName ?? "N/A")
-                        </td>
-                        <td>
-                            @(item.StatusName ?? "N/A")
-                        </td>
-                        <td>
-                            @(item.UpdatedByUserName ?? "N/A")
-                        </td>
-                        <td>
-                            @(item.UserName ?? "N/A")
-                        </td>
+                        <td data-column="SaleNumber">@Html.DisplayFor(modelItem => item.SaleNumber)</td>
+                        <td data-column="InvoiceNumber">@Html.DisplayFor(modelItem => item.InvoiceNumber)</td>
+                        <td data-column="PurchaseOrderNumber">@Html.DisplayFor(modelItem => item.PurchaseOrderNumber)</td>
+                        <td data-column="SaleDate">@Html.DisplayFor(modelItem => item.SaleDate)</td>
+                        <td data-column="DueDate">@Html.DisplayFor(modelItem => item.DueDate)</td>
+                        <td data-column="SubtotalAmount">@Html.DisplayFor(modelItem => item.SubtotalAmount)</td>
+                        <td data-column="TaxAmount">@Html.DisplayFor(modelItem => item.TaxAmount)</td>
+                        <td data-column="DiscountAmount">@Html.DisplayFor(modelItem => item.DiscountAmount)</td>
+                        <td data-column="TotalAmount">@Html.DisplayFor(modelItem => item.TotalAmount)</td>
+                        <td data-column="PaymentTermsDays">@Html.DisplayFor(modelItem => item.PaymentTermsDays)</td>
+                        <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
+                        <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
+                        <td data-column="UpdatedDate">@Html.DisplayFor(modelItem => item.UpdatedDate)</td>
+                        <td data-column="Currency">@(item.CurrencyName ?? "N/A")</td>
+                        <td data-column="Customer">@(item.CustomerDisplay ?? $"Customer #{item.CustomerId}")</td>
+                        <td data-column="Farm">@(item.FarmDisplay ?? $"Farm #{item.FarmId}")</td>
+                        <td data-column="SaleType">@(item.SaleTypeName ?? "N/A")</td>
+                        <td data-column="Status">@(item.StatusName ?? "N/A")</td>
+                        <td data-column="UpdatedByUser">@(item.UpdatedByUserName ?? "N/A")</td>
+                        <td data-column="User">@(item.UserName ?? "N/A")</td>
                         <td style="display: flex; gap: 8px; align-items: center;">
                             @if (User.HasPermission("Sale.Edit"))
                             {
@@ -226,11 +157,94 @@
 <br />
 <br />
 <script>
-    function changePageSize(selectedPageSize) {
-        window.location.href = '@Url.Action("Index", new { pageNumber = 1 })' + '&pageSize=' + selectedPageSize;
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
+        const moduleName = 'Sale';
+        const storageKey = `hiddenColumns_${moduleName}`;
+        const table = document.getElementById('dataTable');
+        const filterSelect = document.getElementById('columnFilterSelect');
+        const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
+        
+        if (!table || !filterSelect) return;
+        
+        // Get all column headers except Actions
+        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+        const columnMap = new Map();
+        
+        // Populate dropdown
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            const displayName = header.textContent.trim();
+            columnMap.set(columnName, displayName);
+            
+            const option = document.createElement('option');
+            option.value = columnName;
+            option.textContent = displayName;
+            filterSelect.appendChild(option);
+        });
+        
+        // Load saved preferences
+        let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        
+        // Update UI based on saved preferences
+        updateHiddenColumnsUI(hiddenColumns, columnMap);
+        applyColumnVisibility(hiddenColumns);
+        
+        // Handle dropdown selection
+        filterSelect.addEventListener('change', function() {
+            const selectedColumn = this.value;
+            if (!selectedColumn) return;
+            
+            // Toggle column visibility
+            if (hiddenColumns.includes(selectedColumn)) {
+                hiddenColumns = hiddenColumns.filter(col => col !== selectedColumn);
+            } else {
+                hiddenColumns.push(selectedColumn);
+            }
+            
+            localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+            updateHiddenColumnsUI(hiddenColumns, columnMap);
+            applyColumnVisibility(hiddenColumns);
+            this.value = '';
+        });
+        
+        function updateHiddenColumnsUI(hiddenCols, colMap) {
+            hiddenColumnsBadges.innerHTML = '';
+            hiddenCols.forEach(columnName => {
+                const displayName = colMap.get(columnName);
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-secondary me-1 mb-1';
+                badge.style.cursor = 'pointer';
+                badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
+                badge.addEventListener('click', function() {
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                    localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                    updateHiddenColumnsUI(hiddenColumns, columnMap);
+                    applyColumnVisibility(hiddenColumns);
+                });
+                hiddenColumnsBadges.appendChild(badge);
+            });
+        }
+        
+        function applyColumnVisibility(hiddenCols) {
+            headers.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                header.style.display = isHidden ? 'none' : '';
+                
+                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = isHidden ? 'none' : '';
+                });
+            });
+            
+            // Ensure Actions column is always visible
+            const actionsHeaders = table.querySelectorAll('thead th[data-column="Actions"]');
+            const actionsCells = table.querySelectorAll('tbody td[data-column="Actions"]');
+            actionsHeaders.forEach(header => header.style.display = '');
+            actionsCells.forEach(cell => cell.style.display = '');
+        }
+
         document.getElementById('pageSizeSelect').value = '@pageSize';
 
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
@@ -302,6 +316,35 @@
                 });
         });
     });
+    
+    function changePageSize(size) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('pageSize', size);
+        url.searchParams.set('pageNumber', '1');
+        window.location.href = url.toString();
+    }
+    
+    function clearColumnFilter() {
+        const moduleName = 'Sale';
+        const storageKey = `hiddenColumns_${moduleName}`;
+        const table = document.getElementById('dataTable');
+        
+        localStorage.setItem(storageKey, JSON.stringify([]));
+        
+        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            header.style.display = '';
+            
+            const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+            cells.forEach(cell => {
+                cell.style.display = '';
+            });
+        });
+        
+        document.getElementById('hiddenColumnsBadges').innerHTML = '';
+        document.getElementById('columnFilterSelect').value = '';
+    }
 </script>
 
 <!-- Toast for success message -->

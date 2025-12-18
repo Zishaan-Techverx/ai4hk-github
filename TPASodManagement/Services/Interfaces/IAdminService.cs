@@ -6,7 +6,7 @@ namespace TpaSodManagement.Services.Interfaces
     public interface IAdminService
     {
         Task<List<IdentityRole<long>>> GetAllRolesAsync();
-        Task<List<TpaSodManagementUser>> GetAllUsersAsync();
+        Task<List<TpaSodManagementUser>> GetAllUsersAsync(string? organizationName = null);
         Task<(bool success, string message)> AssignRoleToUserAsync(long userId, string roleName);
         Task<(bool success, string message)> RemoveRoleFromUserAsync(long userId, string roleName);
         Task<(bool success, string message)> CreateRoleAsync(string roleName);
@@ -17,7 +17,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<List<string>> GetUserRolesAsync(long userId);
 
         // ViewModel helpers to keep controllers thin
-        Task<TpaSodManagement.ViewModels.Admin.AdminIndexViewModel> GetAdminIndexViewModelAsync();
+        Task<TpaSodManagement.ViewModels.Admin.AdminIndexViewModel> GetAdminIndexViewModelAsync(string? organizationName = null);
         Task<TpaSodManagement.ViewModels.Admin.EditRoleViewModel?> GetEditRoleViewModelAsync(long roleId);
         Task<TpaSodManagement.ViewModels.Admin.RoleDetailsViewModel?> GetRoleDetailsViewModelAsync(long roleId);
     }

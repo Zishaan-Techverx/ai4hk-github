@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
 using TpaSodManagement.Services.Interfaces;
@@ -12,11 +13,16 @@ public class AdminController : Controller
 {
     private readonly IAdminService _adminService;
     private readonly ILogger<AdminController> _logger;
+    private readonly UserManager<TpaSodManagementUser> _userManager;
 
-    public AdminController(IAdminService adminService, ILogger<AdminController> logger)
+    public AdminController(
+        IAdminService adminService, 
+        ILogger<AdminController> logger,
+        UserManager<TpaSodManagementUser> userManager)
     {
         _adminService = adminService;
         _logger = logger;
+        _userManager = userManager;
     }
 
     // GET: Admin/Index
@@ -25,14 +31,30 @@ public class AdminController : Controller
     {
         try
         {
-            var model = await _adminService.GetAdminIndexViewModelAsync();
+            // Get current logged-in user
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                TempData["ErrorMessage"] = "User not found.";
+                return View("~/Views/AdminPanel/Index.cshtml", new AdminIndexViewModel());
+            }
+
+            // Check if current user is SuperAdmin
+            var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
+            bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+            
+            // If SuperAdmin, show all users (pass null to get all organizations)
+            // Otherwise, filter by current user's organization
+            string? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationName;
+            
+            var model = await _adminService.GetAdminIndexViewModelAsync(organizationFilter);
             return View("~/Views/AdminPanel/Index.cshtml", model);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading admin page");
             TempData["ErrorMessage"] = "An error occurred while loading the page.";
-            return View("~/Views/AdminPanel/Index.cshtml");
+            return View("~/Views/AdminPanel/Index.cshtml", new AdminIndexViewModel());
         }
     }
 

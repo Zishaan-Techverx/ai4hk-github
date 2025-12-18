@@ -17,10 +17,22 @@
     }
 </div>
 <br />
+<!-- Column Filter and Page Size Controls -->
 <div class="row mb-3">
     <div class="col-md-6">
+        <label for="columnFilterSelect" class="form-label">Hide Columns</label>
+        <div class="d-flex align-items-start gap-2">
+            <select id="columnFilterSelect" class="form-select" style="width: auto; min-width: 200px;">
+                <option value="">-- Select Column to Hide --</option>
+            </select>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="clearColumnFilter()">Show All</button>
+        </div>
+        <div id="hiddenColumnsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
+    </div>
+    <div class="col-md-6 text-end">
         <label for="pageSizeSelect" class="form-label">Page Size</label>
-        <select id="pageSizeSelect" class="form-select" style="width: auto; display: inline-block;" onchange="changePageSize(this.value)">
+        <select id="pageSizeSelect" class="form-select d-inline-block" style="width: auto;"
+            onchange="changePageSize(this.value)">
             <option value="10" selected="@(pageSize == 10)">10</option>
             <option value="15" selected="@(pageSize == 15)">15</option>
             <option value="20" selected="@(pageSize == 20)">20</option>
@@ -31,100 +43,44 @@
     </div>
 </div>
 <div class="card card-body shadow-sm">
-    <table class="table">
+    <table class="table" id="dataTable">
         <thead>
             <tr>
-                <th>
-                    Area Amount
-                </th>
-                <th>
-                    Seeding Date
-                </th>
-                <th>
-                    Seeding Method
-                </th>
-                <th>
-                    SeedRate Per Unit
-                </th>
-                <th>
-                    Weather Conditions
-                </th>
-                <th>
-                    Soil Temperature
-                </th>
-                <th>
-                    Soil Moisture
-                </th>
-                <th>
-                    Notes
-                </th>
-                <th>
-                    Created Date
-                </th>
-                <th>
-                    Area Type
-                </th>
-                <th>
-                    Farm
-                </th>
-                <th>
-                    Field
-                </th>
-                <th>
-                    TagRange
-                </th>
-                <th>
-                    User
-                </th>
-                <th></th>
+                <th data-column="AreaAmount">Area Amount</th>
+                <th data-column="SeedingDate">Seeding Date</th>
+                <th data-column="SeedingMethod">Seeding Method</th>
+                <th data-column="SeedRatePerUnit">SeedRate Per Unit</th>
+                <th data-column="WeatherConditions">Weather Conditions</th>
+                <th data-column="SoilTemperature">Soil Temperature</th>
+                <th data-column="SoilMoisture">Soil Moisture</th>
+                <th data-column="Notes">Notes</th>
+                <th data-column="CreatedDate">Created Date</th>
+                <th data-column="AreaType">Area Type</th>
+                <th data-column="Farm">Farm</th>
+                <th data-column="Field">Field</th>
+                <th data-column="TagRange">TagRange</th>
+                <th data-column="User">User</th>
+                <th data-column="Actions" class="no-hide-column">Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in Model)
             {
                 <tr id="row-@item.SeedingId">
-                    <td>
-                        @Html.DisplayFor(modelItem => item.AreaAmount)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.SeedingDate)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.SeedingMethod)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.SeedRatePerUnit)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.WeatherConditions)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.SoilTemperature)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.SoilMoisture)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.Notes)
-                    </td>
-                    <td>
-                        @Html.DisplayFor(modelItem => item.CreatedDate)
-                    </td>
-                    <td>
-                        @(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")
-                    </td>
-                    <td>
-                        @(item.FarmDisplay ?? $"Farm #{item.FarmId}")
-                    </td>
-                    <td>
-                        @(item.FieldName ?? "N/A")
-                    </td>
-                    <td>
-                        @(item.TagRangeCode ?? $"TagRange #{item.TagRangeId}")
-                    </td>
-                    <td>
-                        @(item.UserName ?? "N/A")
-                    </td>
+                    <td data-column="AreaAmount">@Html.DisplayFor(modelItem => item.AreaAmount)</td>
+                    <td data-column="SeedingDate">@Html.DisplayFor(modelItem => item.SeedingDate)</td>
+                    <td data-column="SeedingMethod">@Html.DisplayFor(modelItem => item.SeedingMethod)</td>
+                    <td data-column="SeedRatePerUnit">@Html.DisplayFor(modelItem => item.SeedRatePerUnit)</td>
+                    <td data-column="WeatherConditions">@Html.DisplayFor(modelItem => item.WeatherConditions)</td>
+                    <td data-column="SoilTemperature">@Html.DisplayFor(modelItem => item.SoilTemperature)</td>
+                    <td data-column="SoilMoisture">@Html.DisplayFor(modelItem => item.SoilMoisture)</td>
+                    <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
+                    <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
+                    <td data-column="AreaType">@(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")</td>
+                    <td data-column="Farm">@(item.FarmDisplay ?? $"Farm #{item.FarmId}")</td>
+                    <td data-column="Field">@(item.FieldName ?? "N/A")</td>
+                    <td data-column="TagRange">@(item.TagRangeCode ?? $"TagRange #{item.TagRangeId}")</td>
+                    <td data-column="User">@(item.UserName ?? "N/A")</td>
                     <td style="display: flex; gap: 8px; align-items: center;">
                         @if (User.HasPermission("Seeding.Edit"))
                         {
@@ -226,11 +182,94 @@
 </div>
 
 <script>
-    function changePageSize(selectedPageSize) {
-        window.location.href = '@Url.Action("Index", new { pageNumber = 1 })' + '&pageSize=' + selectedPageSize;
-    }
-
     document.addEventListener('DOMContentLoaded', function () {
+        const moduleName = 'Seeding';
+        const storageKey = `hiddenColumns_${moduleName}`;
+        const table = document.getElementById('dataTable');
+        const filterSelect = document.getElementById('columnFilterSelect');
+        const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
+        
+        if (!table || !filterSelect) return;
+        
+        // Get all column headers except Actions
+        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+        const columnMap = new Map();
+        
+        // Populate dropdown
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            const displayName = header.textContent.trim();
+            columnMap.set(columnName, displayName);
+            
+            const option = document.createElement('option');
+            option.value = columnName;
+            option.textContent = displayName;
+            filterSelect.appendChild(option);
+        });
+        
+        // Load saved preferences
+        let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        
+        // Update UI based on saved preferences
+        updateHiddenColumnsUI(hiddenColumns, columnMap);
+        applyColumnVisibility(hiddenColumns);
+        
+        // Handle dropdown selection
+        filterSelect.addEventListener('change', function() {
+            const selectedColumn = this.value;
+            if (!selectedColumn) return;
+            
+            // Toggle column visibility
+            if (hiddenColumns.includes(selectedColumn)) {
+                hiddenColumns = hiddenColumns.filter(col => col !== selectedColumn);
+            } else {
+                hiddenColumns.push(selectedColumn);
+            }
+            
+            localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+            updateHiddenColumnsUI(hiddenColumns, columnMap);
+            applyColumnVisibility(hiddenColumns);
+            this.value = '';
+        });
+        
+        function updateHiddenColumnsUI(hiddenCols, colMap) {
+            hiddenColumnsBadges.innerHTML = '';
+            hiddenCols.forEach(columnName => {
+                const displayName = colMap.get(columnName);
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-secondary me-1 mb-1';
+                badge.style.cursor = 'pointer';
+                badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
+                badge.addEventListener('click', function() {
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                    localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                    updateHiddenColumnsUI(hiddenColumns, columnMap);
+                    applyColumnVisibility(hiddenColumns);
+                });
+                hiddenColumnsBadges.appendChild(badge);
+            });
+        }
+        
+        function applyColumnVisibility(hiddenCols) {
+            headers.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                header.style.display = isHidden ? 'none' : '';
+                
+                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = isHidden ? 'none' : '';
+                });
+            });
+            
+            // Ensure Actions column is always visible
+            const actionsHeaders = table.querySelectorAll('thead th[data-column="Actions"]');
+            const actionsCells = table.querySelectorAll('tbody td[data-column="Actions"]');
+            actionsHeaders.forEach(header => header.style.display = '');
+            actionsCells.forEach(cell => cell.style.display = '');
+        }
+
         document.getElementById('pageSizeSelect').value = '@pageSize';
 
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
@@ -302,4 +341,33 @@
                 });
         });
     });
+    
+    function changePageSize(size) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('pageSize', size);
+        url.searchParams.set('pageNumber', '1');
+        window.location.href = url.toString();
+    }
+    
+    function clearColumnFilter() {
+        const moduleName = 'Seeding';
+        const storageKey = `hiddenColumns_${moduleName}`;
+        const table = document.getElementById('dataTable');
+        
+        localStorage.setItem(storageKey, JSON.stringify([]));
+        
+        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            header.style.display = '';
+            
+            const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+            cells.forEach(cell => {
+                cell.style.display = '';
+            });
+        });
+        
+        document.getElementById('hiddenColumnsBadges').innerHTML = '';
+        document.getElementById('columnFilterSelect').value = '';
+    }
 </script>

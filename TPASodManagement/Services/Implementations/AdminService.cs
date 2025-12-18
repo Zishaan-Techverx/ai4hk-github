@@ -28,10 +28,19 @@ namespace TpaSodManagement.Services.Implementations
             return await _roleManager.Roles.ToListAsync();
         }
 
-        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync()
+        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(string? organizationName = null)
         {
             // Get all users
             var allUsers = await _userManager.Users.ToListAsync();
+            
+            // Filter by organization if provided
+            if (!string.IsNullOrWhiteSpace(organizationName))
+            {
+                allUsers = allUsers
+                    .Where(u => !string.IsNullOrWhiteSpace(u.OrganizationName) && 
+                               u.OrganizationName.Equals(organizationName, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
             
             // Filter out users with SuperAdmin role
             var filteredUsers = new List<TpaSodManagementUser>();
@@ -265,10 +274,10 @@ namespace TpaSodManagement.Services.Implementations
             }
         }
 
-        public async Task<AdminIndexViewModel> GetAdminIndexViewModelAsync()
+        public async Task<AdminIndexViewModel> GetAdminIndexViewModelAsync(string? organizationName = null)
         {
             var roles = await GetAllRolesAsync();
-            var users = await GetAllUsersAsync();
+            var users = await GetAllUsersAsync(organizationName);
 
             var roleViewModels = roles
                 .Select(r => new RoleItemViewModel

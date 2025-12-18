@@ -2,6 +2,10 @@
 
 @{
     ViewData["Title"] = "User Management";
+    int pageNumber = ViewBag.PageNumber ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = ViewBag.PageSize ?? 10;
 }
 
 <br />
@@ -125,6 +129,33 @@
                     </div>
                 </div>
             </div>
+
+            <br />
+
+            <nav aria-label="Page navigation">
+                <ul class="pagination">
+                    <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
+                        <a class="page-link"
+                            href="@Url.Action("Index", new { pageNumber = pageNumber - 1, pageSize = pageSize })">Previous</a>
+                    </li>
+
+                    @for (int i = 1; i <= totalPages; i++)
+                    {
+                        <li class="page-item @(i == pageNumber ? "active" : "")">
+                            <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                        </li>
+                    }
+
+                    <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
+                        <a class="page-link"
+                            href="@Url.Action("Index", new { pageNumber = pageNumber + 1, pageSize = pageSize })">Next</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="text-muted mt-2">
+                Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records
+            </div>
         </div>
     </div>
 </div>
@@ -166,6 +197,93 @@
 @section Scripts {
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            const moduleName = 'User';
+            const storageKey = `hiddenColumns_${moduleName}`;
+            const table = document.getElementById('dataTable');
+            const filterSelect = document.getElementById('columnFilterSelect');
+            const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
+            
+            if (table && filterSelect) {
+                // Get all column headers except Actions
+                const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+                const columnMap = new Map();
+                
+                // Populate dropdown
+                headers.forEach(header => {
+                    const columnName = header.getAttribute('data-column');
+                    const displayName = header.textContent.trim();
+                    columnMap.set(columnName, displayName);
+                    
+                    const option = document.createElement('option');
+                    option.value = columnName;
+                    option.textContent = displayName;
+                    filterSelect.appendChild(option);
+                });
+                
+                // Load saved preferences
+                let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                
+                // Update UI based on saved preferences
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                
+                // Handle dropdown selection
+                filterSelect.addEventListener('change', function() {
+                    const selectedColumn = this.value;
+                    if (!selectedColumn) return;
+                    
+                    // Toggle column visibility
+                    if (hiddenColumns.includes(selectedColumn)) {
+                        hiddenColumns = hiddenColumns.filter(col => col !== selectedColumn);
+                    } else {
+                        hiddenColumns.push(selectedColumn);
+                    }
+                    
+                    localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                    updateHiddenColumnsUI(hiddenColumns, columnMap);
+                    applyColumnVisibility(hiddenColumns);
+                    this.value = '';
+                });
+                
+                function updateHiddenColumnsUI(hiddenCols, colMap) {
+                    hiddenColumnsBadges.innerHTML = '';
+                    hiddenCols.forEach(columnName => {
+                        const displayName = colMap.get(columnName);
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-secondary me-1 mb-1';
+                        badge.style.cursor = 'pointer';
+                        badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
+                        badge.addEventListener('click', function() {
+                            hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                            localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                            updateHiddenColumnsUI(hiddenColumns, columnMap);
+                            applyColumnVisibility(hiddenColumns);
+                        });
+                        hiddenColumnsBadges.appendChild(badge);
+                    });
+                }
+                
+                function applyColumnVisibility(hiddenCols) {
+                    headers.forEach(header => {
+                        const columnName = header.getAttribute('data-column');
+                        const isHidden = hiddenCols.includes(columnName);
+                        
+                        header.style.display = isHidden ? 'none' : '';
+                        
+                        const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                        cells.forEach(cell => {
+                            cell.style.display = isHidden ? 'none' : '';
+                        });
+                    });
+                    
+                    // Ensure Actions column is always visible
+                    const actionsHeaders = table.querySelectorAll('thead th[data-column="Actions"]');
+                    const actionsCells = table.querySelectorAll('tbody td[data-column="Actions"]');
+                    actionsHeaders.forEach(header => header.style.display = '');
+                    actionsCells.forEach(cell => cell.style.display = '');
+                }
+            }
+
             setTimeout(function () {
                 const alerts = document.querySelectorAll('.alert-success, .alert-danger');
                 alerts.forEach(alert => {
@@ -291,5 +409,34 @@
                 });
             }
         });
+        
+        function changePageSize(size) {
+            const url = new URL(window.location.href);
+            url.searchParams.set('pageSize', size);
+            url.searchParams.set('pageNumber', '1');
+            window.location.href = url.toString();
+        }
+        
+        function clearColumnFilter() {
+            const moduleName = 'User';
+            const storageKey = `hiddenColumns_${moduleName}`;
+            const table = document.getElementById('dataTable');
+            
+            localStorage.setItem(storageKey, JSON.stringify([]));
+            
+            const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+            headers.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                header.style.display = '';
+                
+                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = '';
+                });
+            });
+            
+            document.getElementById('hiddenColumnsBadges').innerHTML = '';
+            document.getElementById('columnFilterSelect').value = '';
+        }
     </script>
 }

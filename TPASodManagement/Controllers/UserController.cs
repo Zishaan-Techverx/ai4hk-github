@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
@@ -20,6 +21,7 @@ namespace TpaSodManagement.Controllers
         private readonly IRegistrationService _registrationService;
         private readonly SodDbContext _context;
         private readonly ILogger<UserController> _logger;
+        private readonly UserManager<TpaSodManagementUser> _userManager;
 
         public UserController(
             IUserService userService,
@@ -27,7 +29,8 @@ namespace TpaSodManagement.Controllers
             IOrganizationService organizationService,
             IRegistrationService registrationService,
             SodDbContext context,
-            ILogger<UserController> logger)
+            ILogger<UserController> logger,
+            UserManager<TpaSodManagementUser> userManager)
         {
             _userService = userService;
             _adminService = adminService;
@@ -35,13 +38,31 @@ namespace TpaSodManagement.Controllers
             _registrationService = registrationService;
             _context = context;
             _logger = logger;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
         {
             try
             {
-                var users = await _userService.GetAllUsersAsync();
+                // Get current logged-in user
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                {
+                    TempData["ErrorMessage"] = "User not found.";
+                    return View(new List<UserItemViewModel>());
+                }
+
+                // Check if current user is SuperAdmin
+                var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
+                bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+                
+                // If SuperAdmin, show all users (pass null to get all organizations)
+                // Otherwise, filter by current user's organization
+                string? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationName;
+                
+                // Get users filtered by organization (or all if SuperAdmin)
+                var users = await _userService.GetAllUsersAsync(organizationFilter);
                 var viewModel = new List<UserItemViewModel>();
 
                 foreach (var user in users)

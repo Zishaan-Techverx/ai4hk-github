@@ -2,6 +2,10 @@
 
 @{
     ViewData["Title"] = "Fields";
+    int pageNumber = ViewBag.PageNumber ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = ViewBag.PageSize ?? 10;
 }
 
 <br />
@@ -30,32 +34,58 @@
     </div>
 }
 
+<!-- Column Filter and Page Size Controls -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label for="columnFilterSelect" class="form-label">Hide Columns</label>
+        <div class="d-flex align-items-start gap-2">
+            <select id="columnFilterSelect" class="form-select" style="width: auto; min-width: 200px;">
+                <option value="">-- Select Column to Hide --</option>
+            </select>
+            <button type="button" class="btn btn-sm btn-secondary" onclick="clearColumnFilter()">Show All</button>
+        </div>
+        <div id="hiddenColumnsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
+    </div>
+    <div class="col-md-6 text-end">
+        <label for="pageSizeSelect" class="form-label">Page Size</label>
+        <select id="pageSizeSelect" class="form-select d-inline-block" style="width: auto;"
+            onchange="changePageSize(this.value)">
+            <option value="10" selected="@(pageSize == 10)">10</option>
+            <option value="15" selected="@(pageSize == 15)">15</option>
+            <option value="20" selected="@(pageSize == 20)">20</option>
+            <option value="25" selected="@(pageSize == 25)">25</option>
+            <option value="50" selected="@(pageSize == 50)">50</option>
+            <option value="100" selected="@(pageSize == 100)">100</option>
+        </select>
+    </div>
+</div>
+
 <div class="card card-body shadow-sm">
-    <table class="table" id="fieldTable">
+    <table class="table" id="dataTable">
         <thead>
             <tr>
-                <th>Field Name</th>
-                <th>Field Code</th>
-                <th>Area Amount</th>
-                <th>Area Type</th>
-                <th>Farm</th>
-                <th>Soil Type</th>
-                <th>Irrigation Available</th>
-                <th>Is Active</th>
-                <th>Actions</th>
+                <th data-column="FieldName">Field Name</th>
+                <th data-column="FieldCode">Field Code</th>
+                <th data-column="AreaAmount">Area Amount</th>
+                <th data-column="AreaType">Area Type</th>
+                <th data-column="Farm">Farm</th>
+                <th data-column="SoilType">Soil Type</th>
+                <th data-column="IrrigationAvailable">Irrigation Available</th>
+                <th data-column="IsActive">Is Active</th>
+                <th data-column="Actions" class="no-hide-column">Actions</th>
             </tr>
         </thead>
         <tbody>
             @foreach (var item in Model)
             {
                 <tr id="row-@item.FieldId">
-                    <td>@Html.DisplayFor(modelItem => item.FieldName)</td>
-                    <td>@Html.DisplayFor(modelItem => item.FieldCode)</td>
-                    <td>@Html.DisplayFor(modelItem => item.AreaAmount)</td>
-                    <td>@(item.AreaTypeName ?? "N/A")</td>
-                    <td>@(!string.IsNullOrEmpty(item.FarmLicenseNumber) ? item.FarmLicenseNumber : $"Farm #{item.FarmId}")</td>
-                    <td>@Html.DisplayFor(modelItem => item.SoilType)</td>
-                    <td>
+                    <td data-column="FieldName">@Html.DisplayFor(modelItem => item.FieldName)</td>
+                    <td data-column="FieldCode">@Html.DisplayFor(modelItem => item.FieldCode)</td>
+                    <td data-column="AreaAmount">@Html.DisplayFor(modelItem => item.AreaAmount)</td>
+                    <td data-column="AreaType">@(item.AreaTypeName ?? "N/A")</td>
+                    <td data-column="Farm">@(!string.IsNullOrEmpty(item.FarmLicenseNumber) ? item.FarmLicenseNumber : $"Farm #{item.FarmId}")</td>
+                    <td data-column="SoilType">@Html.DisplayFor(modelItem => item.SoilType)</td>
+                    <td data-column="IrrigationAvailable">
                         @if (item.IrrigationAvailable)
                         {
                             <span class="badge bg-success">Yes</span>
@@ -65,7 +95,7 @@
                             <span class="badge bg-secondary">No</span>
                         }
                     </td>
-                    <td>
+                    <td data-column="IsActive">
                         @if (item.IsActive)
                         {
                             <span class="badge bg-success">Active</span>
@@ -104,6 +134,36 @@
         </tbody>
     </table>
 </div>
+
+<br />
+
+<nav aria-label="Page navigation">
+    <ul class="pagination">
+        <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
+            <a class="page-link"
+                href="@Url.Action("Index", new { pageNumber = pageNumber - 1, pageSize = pageSize })">Previous</a>
+        </li>
+
+        @for (int i = 1; i <= totalPages; i++)
+        {
+            <li class="page-item @(i == pageNumber ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+            </li>
+        }
+
+        <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
+            <a class="page-link"
+                href="@Url.Action("Index", new { pageNumber = pageNumber + 1, pageSize = pageSize })">Next</a>
+        </li>
+    </ul>
+</nav>
+
+<div class="text-muted mt-2">
+    Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records
+</div>
+
+<br />
+<br />
 
 <!-- Toast for success message -->
 <div aria-live="polite" aria-atomic="true" class="position-relative">
@@ -149,6 +209,93 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
+        const moduleName = 'Field';
+        const storageKey = `hiddenColumns_${moduleName}`;
+        const table = document.getElementById('dataTable');
+        const filterSelect = document.getElementById('columnFilterSelect');
+        const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
+        
+        if (!table || !filterSelect) return;
+        
+        // Get all column headers except Actions
+        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+        const columnMap = new Map();
+        
+        // Populate dropdown
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            const displayName = header.textContent.trim();
+            columnMap.set(columnName, displayName);
+            
+            const option = document.createElement('option');
+            option.value = columnName;
+            option.textContent = displayName;
+            filterSelect.appendChild(option);
+        });
+        
+        // Load saved preferences
+        let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        
+        // Update UI based on saved preferences
+        updateHiddenColumnsUI(hiddenColumns, columnMap);
+        applyColumnVisibility(hiddenColumns);
+        
+        // Handle dropdown selection
+        filterSelect.addEventListener('change', function() {
+            const selectedColumn = this.value;
+            if (!selectedColumn) return;
+            
+            // Toggle column visibility
+            if (hiddenColumns.includes(selectedColumn)) {
+                hiddenColumns = hiddenColumns.filter(col => col !== selectedColumn);
+            } else {
+                hiddenColumns.push(selectedColumn);
+            }
+            
+            localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+            updateHiddenColumnsUI(hiddenColumns, columnMap);
+            applyColumnVisibility(hiddenColumns);
+            this.value = '';
+        });
+        
+        function updateHiddenColumnsUI(hiddenCols, colMap) {
+            hiddenColumnsBadges.innerHTML = '';
+            hiddenCols.forEach(columnName => {
+                const displayName = colMap.get(columnName);
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-secondary me-1 mb-1';
+                badge.style.cursor = 'pointer';
+                badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
+                badge.addEventListener('click', function() {
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                    localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                    updateHiddenColumnsUI(hiddenColumns, columnMap);
+                    applyColumnVisibility(hiddenColumns);
+                });
+                hiddenColumnsBadges.appendChild(badge);
+            });
+        }
+        
+        function applyColumnVisibility(hiddenCols) {
+            headers.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                header.style.display = isHidden ? 'none' : '';
+                
+                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = isHidden ? 'none' : '';
+                });
+            });
+            
+            // Ensure Actions column is always visible
+            const actionsHeaders = table.querySelectorAll('thead th[data-column="Actions"]');
+            const actionsCells = table.querySelectorAll('tbody td[data-column="Actions"]');
+            actionsHeaders.forEach(header => header.style.display = '');
+            actionsCells.forEach(cell => cell.style.display = '');
+        }
+
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
         const fieldIdInput = document.getElementById('fieldIdToDelete');
         const fieldNamePlaceholder = document.getElementById('fieldNamePlaceholder');
@@ -218,5 +365,34 @@
                 });
         });
     });
+    
+    function changePageSize(size) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('pageSize', size);
+        url.searchParams.set('pageNumber', '1');
+        window.location.href = url.toString();
+    }
+    
+    function clearColumnFilter() {
+        const moduleName = 'Field';
+        const storageKey = `hiddenColumns_${moduleName}`;
+        const table = document.getElementById('dataTable');
+        
+        localStorage.setItem(storageKey, JSON.stringify([]));
+        
+        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            header.style.display = '';
+            
+            const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+            cells.forEach(cell => {
+                cell.style.display = '';
+            });
+        });
+        
+        document.getElementById('hiddenColumnsBadges').innerHTML = '';
+        document.getElementById('columnFilterSelect').value = '';
+    }
 </script>
 
