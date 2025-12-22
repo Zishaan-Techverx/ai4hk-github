@@ -349,34 +349,33 @@
                     confirmDeleteBtn.innerHTML = 'Delete';
                 });
         });
-    });
-    
-    function clearColumnFilter() {
-        const moduleName = 'AreaType';
-        const storageKey = `hiddenColumns_${moduleName}`;
-        const table = document.getElementById('dataTable');
         
-        // Clear localStorage
-        localStorage.setItem(storageKey, JSON.stringify([]));
-        
-        // Show all columns
-        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
-        headers.forEach(header => {
-            const columnName = header.getAttribute('data-column');
-            header.style.display = '';
+        // Make clearColumnFilter accessible and update hiddenColumns variable
+        window.clearColumnFilter = function() {
+            // Reset hiddenColumns variable to empty array
+            hiddenColumns = [];
             
-            const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
-            cells.forEach(cell => {
-                cell.style.display = '';
+            // Clear localStorage
+            localStorage.setItem(storageKey, JSON.stringify([]));
+            
+            // Show all columns
+            headers.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                header.style.display = '';
+                
+                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = '';
+                });
             });
-        });
-        
-        // Clear badges
-        document.getElementById('hiddenColumnsBadges').innerHTML = '';
-        
-        // Reset dropdown
-        document.getElementById('columnFilterSelect').value = '';
-    }
+            
+            // Clear badges and update UI
+            updateHiddenColumnsUI(hiddenColumns, columnMap);
+            
+            // Reset dropdown
+            filterSelect.value = '';
+        };
+    });
     
     function changePageSize(size) {
         const url = new URL(window.location.href);

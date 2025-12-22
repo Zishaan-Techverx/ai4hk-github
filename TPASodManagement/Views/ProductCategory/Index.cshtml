@@ -214,7 +214,7 @@
         
         // Get all column headers except Actions
         const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
-        const columnMap = new Map();
+        const columnMap = new Map(); // Store column name -> display name mapping
         
         // Populate dropdown
         headers.forEach(header => {
@@ -242,14 +242,21 @@
             
             // Toggle column visibility
             if (hiddenColumns.includes(selectedColumn)) {
+                // Column is already hidden, show it
                 hiddenColumns = hiddenColumns.filter(col => col !== selectedColumn);
             } else {
+                // Hide the column
                 hiddenColumns.push(selectedColumn);
             }
             
+            // Save to localStorage
             localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+            
+            // Update UI
             updateHiddenColumnsUI(hiddenColumns, columnMap);
             applyColumnVisibility(hiddenColumns);
+            
+            // Reset dropdown
             this.value = '';
         });
         
@@ -276,8 +283,10 @@
                 const columnName = header.getAttribute('data-column');
                 const isHidden = hiddenCols.includes(columnName);
                 
+                // Hide/show header
                 header.style.display = isHidden ? 'none' : '';
                 
+                // Hide/show all cells in this column
                 const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
                 cells.forEach(cell => {
                     cell.style.display = isHidden ? 'none' : '';
@@ -359,6 +368,32 @@
                     confirmDeleteBtn.innerHTML = 'Delete';
                 });
         });
+        
+        // Make clearColumnFilter accessible and update hiddenColumns variable
+        window.clearColumnFilter = function() {
+            // Reset hiddenColumns variable to empty array
+            hiddenColumns = [];
+            
+            // Clear localStorage
+            localStorage.setItem(storageKey, JSON.stringify([]));
+            
+            // Show all columns
+            headers.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                header.style.display = '';
+                
+                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = '';
+                });
+            });
+            
+            // Clear badges and update UI
+            updateHiddenColumnsUI(hiddenColumns, columnMap);
+            
+            // Reset dropdown
+            filterSelect.value = '';
+        };
     });
     
     function changePageSize(size) {
@@ -366,27 +401,5 @@
         url.searchParams.set('pageSize', size);
         url.searchParams.set('pageNumber', '1');
         window.location.href = url.toString();
-    }
-    
-    function clearColumnFilter() {
-        const moduleName = 'ProductCategory';
-        const storageKey = `hiddenColumns_${moduleName}`;
-        const table = document.getElementById('dataTable');
-        
-        localStorage.setItem(storageKey, JSON.stringify([]));
-        
-        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
-        headers.forEach(header => {
-            const columnName = header.getAttribute('data-column');
-            header.style.display = '';
-            
-            const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
-            cells.forEach(cell => {
-                cell.style.display = '';
-            });
-        });
-        
-        document.getElementById('hiddenColumnsBadges').innerHTML = '';
-        document.getElementById('columnFilterSelect').value = '';
     }
 </script>
