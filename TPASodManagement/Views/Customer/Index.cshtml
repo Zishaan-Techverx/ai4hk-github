@@ -23,12 +23,20 @@
 <!-- Column Filter and Page Size Controls -->
 <div class="row mb-3">
     <div class="col-md-6">
-        <label for="columnFilterSelect" class="form-label">Hide Columns</label>
-        <div class="d-flex align-items-start gap-2">
-            <select id="columnFilterSelect" class="form-select" style="width: auto; min-width: 200px;">
-                <option value="">-- Select Column to Hide --</option>
-            </select>
-            <button type="button" class="btn btn-sm btn-secondary" onclick="clearColumnFilter()">Show All</button>
+        <label class="form-label">Hide Columns</label>
+        <div class="dropdown">
+            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="columnFilterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="min-width: 200px;">
+                Show All
+            </button>
+            <ul class="dropdown-menu" id="columnFilterMenu" aria-labelledby="columnFilterDropdown" style="max-height: 300px; overflow-y: auto;">
+                <li>
+                    <a class="dropdown-item" href="#" id="showAllOption">
+                        <input type="checkbox" id="showAllCheckbox" class="form-check-input me-2" checked>
+                        <label class="form-check-label" for="showAllCheckbox" style="cursor: pointer; width: 100%;">Show All</label>
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+            </ul>
         </div>
         <div id="hiddenColumnsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
     </div>
@@ -88,27 +96,29 @@
                             <text>N/A</text>
                         }
                     </td>
-                    <td style="display: flex; gap: 8px; align-items: center;">
-                        @if (User.HasPermission("Customer.Edit"))
-                        {
-                            <a asp-action="Edit" asp-route-id="@item.CustomerId">
-                                <i class="fa-regular fa-pen-to-square"></i>
-                            </a>
-                        }
-                        @if (User.HasPermission("Customer.Detail"))
-                        {
-                            <a asp-action="Details" asp-route-id="@item.CustomerId">
-                                <i class="fa-solid fa-circle-info"></i>
-                            </a>
-                        }
-                        @if (User.HasPermission("Customer.Delete"))
-                        {
-                            <a href="#" class="delete-btn" data-id="@item.CustomerId" 
-                                data-name="@(!string.IsNullOrEmpty(item.CustomerCode) ? item.CustomerCode : $"Customer #{item.CustomerId}")"
-                                data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
-                                <i class="fa-solid fa-trash-can" style="color: #ff0000;"></i>
-                            </a>
-                        }
+                    <td data-column="Actions">
+                        <div class="btn-group btn-group-sm">
+                            @if (User.HasPermission("Customer.Detail"))
+                            {
+                                <a class="btn btn-info" asp-action="Details" asp-route-id="@item.CustomerId">
+                                    Details
+                                </a>
+                            }
+                            @if (User.HasPermission("Customer.Edit"))
+                            {
+                                <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.CustomerId">
+                                    Edit
+                                </a>
+                            }
+                            @if (User.HasPermission("Customer.Delete"))
+                            {
+                                <a href="#" class="btn btn-danger delete-btn" data-id="@item.CustomerId" 
+                                    data-name="@(!string.IsNullOrEmpty(item.CustomerCode) ? item.CustomerCode : $"Customer #{item.CustomerId}")"
+                                    data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
+                                    Delete
+                                </a>
+                            }
+                        </div>
                     </td>
                 </tr>
             }
@@ -190,58 +200,167 @@
         const moduleName = 'Customer';
         const storageKey = `hiddenColumns_${moduleName}`;
         const table = document.getElementById('dataTable');
-        const filterSelect = document.getElementById('columnFilterSelect');
+        const columnFilterDropdown = document.getElementById('columnFilterDropdown');
+        const columnFilterMenu = document.getElementById('columnFilterMenu');
+        const showAllOption = document.getElementById('showAllOption');
+        const showAllCheckbox = document.getElementById('showAllCheckbox');
         const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
         
-        if (!table || !filterSelect) return;
+        if (!table || !columnFilterMenu) return;
         
         // Get all column headers except Actions
         const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
         const columnMap = new Map(); // Store column name -> display name mapping
         
-        // Populate dropdown
+        // Populate dropdown with checkboxes
         headers.forEach(header => {
             const columnName = header.getAttribute('data-column');
             const displayName = header.textContent.trim();
             columnMap.set(columnName, displayName);
             
-            const option = document.createElement('option');
-            option.value = columnName;
-            option.textContent = displayName;
-            filterSelect.appendChild(option);
+            const listItem = document.createElement('li');
+            const checkboxId = `colCheckbox_${columnName}`;
+            
+            listItem.innerHTML = `
+                <a class="dropdown-item" href="#" style="pointer-events: none;">
+                    <input type="checkbox" id="${checkboxId}" class="form-check-input me-2" data-column="${columnName}" style="pointer-events: auto;">
+                    <label class="form-check-label" for="${checkboxId}" style="cursor: pointer; width: 100%; pointer-events: auto;">${displayName}</label>
+                </a>
+            `;
+            
+            columnFilterMenu.appendChild(listItem);
+            
+            // Get the checkbox after it's been added to DOM
+            const checkbox = document.getElementById(checkboxId);
+            
+            // Handle checkbox click directly to toggle state
+            checkbox.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent dropdown from closing
+                
+                const columnName = this.dataset.column;
+                const isChecked = this.checked;
+                
+                // Update hiddenColumns array
+                if (isChecked) {
+                    // Hide the column
+                    if (!hiddenColumns.includes(columnName)) {
+                        hiddenColumns.push(columnName);
+                    }
+                } else {
+                    // Show the column
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                }
+                
+                // Update "Show All" checkbox state
+                updateShowAllCheckbox();
+                
+                // Save to localStorage
+                localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                
+                // Update UI
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
+            });
         });
         
         // Load saved preferences
         let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
         
+        // Update checkboxes based on saved preferences
+        updateCheckboxes();
+        
         // Update UI based on saved preferences
         updateHiddenColumnsUI(hiddenColumns, columnMap);
         applyColumnVisibility(hiddenColumns);
+        updateDropdownButton();
         
-        // Handle dropdown selection
-        filterSelect.addEventListener('change', function() {
-            const selectedColumn = this.value;
-            if (!selectedColumn) return;
+        // Handle "Show All" option click
+        showAllOption.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
             
-            // Toggle column visibility
-            if (hiddenColumns.includes(selectedColumn)) {
-                // Column is already hidden, show it
-                hiddenColumns = hiddenColumns.filter(col => col !== selectedColumn);
-            } else {
-                // Hide the column
-                hiddenColumns.push(selectedColumn);
-            }
+            // Uncheck all column checkboxes
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            allCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
             
-            // Save to localStorage
-            localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+            // Update hiddenColumns
+            hiddenColumns = [];
+            localStorage.setItem(storageKey, JSON.stringify([]));
             
             // Update UI
             updateHiddenColumnsUI(hiddenColumns, columnMap);
             applyColumnVisibility(hiddenColumns);
-            
-            // Reset dropdown
-            this.value = '';
+            updateDropdownButton();
         });
+        
+        // Handle individual checkbox changes
+        columnFilterMenu.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox' && e.target.dataset.column) {
+                e.stopPropagation(); // Prevent dropdown from closing
+                
+                const columnName = e.target.dataset.column;
+                const isChecked = e.target.checked;
+                
+                // Update hiddenColumns array
+                if (isChecked) {
+                    // Hide the column
+                    if (!hiddenColumns.includes(columnName)) {
+                        hiddenColumns.push(columnName);
+                    }
+                } else {
+                    // Show the column
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                }
+                
+                // Update "Show All" checkbox state
+                updateShowAllCheckbox();
+                
+                // Save to localStorage
+                localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                
+                // Update UI
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
+            }
+        });
+        
+        // Prevent dropdown from closing when clicking inside the menu (but allow checkbox clicks)
+        columnFilterMenu.addEventListener('click', function(e) {
+            // Don't stop propagation for checkbox clicks - let them work normally
+            if (e.target.type !== 'checkbox' && !e.target.closest('input[type="checkbox"]') && !e.target.closest('label')) {
+                e.stopPropagation();
+            }
+        });
+        
+        function updateCheckboxes() {
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            allCheckboxes.forEach(checkbox => {
+                const columnName = checkbox.dataset.column;
+                checkbox.checked = hiddenColumns.includes(columnName);
+            });
+            updateShowAllCheckbox();
+        }
+        
+        function updateShowAllCheckbox() {
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+            const allUnchecked = Array.from(allCheckboxes).every(cb => !cb.checked);
+            
+            // Show All checkbox should be checked only if all columns are visible (unchecked)
+            showAllCheckbox.checked = allUnchecked;
+        }
+        
+        function updateDropdownButton() {
+            if (hiddenColumns.length === 0) {
+                columnFilterDropdown.textContent = 'Show All';
+            } else {
+                columnFilterDropdown.textContent = `${hiddenColumns.length} Column(s) Hidden`;
+            }
+        }
         
         function updateHiddenColumnsUI(hiddenCols, colMap) {
             hiddenColumnsBadges.innerHTML = '';
@@ -252,10 +371,13 @@
                 badge.style.cursor = 'pointer';
                 badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
                 badge.addEventListener('click', function() {
-                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
-                    localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
-                    updateHiddenColumnsUI(hiddenColumns, columnMap);
-                    applyColumnVisibility(hiddenColumns);
+                    // Uncheck the corresponding checkbox
+                    const checkbox = columnFilterMenu.querySelector(`input[data-column="${columnName}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        // Trigger change event
+                        checkbox.dispatchEvent(new Event('change'));
+                    }
                 });
                 hiddenColumnsBadges.appendChild(badge);
             });
@@ -354,31 +476,6 @@
                 });
         });
         
-        // Make clearColumnFilter accessible and update hiddenColumns variable
-        window.clearColumnFilter = function() {
-            // Reset hiddenColumns variable to empty array
-            hiddenColumns = [];
-            
-            // Clear localStorage
-            localStorage.setItem(storageKey, JSON.stringify([]));
-            
-            // Show all columns
-            headers.forEach(header => {
-                const columnName = header.getAttribute('data-column');
-                header.style.display = '';
-                
-                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
-                cells.forEach(cell => {
-                    cell.style.display = '';
-                });
-            });
-            
-            // Clear badges and update UI
-            updateHiddenColumnsUI(hiddenColumns, columnMap);
-            
-            // Reset dropdown
-            filterSelect.value = '';
-        };
     });
     
     function changePageSize(selectedPageSize) {
