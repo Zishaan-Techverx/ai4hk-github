@@ -49,15 +49,15 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label asp-for="Input.OrganizationName" class="form-label">Organization Name</label>
-                                    <select asp-for="Input.OrganizationName" 
+                                    <label asp-for="Input.OrganizationId" class="form-label">Organization</label>
+                                    <select asp-for="Input.OrganizationId" 
                                             class="form-select" 
                                             asp-items='@(ViewData["Organizations"] as SelectList)' 
                                             id="registerOrganization" 
                                             required>
                                         <option value="">-- Select Organization --</option>
                                     </select>
-                                    <span asp-validation-for="Input.OrganizationName" class="text-danger"></span>
+                                    <span asp-validation-for="Input.OrganizationId" class="text-danger"></span>
                                     <div class="invalid-feedback">
                                         Please select an organization.
                                     </div>

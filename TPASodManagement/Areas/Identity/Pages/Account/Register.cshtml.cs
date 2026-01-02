@@ -48,9 +48,8 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             [Required]
-            [Display(Name = "Organization Name")]
-            [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 3)]
-            public string OrganizationName { get; set; }
+            [Display(Name = "Organization")]
+            public long OrganizationId { get; set; }
 
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
@@ -71,7 +70,7 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
             // Load ALL organizations for dropdown (no IsActive filter)
             var organizations = await _registrationService.GetAllOrganizationsAsync();
             
-            ViewData["Organizations"] = new SelectList(organizations, "OrganizationName", "OrganizationName");
+            ViewData["Organizations"] = new SelectList(organizations, "OrganizationId", "OrganizationName");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -81,14 +80,14 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
             if (ModelState.IsValid)
             {
                 // Validate Organization exists
-                var organization = await _registrationService.GetOrganizationByNameAsync(Input.OrganizationName);
+                var organizations = await _registrationService.GetAllOrganizationsAsync();
+                var organization = organizations.FirstOrDefault(o => o.OrganizationId == Input.OrganizationId);
 
                 if (organization == null)
                 {
-                    ModelState.AddModelError("Input.OrganizationName", "Organization does not exist. Please enter a valid organization name.");
+                    ModelState.AddModelError("Input.OrganizationId", "Organization does not exist. Please select a valid organization.");
                     
-                    var organizations = await _registrationService.GetAllOrganizationsAsync();
-                    ViewData["Organizations"] = new SelectList(organizations, "OrganizationName", "OrganizationName");
+                    ViewData["Organizations"] = new SelectList(organizations, "OrganizationId", "OrganizationName", Input.OrganizationId);
                     return Page();
                 }
 
@@ -97,19 +96,18 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
                 {
                     ModelState.AddModelError("Input.Email", $"An account with the email '{Input.Email}' already exists. Please use a different email address.");
                     
-                    var organizations = await _registrationService.GetAllOrganizationsAsync();
-                    ViewData["Organizations"] = new SelectList(organizations, "OrganizationName", "OrganizationName");
+                    ViewData["Organizations"] = new SelectList(organizations, "OrganizationId", "OrganizationName", Input.OrganizationId);
                     return Page();
                 }
 
                 // Generate username
-                string finalUsername = await _registrationService.GenerateUsernameAsync(organization.OrganizationName, Input.FirstName);
+                string finalUsername = await _registrationService.GenerateUsernameAsync(organization, Input.FirstName);
 
                 var user = new TpaSodManagementUser
                 {
                     UserName = finalUsername,
                     Email = Input.Email,
-                    OrganizationName = organization.OrganizationName,
+                    OrganizationId = organization.OrganizationId,
                     IsActive = true, 
                     PhoneNumber = string.Empty,
                     EmailConfirmed = false,
@@ -171,7 +169,7 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
 
             // Reload organizations if validation fails
             var orgs = await _registrationService.GetAllOrganizationsAsync();
-            ViewData["Organizations"] = new SelectList(orgs, "OrganizationName", "OrganizationName", Input?.OrganizationName);
+            ViewData["Organizations"] = new SelectList(orgs, "OrganizationId", "OrganizationName", Input?.OrganizationId);
             
             return Page();
         }

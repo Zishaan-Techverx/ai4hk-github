@@ -45,7 +45,7 @@ public class AdminController : Controller
             
             // If SuperAdmin, show all users (pass null to get all organizations)
             // Otherwise, filter by current user's organization
-            string? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationName;
+            long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
             
             var model = await _adminService.GetAdminIndexViewModelAsync(organizationFilter);
             return View("~/Views/AdminPanel/Index.cshtml", model);

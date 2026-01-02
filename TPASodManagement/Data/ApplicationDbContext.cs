@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using System.Reflection.Emit;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Models;
+using TpaSodManagement.Models.Db;
 
 namespace TpaSodManagement.Data;
 
@@ -17,6 +18,7 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
 
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
+    public DbSet<Organization> Organizations { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -73,7 +75,15 @@ public class IdentityTestUserEntityConfiguration : IEntityTypeConfiguration<TpaS
         builder.Property(u => u.PhoneNumber).HasDefaultValue(string.Empty);
         builder.Property(u => u.PrimaryContact).HasMaxLength(20);
         builder.Property(u => u.IsActive).HasDefaultValue(false);
-        builder.Property(u => u.OrganizationName).HasMaxLength(200);
+        
+        // OrganizationId foreign key relationship
+        builder.Property(u => u.OrganizationId);
+        builder.HasOne(u => u.Organization)
+            .WithMany(o => o.Users)
+            .HasForeignKey(u => u.OrganizationId)
+            .OnDelete(DeleteBehavior.SetNull)
+            .HasConstraintName("FK_AspNetUsers_Organizations");
+        
         builder.Property(u => u.AddressId);
         builder.Property(u => u.PersonId);
         builder.Property(u => u.WebsiteId);

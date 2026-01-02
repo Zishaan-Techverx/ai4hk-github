@@ -59,7 +59,7 @@ namespace TpaSodManagement.Controllers
                 
                 // If SuperAdmin, show all users (pass null to get all organizations)
                 // Otherwise, filter by current user's organization
-                string? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationName;
+                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
                 
                 // Get users filtered by organization (or all if SuperAdmin)
                 var users = await _userService.GetAllUsersAsync(organizationFilter);
@@ -167,7 +167,14 @@ namespace TpaSodManagement.Controllers
 
             try
             {
-                var organization = await _organizationService.GetOrganizationByNameAsync(model.OrganizationName!);
+                if (!model.OrganizationId.HasValue)
+                {
+                    TempData["ErrorMessage"] = "Please select an organization.";
+                    await PopulateDropdowns(model);
+                    return View(model);
+                }
+
+                var organization = await _organizationService.GetOrganizationByIdAsync(model.OrganizationId.Value);
                 if (organization == null)
                 {
                     TempData["ErrorMessage"] = "Selected organization not found.";
@@ -175,7 +182,7 @@ namespace TpaSodManagement.Controllers
                     return View(model);
                 }
 
-                var finalUsername = await _registrationService.GenerateUsernameAsync(organization.OrganizationName, model.FirstName ?? string.Empty);
+                var finalUsername = await _registrationService.GenerateUsernameAsync(organization, model.FirstName ?? string.Empty);
 
                 var user = new TpaSodManagementUser
                 {
@@ -183,7 +190,7 @@ namespace TpaSodManagement.Controllers
                     NormalizedUserName = finalUsername.ToUpperInvariant(),
                     Email = model.Email,
                     NormalizedEmail = model.Email?.ToUpperInvariant(),
-                    OrganizationName = model.OrganizationName,
+                    OrganizationId = model.OrganizationId.Value,
                     PrimaryContact = model.PrimaryContact,
                     PhoneNumber = model.PhoneNumber ?? string.Empty,
                     IsActive = model.IsActive,
@@ -423,7 +430,7 @@ namespace TpaSodManagement.Controllers
                 Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
-                OrganizationName = user.OrganizationName,
+                OrganizationId = user.OrganizationId,
                 PrimaryContact = user.PrimaryContact,
                 PhoneNumber = user.PhoneNumber,
                 IsActive = user.IsActive,
@@ -448,7 +455,7 @@ namespace TpaSodManagement.Controllers
                 PhoneNumber = model.PhoneNumber ?? string.Empty,
                 IsActive = model.IsActive,
                 PrimaryContact = model.PrimaryContact,
-                OrganizationName = model.OrganizationName,
+                OrganizationId = model.OrganizationId,
                 UserName = model.UserName
             };
         }
@@ -456,7 +463,7 @@ namespace TpaSodManagement.Controllers
         private async Task PopulateDropdowns(UserEditViewModel vm)
         {
             var organizations = await _organizationService.GetAllOrganizationsAsync();
-            vm.Organizations = new SelectList(organizations, "OrganizationName", "OrganizationName", vm.OrganizationName);
+            vm.Organizations = new SelectList(organizations, "OrganizationId", "OrganizationName", vm.OrganizationId);
 
             var addressTypes = await _context.AddressTypes
                 .Where(at => at.IsActive)

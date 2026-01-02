@@ -42,9 +42,9 @@ namespace TpaSodManagement.Services.Implementations
             return existingUser != null;
         }
 
-        public async Task<string> GenerateUsernameAsync(string organizationName, string firstName)
+        public async Task<string> GenerateUsernameAsync(Organization organization, string firstName)
         {
-            string rawOrgName = organizationName.Replace(" ", "");
+            string rawOrgName = organization?.OrganizationName?.Replace(" ", "") ?? "";
             const int OrgPrefixLength = 5;
             string orgPrefix = rawOrgName.Length >= OrgPrefixLength
                                ? rawOrgName.Substring(0, OrgPrefixLength)

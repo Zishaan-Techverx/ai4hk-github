@@ -70,11 +70,11 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationName" class="form-label">Organization Name <span class="text-danger">*</span></label>
-                                <select asp-for="OrganizationName" class="form-select" asp-items="Model.Organizations" required>
+                                <label asp-for="OrganizationId" class="form-label">Organization <span class="text-danger">*</span></label>
+                                <select asp-for="OrganizationId" class="form-select" asp-items="Model.Organizations" required>
                                     <option value="">-- Select Organization --</option>
                                 </select>
-                                <span asp-validation-for="OrganizationName" class="text-danger"></span>
+                                <span asp-validation-for="OrganizationId" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -221,7 +221,7 @@
             }
 
             // Auto-generate username based on Organization and First Name
-            const organizationSelect = document.querySelector('select[name="OrganizationName"]');
+            const organizationSelect = document.querySelector('select[name="OrganizationId"]');
             const firstNameInput = document.querySelector('input[name="FirstName"]');
             const userNameInput = document.querySelector('input[name="UserName"]');
             
@@ -253,7 +253,9 @@
             function updateUsername() {
                 if (!organizationSelect || !firstNameInput || !userNameInput) return;
                 
-                const orgName = organizationSelect.value;
+                // Get organization name from selected option text
+                const selectedOption = organizationSelect.options[organizationSelect.selectedIndex];
+                const orgName = selectedOption ? selectedOption.text : '';
                 const firstName = firstNameInput.value;
                 
                 if (orgName && firstName) {

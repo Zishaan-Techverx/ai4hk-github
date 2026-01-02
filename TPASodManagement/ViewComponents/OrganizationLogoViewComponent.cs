@@ -26,9 +26,9 @@ namespace TpaSodManagement.ViewComponents
             if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(HttpContext.User);
-                if (user != null && !string.IsNullOrWhiteSpace(user.OrganizationName))
+                if (user != null && user.OrganizationId.HasValue)
                 {
-                    organization = await _organizationService.GetOrganizationByNameAsync(user.OrganizationName);
+                    organization = await _organizationService.GetOrganizationByIdAsync(user.OrganizationId.Value);
                 }
             }
 

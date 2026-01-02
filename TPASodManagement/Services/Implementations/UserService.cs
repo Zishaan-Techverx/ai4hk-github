@@ -11,28 +11,32 @@ namespace TpaSodManagement.Services.Implementations
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ILogger<UserService> _logger;
         private readonly IRegistrationService _registrationService;
+        private readonly SodDbContext _context;
 
         public UserService(
             UserManager<TpaSodManagementUser> userManager,
             ILogger<UserService> logger,
-            IRegistrationService registrationService)
+            IRegistrationService registrationService,
+            SodDbContext context)
         {
             _userManager = userManager;
             _logger = logger;
             _registrationService = registrationService;
+            _context = context;
         }
 
-        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(string? organizationName = null)
+        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(long? organizationId = null)
         {
             // Get all users
-            var allUsers = await _userManager.Users.ToListAsync();
+            var allUsers = await _userManager.Users
+                .Include(u => u.Organization)
+                .ToListAsync();
             
             // Filter by organization if provided
-            if (!string.IsNullOrWhiteSpace(organizationName))
+            if (organizationId.HasValue)
             {
                 allUsers = allUsers
-                    .Where(u => !string.IsNullOrWhiteSpace(u.OrganizationName) && 
-                               u.OrganizationName.Equals(organizationName, StringComparison.OrdinalIgnoreCase))
+                    .Where(u => u.OrganizationId == organizationId.Value)
                     .ToList();
             }
             
@@ -52,15 +56,15 @@ namespace TpaSodManagement.Services.Implementations
             return filteredUsers;
         }
 
-        public async Task<TpaSodManagementUser> GetUserByIdAsync(string id)
+        public async Task<TpaSodManagementUser?> GetUserByIdAsync(string id)
         {
             return await _userManager.FindByIdAsync(id);
         }
 
         // Helper method to generate username (same logic as registration)
-        private async Task<string> GenerateUsernameAsync(string organizationName, string firstName, long? excludeUserId = null)
+        private async Task<string> GenerateUsernameAsync(Organization organization, string firstName, long? excludeUserId = null)
         {
-            string rawOrgName = organizationName?.Replace(" ", "") ?? "";
+            string rawOrgName = organization?.OrganizationName?.Replace(" ", "") ?? "";
             const int OrgPrefixLength = 5;
             string orgPrefix = rawOrgName.Length >= OrgPrefixLength
                                ? rawOrgName.Substring(0, OrgPrefixLength)
@@ -124,21 +128,21 @@ namespace TpaSodManagement.Services.Implementations
                 // Store existing roles before update (to preserve them)
                 var existingRoles = await _userManager.GetRolesAsync(existingUser);
 
-                // Check if OrganizationName changed
-                bool organizationChanged = !string.Equals(existingUser.OrganizationName, user.OrganizationName, StringComparison.OrdinalIgnoreCase);
+                // Check if OrganizationId changed
+                bool organizationChanged = existingUser.OrganizationId != user.OrganizationId;
                 
                 // Check if Email changed
                 bool emailChanged = !string.Equals(existingUser.Email, user.Email, StringComparison.OrdinalIgnoreCase);
                 
                 // Store original username if we need to regenerate
-                string originalUsername = existingUser.UserName;
+                string originalUsername = existingUser.UserName ?? string.Empty;
 
                 // Update only remaining fields:
                 existingUser.Email = user.Email;
                 existingUser.PhoneNumber = user.PhoneNumber;
                 existingUser.IsActive = user.IsActive;
                 existingUser.PrimaryContact = user.PrimaryContact;
-                existingUser.OrganizationName = user.OrganizationName;
+                existingUser.OrganizationId = user.OrganizationId;
 
                 // Update NormalizedEmail if Email changed
                 if (emailChanged)
@@ -146,17 +150,24 @@ namespace TpaSodManagement.Services.Implementations
                     existingUser.NormalizedEmail = user.Email?.ToUpperInvariant();
                 }
 
-                // Regenerate username if OrganizationName changed - Get FirstName from Person table
-                if (organizationChanged && !string.IsNullOrEmpty(user.OrganizationName))
+                // Regenerate username if OrganizationId changed - Get FirstName from Person table and Organization
+                if (organizationChanged && user.OrganizationId.HasValue)
                 {
                     // Get Person to get FirstName
                     var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
                     var firstName = person?.FirstName ?? "";
-                    var newUsername = await GenerateUsernameAsync(user.OrganizationName, firstName, user.Id);
-                    existingUser.UserName = newUsername;
-                    existingUser.NormalizedUserName = newUsername?.ToUpperInvariant();
-                    _logger.LogInformation("Username regenerated for user {UserId}: {OldUsername} -> {NewUsername}", 
-                        user.Id, originalUsername, newUsername);
+                    
+                    // Get Organization to get OrganizationName for username generation
+                    var organization = await _context.Organizations
+                        .FirstOrDefaultAsync(o => o.OrganizationId == user.OrganizationId.Value);
+                    if (organization != null)
+                    {
+                        var newUsername = await GenerateUsernameAsync(organization, firstName, user.Id);
+                        existingUser.UserName = newUsername;
+                        existingUser.NormalizedUserName = newUsername?.ToUpperInvariant();
+                        _logger.LogInformation("Username regenerated for user {UserId}: {OldUsername} -> {NewUsername}", 
+                            user.Id, originalUsername, newUsername);
+                    }
                 }
 
                 // Update user

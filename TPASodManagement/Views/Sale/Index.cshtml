@@ -337,13 +337,26 @@
                 badge.className = 'badge bg-secondary me-1 mb-1';
                 badge.style.cursor = 'pointer';
                 badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
-                badge.addEventListener('click', function() {
+                badge.addEventListener('click', function(e) {
+                    e.stopPropagation();
                     // Uncheck the corresponding checkbox
                     const checkbox = columnFilterMenu.querySelector(`input[data-column="${columnName}"]`);
                     if (checkbox) {
                         checkbox.checked = false;
-                        // Trigger change event
-                        checkbox.dispatchEvent(new Event('change'));
+                        
+                        // Remove from hiddenColumns array
+                        hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                        
+                        // Update "Show All" checkbox state
+                        updateShowAllCheckbox();
+                        
+                        // Save to localStorage
+                        localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                        
+                        // Update UI
+                        updateHiddenColumnsUI(hiddenColumns, columnMap);
+                        applyColumnVisibility(hiddenColumns);
+                        updateDropdownButton();
                     }
                 });
                 hiddenColumnsBadges.appendChild(badge);

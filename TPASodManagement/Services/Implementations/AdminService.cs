@@ -28,17 +28,18 @@ namespace TpaSodManagement.Services.Implementations
             return await _roleManager.Roles.ToListAsync();
         }
 
-        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(string? organizationName = null)
+        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(long? organizationId = null)
         {
             // Get all users
-            var allUsers = await _userManager.Users.ToListAsync();
+            var allUsers = await _userManager.Users
+                .Include(u => u.Organization)
+                .ToListAsync();
             
             // Filter by organization if provided
-            if (!string.IsNullOrWhiteSpace(organizationName))
+            if (organizationId.HasValue)
             {
                 allUsers = allUsers
-                    .Where(u => !string.IsNullOrWhiteSpace(u.OrganizationName) && 
-                               u.OrganizationName.Equals(organizationName, StringComparison.OrdinalIgnoreCase))
+                    .Where(u => u.OrganizationId == organizationId.Value)
                     .ToList();
             }
             
@@ -274,10 +275,10 @@ namespace TpaSodManagement.Services.Implementations
             }
         }
 
-        public async Task<AdminIndexViewModel> GetAdminIndexViewModelAsync(string? organizationName = null)
+        public async Task<AdminIndexViewModel> GetAdminIndexViewModelAsync(long? organizationId = null)
         {
             var roles = await GetAllRolesAsync();
-            var users = await GetAllUsersAsync(organizationName);
+            var users = await GetAllUsersAsync(organizationId);
 
             var roleViewModels = roles
                 .Select(r => new RoleItemViewModel

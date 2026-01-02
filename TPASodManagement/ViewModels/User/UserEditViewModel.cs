@@ -16,8 +16,8 @@ namespace TpaSodManagement.ViewModels.User
         public string? Email { get; set; }
 
         [Required]
-        [Display(Name = "Organization Name")]
-        public string? OrganizationName { get; set; }
+        [Display(Name = "Organization")]
+        public long? OrganizationId { get; set; }
 
         [Display(Name = "Primary Contact")]
         public string? PrimaryContact { get; set; }

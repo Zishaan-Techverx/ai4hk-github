@@ -9,7 +9,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<List<Organization>> GetAllOrganizationsAsync();
         Task<Organization?> GetOrganizationByNameAsync(string organizationName);
         Task<bool> IsEmailExistsAsync(string email);
-        Task<string> GenerateUsernameAsync(string organizationName, string firstName);
+        Task<string> GenerateUsernameAsync(Organization organization, string firstName);
         Task<IdentityResult> CreateUserAsync(TpaSodManagementUser user, string password);
         Task<Person> CreatePersonForUserAsync(TpaSodManagementUser user, string firstName, string lastName);
         Task<Address> CreateAddressForUserAsync(TpaSodManagementUser user, string? addressLine1 = null, string? state = null, string? country = null, string? postalCode = null);

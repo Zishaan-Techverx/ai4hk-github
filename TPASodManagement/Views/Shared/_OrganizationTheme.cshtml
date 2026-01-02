@@ -13,9 +13,13 @@
     if (User.Identity.IsAuthenticated)
     {
         var user = await UserManager.GetUserAsync(User);
-        if (user != null && !string.IsNullOrWhiteSpace(user.OrganizationName))
+        if (user != null && user.OrganizationId.HasValue)
         {
-            userOrganizationName = user.OrganizationName.Trim();
+            var organization = await OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value);
+            if (organization != null)
+            {
+                userOrganizationName = organization.OrganizationName.Trim();
+            }
         }
     }
     
