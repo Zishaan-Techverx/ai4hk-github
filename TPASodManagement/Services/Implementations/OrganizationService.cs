@@ -55,9 +55,17 @@ namespace TpaSodManagement.Services.Implementations
             if (orgDb == null)
                 return null;
 
+            // Update all fields
             orgDb.OrganizationName = updatedOrg.OrganizationName;
             orgDb.OrganizationType = updatedOrg.OrganizationType;
+            orgDb.OrganizationCode = updatedOrg.OrganizationCode;
+            orgDb.TaxIdentificationNumber = updatedOrg.TaxIdentificationNumber;
+            orgDb.RegistrationNumber = updatedOrg.RegistrationNumber;
+            orgDb.EstablishedDate = updatedOrg.EstablishedDate;
+            orgDb.Description = updatedOrg.Description;
+            orgDb.IsActive = updatedOrg.IsActive;
 
+            // Update logo only if a new file is provided
             if (logoFile != null && logoFile.Length > 0)
             {
                 orgDb.LogoBytes = await ConvertFileToBytesAsync(logoFile);

@@ -105,6 +105,19 @@
                                                     </a>
                                                 }
 
+                                                <!-- RESET PASSWORD BUTTON -->
+                                                @if (User.HasPermission("User.Edit"))
+                                                {
+                                                    <button type="button" class="btn btn-secondary reset-password-btn"
+                                                            data-user-id="@user.Id"
+                                                            data-user-name="@user.UserName"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#resetPasswordModal"
+                                                            title="Reset Password">
+                                                        Reset Password
+                                                    </button>
+                                                }
+
                                                 <!-- DELETE BUTTON -->
                                                 @if (User.HasPermission("User.Delete"))
                                                 {
@@ -189,6 +202,40 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                 <button type="button" class="btn btn-danger" id="confirmUserDeleteBtn">Delete User</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="resetPasswordModal" tabindex="-1" aria-labelledby="resetPasswordModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="resetPasswordModalLabel">Reset User Password</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>
+                    Reset password for user: <strong id="resetPasswordUserNamePlaceholder"></strong>
+                </p>
+
+                <div class="mb-3">
+                    <label for="newPasswordInput" class="form-label">New Password</label>
+                    <input type="text" class="form-control" id="newPasswordInput" placeholder="Enter new password" />
+                    <small class="form-text text-muted">You can edit the generated password if needed.</small>
+                </div>
+
+                <div class="alert alert-danger d-none" role="alert" id="resetPasswordError">
+                    Error resetting password. Please try again.
+                </div>
+
+                <input type="hidden" id="userIdToResetPassword" />
+
+                @Html.AntiForgeryToken()
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="confirmResetPasswordBtn">Reset Password</button>
             </div>
         </div>
     </div>
@@ -444,6 +491,147 @@
                             // Restore button state
                             confirmDeleteBtn.disabled = false;
                             confirmDeleteBtn.innerHTML = 'Delete User';
+                        });
+                });
+            }
+
+            // Reset Password Modal elements
+            const resetPasswordModalEl = document.getElementById('resetPasswordModal');
+            const userIdToResetInput = document.getElementById('userIdToResetPassword');
+            const resetPasswordUserNamePlaceholder = document.getElementById('resetPasswordUserNamePlaceholder');
+            const newPasswordInput = document.getElementById('newPasswordInput');
+            const confirmResetPasswordBtn = document.getElementById('confirmResetPasswordBtn');
+            const resetPasswordErrorAlert = document.getElementById('resetPasswordError');
+
+            // Handle Reset Password buttons - Show modal
+            document.querySelectorAll('.reset-password-btn').forEach(function (resetBtn) {
+                resetBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
+
+                    if (!userId) {
+                        alert('Error: User ID is missing.');
+                        return;
+                    }
+
+                    // Set user info in modal
+                    if (userIdToResetInput) {
+                        userIdToResetInput.value = userId || '';
+                    }
+                    if (resetPasswordUserNamePlaceholder) {
+                        resetPasswordUserNamePlaceholder.textContent = userName || 'Unknown User';
+                    }
+                    
+                    // Generate default password and set in input
+                    const defaultPassword = userName + '@@123';
+                    if (newPasswordInput) {
+                        newPasswordInput.value = defaultPassword;
+                    }
+
+                    // Reset modal state
+                    if (resetPasswordErrorAlert) {
+                        resetPasswordErrorAlert.classList.add('d-none');
+                    }
+                    if (confirmResetPasswordBtn) {
+                        confirmResetPasswordBtn.disabled = false;
+                        confirmResetPasswordBtn.innerHTML = 'Reset Password';
+                    }
+                });
+            });
+
+            // Reset Password confirmation button click
+            if (confirmResetPasswordBtn) {
+                confirmResetPasswordBtn.addEventListener('click', function () {
+                    const userId = userIdToResetInput.value;
+                    const newPassword = newPasswordInput.value;
+
+                    if (!userId) {
+                        if (resetPasswordErrorAlert) {
+                            resetPasswordErrorAlert.innerText = 'Error: User ID is missing.';
+                            resetPasswordErrorAlert.classList.remove('d-none');
+                        }
+                        return;
+                    }
+
+                    if (!newPassword || newPassword.trim() === '') {
+                        if (resetPasswordErrorAlert) {
+                            resetPasswordErrorAlert.innerText = 'Error: Please enter a password.';
+                            resetPasswordErrorAlert.classList.remove('d-none');
+                        }
+                        newPasswordInput.focus();
+                        return;
+                    }
+
+                    // Show loading state
+                    confirmResetPasswordBtn.disabled = true;
+                    confirmResetPasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Resetting...';
+                    if (resetPasswordErrorAlert) {
+                        resetPasswordErrorAlert.classList.add('d-none');
+                    }
+
+                    // Prepare request body
+                    const requestBody = 'id=' + encodeURIComponent(userId) +
+                        '&newPassword=' + encodeURIComponent(newPassword) +
+                        '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+
+                    // Send AJAX POST request
+                    fetch('@Url.Action("ResetPassword", "User")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: requestBody
+                    })
+                        .then(response => {
+                            if (response.ok) {
+                                return response.json().catch(() => response.text());
+                            } else {
+                                return response.json()
+                                    .then(err => { throw new Error(err.message || 'Server returned an error.'); })
+                                    .catch(() => response.text().then(text => { throw new Error(text || 'Server returned an error.'); }));
+                            }
+                        })
+                        .then(data => {
+                            console.log('Password reset successful:', data);
+                            
+                            // Show success message
+                            if (data.success) {
+                                alert('Password reset successfully!\n\nAn email has been sent to the user with the new password.');
+                                
+                                // Close modal
+                                if (resetPasswordModalEl) {
+                                    const modal = bootstrap.Modal.getInstance(resetPasswordModalEl);
+                                    if (modal) {
+                                        modal.hide();
+                                    }
+                                }
+                                
+                                // Optionally refresh the page
+                                // window.location.reload();
+                            } else {
+                                if (resetPasswordErrorAlert) {
+                                    resetPasswordErrorAlert.innerText = 'Error: ' + (data.message || 'Unknown error occurred.');
+                                    resetPasswordErrorAlert.classList.remove('d-none');
+                                }
+                            }
+
+                            // Restore button state
+                            confirmResetPasswordBtn.disabled = false;
+                            confirmResetPasswordBtn.innerHTML = 'Reset Password';
+                        })
+                        .catch(error => {
+                            console.error('Password reset failed:', error);
+                            
+                            if (resetPasswordErrorAlert) {
+                                resetPasswordErrorAlert.innerText = 'Password reset failed: ' + (error.message || 'Unknown error.');
+                                resetPasswordErrorAlert.classList.remove('d-none');
+                            }
+
+                            // Restore button state
+                            confirmResetPasswordBtn.disabled = false;
+                            confirmResetPasswordBtn.innerHTML = 'Reset Password';
                         });
                 });
             }

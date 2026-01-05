@@ -8,11 +8,45 @@
 @if (!User.Identity.IsAuthenticated)
 {
     <!-- Show login/register for unauthenticated users -->
-    <div class="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center">
+    <style>
+        .auth-page {
+            min-height: 100vh;
+        }
+        .auth-card {
+            background-color: #f8f9fa;
+            border: none;
+            box-shadow: none;
+        }
+        .auth-title {
+            color: #2B2B2B !important;
+            text-shadow: none;
+        }
+        .auth-btn-primary {
+            background-color: #2B2B2B;
+            border-color: #2B2B2B;
+            color: #F6F4EE;
+        }
+        .auth-btn-primary:hover {
+            background-color: #1a1a1a;
+            border-color: #1a1a1a;
+            color: #F6F4EE;
+        }
+        .auth-btn-outline {
+            border-color: #2B2B2B;
+            color: #2B2B2B;
+            background-color: transparent;
+        }
+        .auth-btn-outline:hover {
+            background-color: #2B2B2B;
+            border-color: #2B2B2B;
+            color: #F6F4EE;
+        }
+    </style>
+    <div class="container-fluid auth-page min-vh-100 d-flex align-items-center justify-content-center">
         <div class="row w-100 justify-content-center">
             <div class="col-lg-8 col-xl-6">
                 <div class="text-center mb-5">
-                    <h1 class="display-4 text-primary">Sod Management System</h1>
+                    <h1 class="display-4 auth-title">Sod Management System</h1>
                 </div>
                 <partial name="_AuthPartial" />
             </div>

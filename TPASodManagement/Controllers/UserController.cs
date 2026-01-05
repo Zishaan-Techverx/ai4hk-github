@@ -405,6 +405,40 @@ namespace TpaSodManagement.Controllers
             }
         }
 
+        // POST: User/ResetPassword - For AJAX password reset
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ResetPassword(string id, string newPassword)
+        {
+            if (string.IsNullOrEmpty(id))
+            {
+                return BadRequest(new { success = false, message = "User ID is required." });
+            }
+
+            if (string.IsNullOrEmpty(newPassword))
+            {
+                return BadRequest(new { success = false, message = "New password is required." });
+            }
+
+            try
+            {
+                var result = await _userService.ResetPasswordAsync(id, newPassword);
+                if (result.success)
+                {
+                    return Ok(new { success = true, message = result.message });
+                }
+                else
+                {
+                    return BadRequest(new { success = false, message = result.message });
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resetting password for user: {UserId}", id);
+                return StatusCode(500, new { success = false, message = "An error occurred while resetting the password." });
+            }
+        }
+
         private static UserItemViewModel MapToItemViewModel(TpaSodManagementUser user, Person? person, Address? address)
         {
             return new UserItemViewModel

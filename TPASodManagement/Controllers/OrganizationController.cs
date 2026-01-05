@@ -42,6 +42,10 @@ namespace TpaSodManagement.Controllers
                 if (organization == null)
                     return NotFound();
 
+            // Clear TempData messages when viewing details (they should only show on Index)
+            TempData.Remove("SuccessMessage");
+            TempData.Remove("ErrorMessage");
+            
             var vm = MapToEditViewModel(organization, isDetailsView: true);
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Organization Details";
@@ -93,17 +97,36 @@ namespace TpaSodManagement.Controllers
                     var entity = MapToEntity(updatedOrgVm);
                     var result = await _organizationService.UpdateOrganizationAsync(id, entity, updatedOrgVm.LogoFile);
                         if (result == null)
-                            return NotFound();
+                        {
+                            TempData["ErrorMessage"] = "Organization not found.";
+                            return View(updatedOrgVm);
+                        }
+                        
+                        TempData["SuccessMessage"] = "Organization updated successfully.";
+                        return RedirectToAction(nameof(Index));
                     }
                     catch (DbUpdateConcurrencyException)
                     {
                     if (!await _organizationService.OrganizationExistsAsync(updatedOrgVm.OrganizationId))
-                            return NotFound();
+                        {
+                            TempData["ErrorMessage"] = "Organization not found.";
+                            return View(updatedOrgVm);
+                        }
                         else
-                            throw;
+                        {
+                            TempData["ErrorMessage"] = "The organization was modified by another user. Please refresh and try again.";
+                            return View(updatedOrgVm);
+                        }
                     }
-                    return RedirectToAction(nameof(Index));
+                    catch (Exception ex)
+                    {
+                        TempData["ErrorMessage"] = $"An error occurred while updating the organization: {ex.Message}";
+                        return View(updatedOrgVm);
+                    }
                 }
+                
+                // ModelState is invalid - return view with errors
+                TempData["ErrorMessage"] = "Please correct the validation errors below.";
             return View(updatedOrgVm);
             }
 

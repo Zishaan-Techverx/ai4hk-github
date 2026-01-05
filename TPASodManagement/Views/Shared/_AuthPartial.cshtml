@@ -27,9 +27,9 @@
 
     <!-- Login Form - Initially Visible -->
     <div class="col-md-9" id="loginSection">
-        <div class="card">
+        <div class="card auth-card">
             <div class="card-body">
-                <h5 class="card-title">Log in</h5>
+                <h5 class="card-title" style="color:#2B2B2B;">Log in</h5>
 
                 @if (TempData["ErrorMessage"] != null)
                 {
@@ -54,12 +54,12 @@
                     </div>
                     <div class="form-check mb-3">
                         <input name="Input_RememberMe" class="form-check-input" type="checkbox" value="true" id="rememberMe" />
-                        <label class="form-check-label" for="rememberMe">Remember me</label>
+                        <label class="form-check-label" style="color:#2B2B2B;" for="rememberMe">Remember me</label>
                     </div>
-                    <button type="submit" class="btn btn-primary w-100">Log in</button>
+                    <button type="submit" class="btn auth-btn-primary w-100">Log in</button>
                 </form>
 
-                <button type="button" onclick="showRegister()" class="btn btn-outline-secondary w-100 mt-2">
+                <button type="button" onclick="showRegister()" class="btn auth-btn-outline w-100 mt-2">
                     Register
                 </button>
             </div>
@@ -68,9 +68,9 @@
 
     <!-- Register Form - Initially Hidden -->
     <div class="col-md-9" id="registerSection" style="display: none;">
-        <div class="card">
+        <div class="card auth-card">
             <div class="card-body">
-                <h5 class="card-title">Register</h5>
+                <h5 class="card-title" style="color:#2B2B2B;">Register</h5>
                 <form asp-area="Identity" asp-page="/Account/Register" method="post" class="needs-validation" novalidate>
                     <input type="hidden" name="ReturnUrl" value="@Context.Request.Path" />
 
@@ -99,7 +99,7 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="registerOrganization" class="form-label">Organization Name</label>
+                        <label for="registerOrganization" class="form-label" style="color:#2B2B2B;">Organization Name</label>
                         <select name="Input.OrganizationName" 
                                 class="form-select" 
                                 id="registerOrganization" 
@@ -131,10 +131,10 @@
                         </div>
                     </div>
                     
-                    <button type="submit" class="btn btn-primary w-100">Register</button>
+                    <button type="submit" class="btn auth-btn-primary w-100">Register</button>
                 </form>
                 
-                <button type="button" onclick="showLogin()" class="btn btn-outline-secondary w-100 mt-2">
+                <button type="button" onclick="showLogin()" class="btn auth-btn-outline w-100 mt-2">
                     Login Existing User
                 </button>
             </div>

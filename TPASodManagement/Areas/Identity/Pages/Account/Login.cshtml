@@ -5,20 +5,52 @@
     ViewData["Title"] = "Log in";
 }
 
-<div class="container-fluid bg-light min-vh-100 d-flex align-items-center justify-content-center">
+<style>
+    .auth-page {
+        min-height: 100vh;
+    }
+    .auth-card {
+        border: none;
+        box-shadow: none;
+    }
+    .auth-title {
+        color: #2B2B2B !important;
+        text-shadow: none;
+    }
+    .auth-btn-primary {
+        background-color: #2B2B2B;
+        border-color: #2B2B2B;
+        color: #F6F4EE;
+    }
+    .auth-btn-primary:hover {
+        background-color: #1a1a1a;
+        border-color: #1a1a1a;
+        color: #F6F4EE;
+    }
+    .auth-btn-outline {
+        border-color: #2B2B2B;
+        color: #2B2B2B;
+        background-color: transparent;
+    }
+    .auth-btn-outline:hover {
+        background-color: #2B2B2B;
+        border-color: #2B2B2B;
+        color: #F6F4EE;
+    }
+</style>
+
+<div class="container-fluid auth-page min-vh-100 d-flex align-items-center justify-content-center">
     <div class="row w-100 justify-content-center">
         <div class="col-lg-8 col-xl-6">
             <div class="text-center mb-5">
-                <h1 class="display-4 text-primary">Sod Management System</h1>
+                <h1 class="display-4 auth-title">Sod Management System</h1>
             </div>
-
-
 
             <div class="row g-4 justify-content-center">
                 <div class="col-md-9">
-                    <div class="card">
+                    <div class="card auth-card">
                         <div class="card-body">
-                            <h5 class="card-title">Log in</h5>
+                            <h5 class="card-title" style="color:#2B2B2B;">Log in</h5>
 
                             <form asp-controller="Home" asp-action="Login" method="post" id="account">
                                 <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
@@ -34,14 +66,14 @@
                                 </div>
                                 <div class="form-check mb-3">
                                     <input class="form-check-input" type="checkbox" name="Input_RememberMe" value="true" />
-                                    <label class="form-check-label" for="Input_RememberMe">
+                                    <label style="color:#2B2B2B;" class="form-check-label" for="Input_RememberMe">
                                         Remember me
                                     </label>
                                 </div>
-                                <button id="login-submit" type="submit" class="btn btn-primary w-100">Log in</button>
+                                <button id="login-submit" type="submit" class="btn auth-btn-primary w-100">Log in</button>
                             </form>
 
-                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="btn btn-outline-secondary w-100 mt-2">
+                            <a asp-page="./Register" asp-route-returnUrl="@Model.ReturnUrl" class="btn auth-btn-outline w-100 mt-2">
                                 Register
                             </a>
 
