@@ -34,6 +34,53 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
+        public async Task<ServiceResponse<List<ProductCategory>>> GetFilteredAsync(Dictionary<string, string> filters)
+        {
+            var response = new ServiceResponse<List<ProductCategory>>();
+            try
+            {
+                var query = _context.ProductCategories.AsQueryable();
+
+                // Apply filters
+                if (filters != null && filters.Count > 0)
+                {
+                    if (filters.ContainsKey("CategoryCode") && !string.IsNullOrWhiteSpace(filters["CategoryCode"]))
+                    {
+                        var filterValue = filters["CategoryCode"].Trim();
+                        query = query.Where(pc => pc.CategoryCode != null && pc.CategoryCode.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("CategoryName") && !string.IsNullOrWhiteSpace(filters["CategoryName"]))
+                    {
+                        var filterValue = filters["CategoryName"].Trim();
+                        query = query.Where(pc => pc.CategoryName != null && pc.CategoryName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("Description") && !string.IsNullOrWhiteSpace(filters["Description"]))
+                    {
+                        var filterValue = filters["Description"].Trim();
+                        query = query.Where(pc => pc.Description != null && pc.Description.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out bool isActive))
+                        {
+                            query = query.Where(pc => pc.IsActive == isActive);
+                        }
+                    }
+                }
+
+                response.Data = await query.OrderBy(pc => pc.CategoryName).ToListAsync();
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error filtering product categories: {ex.Message}";
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<ProductCategory>> GetByIdAsync(int id)
         {
             var response = new ServiceResponse<ProductCategory>();

@@ -35,6 +35,61 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
+        public async Task<ServiceResponse<List<Currency>>> GetFilteredAsync(Dictionary<string, string> filters)
+        {
+            var response = new ServiceResponse<List<Currency>>();
+            try
+            {
+                var query = _context.Currencies.AsQueryable();
+
+                // Apply filters
+                if (filters != null && filters.Count > 0)
+                {
+                    if (filters.ContainsKey("CurrencyCode") && !string.IsNullOrWhiteSpace(filters["CurrencyCode"]))
+                    {
+                        var filterValue = filters["CurrencyCode"].Trim();
+                        query = query.Where(c => c.CurrencyCode.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("CurrencyName") && !string.IsNullOrWhiteSpace(filters["CurrencyName"]))
+                    {
+                        var filterValue = filters["CurrencyName"].Trim();
+                        query = query.Where(c => c.CurrencyName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("CurrencySymbol") && !string.IsNullOrWhiteSpace(filters["CurrencySymbol"]))
+                    {
+                        var filterValue = filters["CurrencySymbol"].Trim();
+                        query = query.Where(c => c.CurrencySymbol != null && c.CurrencySymbol.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("DecimalPlaces") && !string.IsNullOrWhiteSpace(filters["DecimalPlaces"]))
+                    {
+                        if (byte.TryParse(filters["DecimalPlaces"], out byte decimalPlaces))
+                        {
+                            query = query.Where(c => c.DecimalPlaces == decimalPlaces);
+                        }
+                    }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out bool isActive))
+                        {
+                            query = query.Where(c => c.IsActive == isActive);
+                        }
+                    }
+                }
+
+                response.Data = await query.OrderBy(c => c.CurrencyName).ToListAsync();
+            }
+            catch (System.Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error filtering currencies: {ex.Message}";
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<Currency>> GetByIdAsync(int id)
         {
             var response = new ServiceResponse<Currency>();

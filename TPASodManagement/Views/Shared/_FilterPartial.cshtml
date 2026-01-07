@@ -1,0 +1,180 @@
+@* Filter Partial View - Reusable filter component for listing pages *@
+
+@model Dictionary<string, string>
+
+@{
+    // Get column names from ViewBag or use default
+    var columnNames = ViewBag.FilterColumns as Dictionary<string, string> ?? new Dictionary<string, string>();
+    var moduleName = ViewBag.ModuleName as string ?? "Module";
+    // Get boolean columns (columns that should use toggle instead of input)
+    var booleanColumns = ViewBag.BooleanColumns as HashSet<string> ?? new HashSet<string> { "IsActive", "TaxExempt" };
+    // Get date columns (columns that should use date range filters)
+    var dateColumns = ViewBag.DateColumns as HashSet<string> ?? new HashSet<string>();
+}
+
+<!-- Filter Button -->
+<button type="button" class="btn btn-outline-secondary btn-sm" id="openFilterModalBtn" data-bs-toggle="modal" data-bs-target="#filterModal" style="padding-top: 0.50rem; padding-bottom: 0.50rem; padding-left: 1.5rem; padding-right: 1.5rem; border-radius: 6px;">
+    <i class="fas fa-filter me-1"></i> Filter
+    <span class="badge bg-secondary ms-1" id="activeFilterCount" style="display: none;">0</span>
+</button>
+<button type="button" class="btn btn-link btn-sm text-muted p-0 ms-2" id="clearAllFiltersBtn" style="display: none; text-decoration: none;">
+    Clear filters
+</button>
+<div id="activeFilterTags" class="mt-2 d-flex flex-wrap gap-1"></div>
+
+<!-- Filter Modal -->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filterModalLabel">Filter @moduleName</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="max-height: 350px; overflow-y: auto;">
+                <div class="row g-3" id="filterContainer">
+                    @foreach (var column in columnNames)
+                    {
+                        var isBoolean = booleanColumns.Contains(column.Key);
+                        var isDate = dateColumns.Contains(column.Key);
+                        <div class="col-12 filter-item" data-column="@column.Key" data-is-boolean="@isBoolean.ToString().ToLower()" data-is-date="@isDate.ToString().ToLower()">
+                            <div class="d-flex align-items-center gap-3">
+                                <label class="form-label mb-0 text-nowrap" style="width: 240px; font-weight: 500; flex-shrink: 0;">
+                                    @column.Value:
+                                </label>
+                                <div class="flex-grow-1 position-relative" style="min-width: 0;">
+                                    @if (isBoolean)
+                                    {
+                                        <div class="d-flex align-items-center gap-2">
+                                            <label class="form-check-label mb-0">No</label>
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input filter-toggle" 
+                                                       type="checkbox" 
+                                                       data-column="@column.Key" 
+                                                       id="filterToggle_@column.Key"
+                                                       role="switch">
+                                            </div>
+                                            <label class="form-check-label mb-0">Yes</label>
+                                        </div>
+                                    }
+                                    else if (isDate)
+                                    {
+                                        <div class="d-flex gap-2">
+                                            <div class="flex-grow-1 position-relative">
+                                                <input type="date" 
+                                                       class="form-control filter-date-from" 
+                                                       data-column="@column.Key" 
+                                                       placeholder="From Date" 
+                                                       id="filterDateFrom_@column.Key"
+                                                       style="padding-right: 25px;" />
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-link text-danger p-0 position-absolute clear-date-from-filter" 
+                                                        data-column="@column.Key"
+                                                        style="display: none; border: none; background: none; cursor: pointer; z-index: 10; right: 10px; top: 50%; transform: translateY(-50%);"
+                                                        title="Clear from date">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                            <div class="flex-grow-1 position-relative">
+                                                <input type="date" 
+                                                       class="form-control filter-date-to" 
+                                                       data-column="@column.Key" 
+                                                       placeholder="To Date" 
+                                                       id="filterDateTo_@column.Key"
+                                                       style="padding-right: 25px;" />
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-link text-danger p-0 position-absolute clear-date-to-filter" 
+                                                        data-column="@column.Key"
+                                                        style="display: none; border: none; background: none; cursor: pointer; z-index: 10; right: 10px; top: 50%; transform: translateY(-50%);"
+                                                        title="Clear to date">
+                                                    <i class="fas fa-times"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <input type="text" 
+                                               class="form-control filter-input" 
+                                               data-column="@column.Key" 
+                                               placeholder="Enter @column.Value" 
+                                               id="filterInput_@column.Key" />
+                                        <button type="button" 
+                                                class="btn btn-sm btn-link text-danger p-0 position-absolute end-0 top-50 translate-middle-y me-2 clear-column-filter" 
+                                                data-column="@column.Key"
+                                                style="display: none; border: none; background: none; cursor: pointer; z-index: 10;"
+                                                title="Clear this filter">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" id="clearAllFiltersInModalBtn">Clear all</button>
+                <button type="button" class="btn btn-primary" id="applyFilterBtn">
+                    <i class="fas fa-check me-1"></i> Apply
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<style>
+    .filter-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        background-color: #e7f3ff;
+        border: 1px solid #b3d9ff;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-right: 4px;
+    }
+    
+    .filter-tag .remove-tag {
+        margin-left: 6px;
+        cursor: pointer;
+        color: #0066cc;
+        font-weight: bold;
+    }
+    
+    .filter-tag .remove-tag:hover {
+        color: #cc0000;
+    }
+
+    .filter-input:focus {
+        border-color: #86b7fe;
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+
+    .clear-column-filter:hover {
+        opacity: 0.7;
+    }
+
+    .modal-body {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 #f7fafc;
+    }
+
+    .modal-body::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    .modal-body::-webkit-scrollbar-track {
+        background: #f7fafc;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb {
+        background-color: #cbd5e0;
+        border-radius: 4px;
+    }
+
+    .modal-body::-webkit-scrollbar-thumb:hover {
+        background-color: #a0aec0;
+    }
+</style>
+

@@ -1,5 +1,7 @@
 ﻿using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 using TpaSodManagement.Models.Db;
+using TpaSodManagement.Services;
 
 namespace TpaSodManagement.Services.Interfaces
 {
@@ -12,5 +14,6 @@ namespace TpaSodManagement.Services.Interfaces
         Task<Organization> UpdateOrganizationAsync(long id, Organization updatedOrg, IFormFile logoFile);
         Task<bool> DeleteOrganizationAsync(long id);
         Task<bool> OrganizationExistsAsync(long id);
+        Task<ServiceResponse<List<Organization>>> GetFilteredAsync(Dictionary<string, string> filters);
     }
 }

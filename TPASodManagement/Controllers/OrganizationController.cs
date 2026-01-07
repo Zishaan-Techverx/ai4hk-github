@@ -1,9 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Organization;
+using OfficeOpenXml;
 
 namespace TpaSodManagement.Controllers
 {
@@ -17,19 +21,148 @@ namespace TpaSodManagement.Controllers
                 _organizationService = organizationService;
             }
 
-            public async Task<IActionResult> Index()
+            public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
             {
-                var organizations = await _organizationService.GetAllOrganizationsAsync();
-            var vm = organizations?
-                .Select(o => new OrganizationItemViewModel
+                // Set filter columns for the partial view
+                ViewBag.FilterColumns = new Dictionary<string, string>
                 {
-                    OrganizationId = o.OrganizationId,
-                    OrganizationName = o.OrganizationName,
-                    OrganizationType = o.OrganizationType,
-                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
-                })
-                .ToList() ?? new List<OrganizationItemViewModel>();
-            return View(vm);
+                    { "OrganizationName", "Organization Name" },
+                    { "OrganizationType", "Organization Type" },
+                    { "OrganizationCode", "Organization Code" },
+                    { "IsActive", "Is Active" }
+                };
+                ViewBag.ModuleName = "Organizations";
+                ViewBag.BooleanColumns = new HashSet<string> { "IsActive" };
+
+                var organizations = await _organizationService.GetAllOrganizationsAsync();
+                var allVm = organizations?
+                    .Select(o => new OrganizationItemViewModel
+                    {
+                        OrganizationId = o.OrganizationId,
+                        OrganizationName = o.OrganizationName,
+                        OrganizationType = o.OrganizationType,
+                        HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
+                    })
+                    .ToList() ?? new List<OrganizationItemViewModel>();
+
+                // Pagination
+                var totalCount = allVm.Count;
+                var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                var vm = allVm.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+
+                ViewBag.PageNumber = pageNumber;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.TotalCount = totalCount;
+                ViewBag.PageSize = pageSize;
+
+                return View(vm);
+            }
+
+            [HttpPost]
+            [IgnoreAntiforgeryToken]
+            public async Task<IActionResult> Filter([FromBody] Dictionary<string, string> filters)
+            {
+                try
+                {
+                    var result = await _organizationService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                    if (!result.Success)
+                    {
+                        return Json(new { success = false, message = result.Message });
+                    }
+
+                    var vm = result.Data?.Select(o => new OrganizationItemViewModel
+                    {
+                        OrganizationId = o.OrganizationId,
+                        OrganizationName = o.OrganizationName,
+                        OrganizationType = o.OrganizationType,
+                        HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
+                    }).ToList() ?? new List<OrganizationItemViewModel>();
+
+                    return Json(new { success = true, data = vm });
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = $"Error filtering data: {ex.Message}" });
+                }
+            }
+
+            [HttpPost]
+            [IgnoreAntiforgeryToken]
+            public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+            {
+                try
+                {
+                    // Get all filtered records (no pagination)
+                    var result = await _organizationService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                    if (!result.Success)
+                    {
+                        return Json(new { success = false, message = result.Message });
+                    }
+
+                    var organizations = result.Data ?? new List<Organization>();
+
+                    // Set EPPlus license context (non-commercial use)
+                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+                    // Generate Excel file using EPPlus
+                    using (var package = new ExcelPackage())
+                    {
+                        var worksheet = package.Workbook.Worksheets.Add("Organizations");
+
+                        // Set header row
+                        worksheet.Cells[1, 1].Value = "Organization Name";
+                        worksheet.Cells[1, 2].Value = "Organization Type";
+                        worksheet.Cells[1, 3].Value = "Organization Code";
+                        worksheet.Cells[1, 4].Value = "Is Active";
+
+                        // Style header row
+                        using (var range = worksheet.Cells[1, 1, 1, 4])
+                        {
+                            range.Style.Font.Bold = true;
+                            range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                            range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                            range.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
+                        }
+
+                        // Add data rows
+                        for (int i = 0; i < organizations.Count; i++)
+                        {
+                            var row = i + 2;
+                            var item = organizations[i];
+                            worksheet.Cells[row, 1].Value = item.OrganizationName ?? "";
+                            worksheet.Cells[row, 2].Value = item.OrganizationType ?? "";
+                            worksheet.Cells[row, 3].Value = item.OrganizationCode ?? "";
+                            worksheet.Cells[row, 4].Value = item.IsActive ? "Yes" : "No";
+                        }
+
+                        // Auto-fit columns
+                        worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
+
+                        // Add borders to data cells
+                        if (organizations.Count > 0)
+                        {
+                            using (var range = worksheet.Cells[1, 1, organizations.Count + 1, 4])
+                            {
+                                range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                                range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                                range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                                range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
+                            }
+                        }
+
+                        var stream = new MemoryStream();
+                        package.SaveAs(stream);
+                        stream.Position = 0;
+
+                        var fileName = $"Organizations_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                        Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return Json(new { success = false, message = $"Error generating Excel file: {ex.Message}" });
+                }
             }
 
             // GET: Organization/Details/{id}

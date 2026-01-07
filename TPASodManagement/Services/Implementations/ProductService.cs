@@ -31,12 +31,130 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(p => p.CertificateType)
                     .Include(p => p.CreatedByUser)
                     .Include(p => p.ProductCategory)
+                    .Include(p => p.Currency)
                     .ToListAsync();
             }
             catch (System.Exception ex)
             {
                 response.Success = false;
                 response.Message = $"Error fetching products: {ex.Message}";
+            }
+            return response;
+        }
+
+        public async Task<ServiceResponse<List<Product>>> GetFilteredAsync(Dictionary<string, string> filters)
+        {
+            var response = new ServiceResponse<List<Product>>();
+            try
+            {
+                var query = _context.Products
+                    .Include(p => p.CertificateType)
+                    .Include(p => p.CreatedByUser)
+                    .Include(p => p.ProductCategory)
+                    .Include(p => p.Currency)
+                    .AsQueryable();
+
+                // Apply filters
+                if (filters != null && filters.Count > 0)
+                {
+                    if (filters.ContainsKey("ProductCode") && !string.IsNullOrWhiteSpace(filters["ProductCode"]))
+                    {
+                        var filterValue = filters["ProductCode"].Trim();
+                        query = query.Where(p => p.ProductCode != null && p.ProductCode.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("ProductName") && !string.IsNullOrWhiteSpace(filters["ProductName"]))
+                    {
+                        var filterValue = filters["ProductName"].Trim();
+                        query = query.Where(p => p.ProductName != null && p.ProductName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("UnitOfMeasure") && !string.IsNullOrWhiteSpace(filters["UnitOfMeasure"]))
+                    {
+                        var filterValue = filters["UnitOfMeasure"].Trim();
+                        query = query.Where(p => p.UnitOfMeasure != null && p.UnitOfMeasure.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("StandardPrice") && !string.IsNullOrWhiteSpace(filters["StandardPrice"]))
+                    {
+                        if (decimal.TryParse(filters["StandardPrice"], out decimal standardPrice))
+                        {
+                            query = query.Where(p => p.StandardPrice == standardPrice);
+                        }
+                    }
+
+                    if (filters.ContainsKey("RequiresCertificate") && !string.IsNullOrWhiteSpace(filters["RequiresCertificate"]))
+                    {
+                        if (bool.TryParse(filters["RequiresCertificate"], out bool requiresCertificate))
+                        {
+                            query = query.Where(p => p.RequiresCertificate == requiresCertificate);
+                        }
+                    }
+
+                    if (filters.ContainsKey("Description") && !string.IsNullOrWhiteSpace(filters["Description"]))
+                    {
+                        var filterValue = filters["Description"].Trim();
+                        query = query.Where(p => p.Description != null && p.Description.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out bool isActive))
+                        {
+                            query = query.Where(p => p.IsActive == isActive);
+                        }
+                    }
+
+                    if (filters.ContainsKey("CertificateTypeName") && !string.IsNullOrWhiteSpace(filters["CertificateTypeName"]))
+                    {
+                        var filterValue = filters["CertificateTypeName"].Trim();
+                        query = query.Where(p => p.CertificateType != null && p.CertificateType.CertificateTypeName != null && p.CertificateType.CertificateTypeName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("CreatedByUserName") && !string.IsNullOrWhiteSpace(filters["CreatedByUserName"]))
+                    {
+                        var filterValue = filters["CreatedByUserName"].Trim();
+                        query = query.Where(p => p.CreatedByUser != null && p.CreatedByUser.UserName != null && p.CreatedByUser.UserName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("CurrencyCode") && !string.IsNullOrWhiteSpace(filters["CurrencyCode"]))
+                    {
+                        var filterValue = filters["CurrencyCode"].Trim();
+                        query = query.Where(p => p.Currency != null && p.Currency.CurrencyCode != null && p.Currency.CurrencyCode.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("ProductCategoryName") && !string.IsNullOrWhiteSpace(filters["ProductCategoryName"]))
+                    {
+                        var filterValue = filters["ProductCategoryName"].Trim();
+                        query = query.Where(p => p.ProductCategory != null && p.ProductCategory.CategoryName != null && p.ProductCategory.CategoryName.Contains(filterValue));
+                    }
+
+                    // Date range filters for CreatedDate
+                    if (filters.ContainsKey("CreatedDate_From") && !string.IsNullOrWhiteSpace(filters["CreatedDate_From"]))
+                    {
+                        if (DateTimeOffset.TryParse(filters["CreatedDate_From"], out DateTimeOffset fromDate))
+                        {
+                            query = query.Where(p => p.CreatedDate >= fromDate);
+                        }
+                    }
+
+                    if (filters.ContainsKey("CreatedDate_To") && !string.IsNullOrWhiteSpace(filters["CreatedDate_To"]))
+                    {
+                        if (DateTimeOffset.TryParse(filters["CreatedDate_To"], out DateTimeOffset toDate))
+                        {
+                            // Add one day to include the entire end date
+                            toDate = toDate.AddDays(1).AddTicks(-1);
+                            query = query.Where(p => p.CreatedDate <= toDate);
+                        }
+                    }
+                }
+
+                response.Data = await query.OrderBy(p => p.ProductName).ToListAsync();
+            }
+            catch (System.Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error filtering products: {ex.Message}";
             }
             return response;
         }

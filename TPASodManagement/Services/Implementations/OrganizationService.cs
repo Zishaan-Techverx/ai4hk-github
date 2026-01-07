@@ -1,7 +1,11 @@
 ﻿using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 using TpaSodManagement.Data;
 using TpaSodManagement.Models.Db;
+using TpaSodManagement.Services;
 using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Services.Implementations
@@ -90,6 +94,61 @@ namespace TpaSodManagement.Services.Implementations
         public async Task<bool> OrganizationExistsAsync(long id)
         {
             return await _context.Organizations.AnyAsync(e => e.OrganizationId == id);
+        }
+
+        public async Task<ServiceResponse<List<Organization>>> GetFilteredAsync(Dictionary<string, string> filters)
+        {
+            var response = new ServiceResponse<List<Organization>>();
+            try
+            {
+                var query = _context.Organizations.AsQueryable();
+
+                // Apply filters
+                if (filters != null && filters.Count > 0)
+                {
+                    if (filters.ContainsKey("OrganizationName") && !string.IsNullOrWhiteSpace(filters["OrganizationName"]))
+                    {
+                        var filterValue = filters["OrganizationName"].Trim();
+                        query = query.Where(o => o.OrganizationName != null && o.OrganizationName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("OrganizationType") && !string.IsNullOrWhiteSpace(filters["OrganizationType"]))
+                    {
+                        var filterValue = filters["OrganizationType"].Trim();
+                        query = query.Where(o => o.OrganizationType != null && o.OrganizationType.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("OrganizationCode") && !string.IsNullOrWhiteSpace(filters["OrganizationCode"]))
+                    {
+                        var filterValue = filters["OrganizationCode"].Trim();
+                        query = query.Where(o => o.OrganizationCode != null && o.OrganizationCode.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out var isActiveValue))
+                        {
+                            query = query.Where(o => o.IsActive == isActiveValue);
+                        }
+                        else if (filters["IsActive"].ToLower() == "true" || filters["IsActive"].ToLower() == "yes" || filters["IsActive"].ToLower() == "1")
+                        {
+                            query = query.Where(o => o.IsActive == true);
+                        }
+                        else if (filters["IsActive"].ToLower() == "false" || filters["IsActive"].ToLower() == "no" || filters["IsActive"].ToLower() == "0")
+                        {
+                            query = query.Where(o => o.IsActive == false);
+                        }
+                    }
+                }
+
+                response.Data = await query.OrderBy(o => o.OrganizationName).ToListAsync();
+            }
+            catch (System.Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error fetching filtered organizations: {ex.Message}";
+            }
+            return response;
         }
 
         private async Task<byte[]> ConvertFileToBytesAsync(IFormFile file)

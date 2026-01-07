@@ -8,6 +8,7 @@ namespace TpaSodManagement.Services.Interfaces
     public interface IFieldService
     {
         Task<ServiceResponse<List<Field>>> GetAllAsync();
+        Task<ServiceResponse<List<Field>>> GetFilteredAsync(Dictionary<string, string> filters);
         Task<ServiceResponse<Field>> GetByIdAsync(long id);
         Task<ServiceResponse<Field>> CreateAsync(Field field);
         Task<ServiceResponse<Field>> UpdateAsync(Field field);

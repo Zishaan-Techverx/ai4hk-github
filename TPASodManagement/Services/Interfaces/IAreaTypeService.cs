@@ -7,6 +7,7 @@ namespace TpaSodManagement.Services.Interfaces
     public interface IAreaTypeService
     {
         Task<ServiceResponse<List<AreaType>>> GetAllAsync();
+        Task<ServiceResponse<List<AreaType>>> GetFilteredAsync(Dictionary<string, string> filters);
         Task<ServiceResponse<AreaType>> GetByIdAsync(int id);
         Task<ServiceResponse<AreaType>> CreateAsync(AreaType areaType);
         Task<ServiceResponse<AreaType>> UpdateAsync(AreaType areaType);

@@ -32,6 +32,120 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
+        public async Task<ServiceResponse<List<Farm>>> GetFilteredAsync(Dictionary<string, string> filters)
+        {
+            var response = new ServiceResponse<List<Farm>>();
+            try
+            {
+                var query = _context.Farms
+                    .Include(f => f.AreaType)
+                    .Include(f => f.Organization)
+                    .AsQueryable();
+
+                // Apply filters
+                if (filters != null && filters.Count > 0)
+                {
+                    if (filters.ContainsKey("TotalArea") && !string.IsNullOrWhiteSpace(filters["TotalArea"]))
+                    {
+                        if (decimal.TryParse(filters["TotalArea"], out decimal totalArea))
+                        {
+                            query = query.Where(f => f.TotalArea == totalArea);
+                        }
+                    }
+
+                    if (filters.ContainsKey("OrganicCertified") && !string.IsNullOrWhiteSpace(filters["OrganicCertified"]))
+                    {
+                        if (bool.TryParse(filters["OrganicCertified"], out bool organicCertified))
+                        {
+                            query = query.Where(f => f.OrganicCertified == organicCertified);
+                        }
+                        else if (filters["OrganicCertified"].ToLower() == "true" || filters["OrganicCertified"].ToLower() == "yes" || filters["OrganicCertified"].ToLower() == "1")
+                        {
+                            query = query.Where(f => f.OrganicCertified == true);
+                        }
+                        else if (filters["OrganicCertified"].ToLower() == "false" || filters["OrganicCertified"].ToLower() == "no" || filters["OrganicCertified"].ToLower() == "0")
+                        {
+                            query = query.Where(f => f.OrganicCertified == false);
+                        }
+                    }
+
+                    if (filters.ContainsKey("LicenseNumber") && !string.IsNullOrWhiteSpace(filters["LicenseNumber"]))
+                    {
+                        var filterValue = filters["LicenseNumber"].Trim();
+                        query = query.Where(f => f.LicenseNumber != null && f.LicenseNumber.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("CertificationDetails") && !string.IsNullOrWhiteSpace(filters["CertificationDetails"]))
+                    {
+                        var filterValue = filters["CertificationDetails"].Trim();
+                        query = query.Where(f => f.CertificationDetails != null && f.CertificationDetails.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("Latitude") && !string.IsNullOrWhiteSpace(filters["Latitude"]))
+                    {
+                        if (decimal.TryParse(filters["Latitude"], out decimal latitude))
+                        {
+                            query = query.Where(f => f.Latitude == latitude);
+                        }
+                    }
+
+                    if (filters.ContainsKey("Longitude") && !string.IsNullOrWhiteSpace(filters["Longitude"]))
+                    {
+                        if (decimal.TryParse(filters["Longitude"], out decimal longitude))
+                        {
+                            query = query.Where(f => f.Longitude == longitude);
+                        }
+                    }
+
+                    if (filters.ContainsKey("ElevationMeters") && !string.IsNullOrWhiteSpace(filters["ElevationMeters"]))
+                    {
+                        if (int.TryParse(filters["ElevationMeters"], out int elevation))
+                        {
+                            query = query.Where(f => f.ElevationMeters == elevation);
+                        }
+                    }
+
+                    if (filters.ContainsKey("SoilType") && !string.IsNullOrWhiteSpace(filters["SoilType"]))
+                    {
+                        var filterValue = filters["SoilType"].Trim();
+                        query = query.Where(f => f.SoilType != null && f.SoilType.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("IrrigationType") && !string.IsNullOrWhiteSpace(filters["IrrigationType"]))
+                    {
+                        var filterValue = filters["IrrigationType"].Trim();
+                        query = query.Where(f => f.IrrigationType != null && f.IrrigationType.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("ClimateZone") && !string.IsNullOrWhiteSpace(filters["ClimateZone"]))
+                    {
+                        var filterValue = filters["ClimateZone"].Trim();
+                        query = query.Where(f => f.ClimateZone != null && f.ClimateZone.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("AreaType") && !string.IsNullOrWhiteSpace(filters["AreaType"]))
+                    {
+                        var filterValue = filters["AreaType"].Trim();
+                        query = query.Where(f => f.AreaType != null && f.AreaType.AreaTypeName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("Organization") && !string.IsNullOrWhiteSpace(filters["Organization"]))
+                    {
+                        var filterValue = filters["Organization"].Trim();
+                        query = query.Where(f => f.Organization != null && f.Organization.OrganizationName.Contains(filterValue));
+                    }
+                }
+
+                response.Data = await query.OrderBy(f => f.FarmId).ToListAsync();
+            }
+            catch (System.Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error filtering farms: {ex.Message}";
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<Farm>> GetByIdAsync(long id)
         {
             var response = new ServiceResponse<Farm>();

@@ -34,6 +34,69 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
+        public async Task<ServiceResponse<List<AreaType>>> GetFilteredAsync(Dictionary<string, string> filters)
+        {
+            var response = new ServiceResponse<List<AreaType>>();
+            try
+            {
+                var query = _context.AreaTypes.AsQueryable();
+
+                // Apply filters
+                if (filters != null && filters.Count > 0)
+                {
+                    if (filters.ContainsKey("AreaTypeName") && !string.IsNullOrWhiteSpace(filters["AreaTypeName"]))
+                    {
+                        var filterValue = filters["AreaTypeName"].Trim();
+                        query = query.Where(a => a.AreaTypeName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("UnitAbbreviation") && !string.IsNullOrWhiteSpace(filters["UnitAbbreviation"]))
+                    {
+                        var filterValue = filters["UnitAbbreviation"].Trim();
+                        query = query.Where(a => a.UnitAbbreviation != null && a.UnitAbbreviation.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("UnitSystem") && !string.IsNullOrWhiteSpace(filters["UnitSystem"]))
+                    {
+                        var filterValue = filters["UnitSystem"].Trim();
+                        query = query.Where(a => a.UnitSystem != null && a.UnitSystem.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("ConversionToSquareMeters") && !string.IsNullOrWhiteSpace(filters["ConversionToSquareMeters"]))
+                    {
+                        if (decimal.TryParse(filters["ConversionToSquareMeters"], out var conversionValue))
+                        {
+                            query = query.Where(a => a.ConversionToSquareMeters == conversionValue);
+                        }
+                    }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out var isActiveValue))
+                        {
+                            query = query.Where(a => a.IsActive == isActiveValue);
+                        }
+                        else if (filters["IsActive"].ToLower() == "true" || filters["IsActive"].ToLower() == "yes" || filters["IsActive"].ToLower() == "1")
+                        {
+                            query = query.Where(a => a.IsActive == true);
+                        }
+                        else if (filters["IsActive"].ToLower() == "false" || filters["IsActive"].ToLower() == "no" || filters["IsActive"].ToLower() == "0")
+                        {
+                            query = query.Where(a => a.IsActive == false);
+                        }
+                    }
+                }
+
+                response.Data = await query.OrderBy(a => a.AreaTypeName).ToListAsync();
+            }
+            catch (System.Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error fetching filtered area types: {ex.Message}";
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<AreaType>> GetByIdAsync(int id)
         {
             var response = new ServiceResponse<AreaType>();

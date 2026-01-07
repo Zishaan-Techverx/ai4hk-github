@@ -43,6 +43,85 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
+        public async Task<ServiceResponse<List<Field>>> GetFilteredAsync(Dictionary<string, string> filters)
+        {
+            var response = new ServiceResponse<List<Field>>();
+            try
+            {
+                var query = _context.Fields
+                    .Include(f => f.Farm)
+                        .ThenInclude(f => f.Organization)
+                    .Include(f => f.AreaType)
+                    .AsQueryable();
+
+                // Apply filters
+                if (filters != null && filters.Count > 0)
+                {
+                    if (filters.ContainsKey("FieldName") && !string.IsNullOrWhiteSpace(filters["FieldName"]))
+                    {
+                        var filterValue = filters["FieldName"].Trim();
+                        query = query.Where(f => f.FieldName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("FieldCode") && !string.IsNullOrWhiteSpace(filters["FieldCode"]))
+                    {
+                        var filterValue = filters["FieldCode"].Trim();
+                        query = query.Where(f => f.FieldCode != null && f.FieldCode.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("AreaAmount") && !string.IsNullOrWhiteSpace(filters["AreaAmount"]))
+                    {
+                        if (decimal.TryParse(filters["AreaAmount"], out decimal areaAmount))
+                        {
+                            query = query.Where(f => f.AreaAmount == areaAmount);
+                        }
+                    }
+
+                    if (filters.ContainsKey("AreaTypeName") && !string.IsNullOrWhiteSpace(filters["AreaTypeName"]))
+                    {
+                        var filterValue = filters["AreaTypeName"].Trim();
+                        query = query.Where(f => f.AreaType != null && f.AreaType.AreaTypeName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("FarmLicenseNumber") && !string.IsNullOrWhiteSpace(filters["FarmLicenseNumber"]))
+                    {
+                        var filterValue = filters["FarmLicenseNumber"].Trim();
+                        query = query.Where(f => f.Farm != null && f.Farm.LicenseNumber != null && f.Farm.LicenseNumber.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("SoilType") && !string.IsNullOrWhiteSpace(filters["SoilType"]))
+                    {
+                        var filterValue = filters["SoilType"].Trim();
+                        query = query.Where(f => f.SoilType != null && f.SoilType.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("IrrigationAvailable") && !string.IsNullOrWhiteSpace(filters["IrrigationAvailable"]))
+                    {
+                        if (bool.TryParse(filters["IrrigationAvailable"], out bool irrigationAvailable))
+                        {
+                            query = query.Where(f => f.IrrigationAvailable == irrigationAvailable);
+                        }
+                    }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out bool isActive))
+                        {
+                            query = query.Where(f => f.IsActive == isActive);
+                        }
+                    }
+                }
+
+                response.Data = await query.OrderBy(f => f.FieldName).ToListAsync();
+            }
+            catch (System.Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error filtering fields: {ex.Message}";
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<Field>> GetByIdAsync(long id)
         {
             var response = new ServiceResponse<Field>();

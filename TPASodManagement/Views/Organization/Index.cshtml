@@ -28,32 +28,41 @@
 
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Organizations</h1>
-
-    @if (User.HasPermission("Organization.Create"))
-    {
-        <a asp-action="Create" class="btn btn-primary">Create New</a>
-    }
+    <div>
+        <button type="button" class="btn btn-secondary me-2" id="printBtn">
+            <i class="fas fa-download me-1"></i> Export to Excel
+        </button>
+        @if (User.HasPermission("Organization.Create"))
+        {
+            <a asp-action="Create" class="btn btn-primary">Create New</a>
+        }
+    </div>
 </div>
 
 <br />
+
+@Html.AntiForgeryToken()
 
 <!-- Column Filter and Page Size Controls -->
 <div class="row mb-3">
     <div class="col-md-6">
         <label class="form-label">Hide Columns</label>
-        <div class="dropdown">
-            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="columnFilterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="min-width: 200px;">
-                Show All
-            </button>
-            <ul class="dropdown-menu" id="columnFilterMenu" aria-labelledby="columnFilterDropdown" style="max-height: 300px; overflow-y: auto;">
-                <li>
-                    <a class="dropdown-item" href="#" id="showAllOption">
-                        <input type="checkbox" id="showAllCheckbox" class="form-check-input me-2" checked>
-                        <label class="form-check-label" for="showAllCheckbox" style="cursor: pointer; width: 100%;">Show All</label>
-                    </a>
-                </li>
-                <li><hr class="dropdown-divider"></li>
-            </ul>
+        <div class="d-flex align-items-center gap-2">
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="columnFilterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="min-width: 200px;">
+                    Show All
+                </button>
+                <ul class="dropdown-menu" id="columnFilterMenu" aria-labelledby="columnFilterDropdown" style="max-height: 300px; overflow-y: auto;">
+                    <li>
+                        <a class="dropdown-item" href="#" id="showAllOption">
+                            <input type="checkbox" id="showAllCheckbox" class="form-check-input me-2" checked>
+                            <label class="form-check-label" for="showAllCheckbox" style="cursor: pointer; width: 100%;">Show All</label>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                </ul>
+            </div>
+            @await Html.PartialAsync("_FilterPartial", new Dictionary<string, string>())
         </div>
         <div id="hiddenColumnsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
     </div>
@@ -495,13 +504,419 @@
                 confirmDeleteBtn.innerHTML = 'Delete';
             });
         });
-        
     });
-    
+
+    // Filter and Excel download functionality
+    let activeFilters = {};
+    let currentFilteredData = [];
+    let currentPage = 1;
+    let pageSize = @pageSize;
+    let isFiltered = false;
+
     function changePageSize(size) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('pageSize', size);
-        url.searchParams.set('pageNumber', '1');
-        window.location.href = url.toString();
+        // If filters are active, update pageSize and re-paginate
+        if (isFiltered) {
+            pageSize = parseInt(size);
+            currentPage = 1;
+            updatePagination();
+            updateTable(getPaginatedData());
+        } else {
+            // Server-side pagination
+            const url = new URL(window.location.href);
+            url.searchParams.set('pageSize', size);
+            url.searchParams.set('pageNumber', '1'); // Reset to first page
+            window.location.href = url.toString();
+        }
+    }
+
+    (function() {
+        // Handle filter input changes
+        document.querySelectorAll('.filter-input').forEach(input => {
+            input.addEventListener('input', function() {
+                const column = this.getAttribute('data-column');
+                const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);
+                if (clearBtn) {
+                    clearBtn.style.display = this.value.trim() ? 'block' : 'none';
+                }
+            });
+        });
+
+        // Handle clear column filter button
+        document.querySelectorAll('.clear-column-filter').forEach(btn => {
+            btn.addEventListener('click', function(e) {
+                e.preventDefault();
+                const column = this.getAttribute('data-column');
+                const filterInput = document.querySelector(`.filter-input[data-column="${column}"]`);
+                const filterToggle = document.querySelector(`.filter-toggle[data-column="${column}"]`);
+                if (filterInput) {
+                    filterInput.value = '';
+                    this.style.display = 'none';
+                }
+                if (filterToggle) {
+                    filterToggle.checked = false;
+                }
+                delete activeFilters[column];
+                updateFilterCount();
+            });
+        });
+
+        // Handle clear all filters button in modal
+        const clearAllFiltersInModalBtn = document.getElementById('clearAllFiltersInModalBtn');
+        if (clearAllFiltersInModalBtn) {
+            clearAllFiltersInModalBtn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-input').forEach(input => {
+                    input.value = '';
+                    const column = input.getAttribute('data-column');
+                    const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);
+                    if (clearBtn) clearBtn.style.display = 'none';
+                });
+                document.querySelectorAll('.filter-toggle').forEach(toggle => {
+                    toggle.checked = false;
+                });
+                activeFilters = {};
+                updateFilterCount();
+            });
+        }
+
+        // Handle clear all filters button outside modal
+        const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
+        if (clearAllFiltersBtn) {
+            clearAllFiltersBtn.addEventListener('click', function() {
+                activeFilters = {};
+                currentFilteredData = [];
+                isFiltered = false;
+                currentPage = 1;
+                updateFilterTags();
+                updateFilterCount();
+                // Reload page to show all data with server-side pagination
+                window.location.reload();
+            });
+        }
+
+        // Handle toggle switches for boolean columns
+        const filterToggles = document.querySelectorAll('.filter-toggle');
+        filterToggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const column = this.getAttribute('data-column');
+                if (this.checked) {
+                    activeFilters[column] = 'true';
+                } else {
+                    delete activeFilters[column];
+                }
+            });
+        });
+
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        if (applyFilterBtn) {
+            applyFilterBtn.addEventListener('click', async function() {
+                await applyFilters();
+            });
+        }
+
+        const printBtn = document.getElementById('printBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', async function() {
+                await downloadExcel();
+            });
+        }
+    })();
+
+    async function applyFilters() {
+        try {
+            // Collect all filter values from inputs and toggles
+            activeFilters = {};
+            
+            // Collect from text inputs
+            const filterInputs = document.querySelectorAll('.filter-input');
+            filterInputs.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value.trim();
+                if (value) {
+                    activeFilters[column] = value;
+                }
+            });
+            
+            // Collect from toggle switches
+            const filterToggles = document.querySelectorAll('.filter-toggle');
+            filterToggles.forEach(toggle => {
+                const column = toggle.getAttribute('data-column');
+                if (toggle.checked) {
+                    activeFilters[column] = 'true';
+                }
+            });
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const response = await fetch('@Url.Action("Filter", "Organization")', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'RequestVerificationToken': token
+                },
+                body: JSON.stringify(activeFilters)
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response error:', response.status, errorText);
+                alert('Error: Server returned status ' + response.status);
+                return;
+            }
+            
+            const result = await response.json();
+            if (result.success) {
+                currentFilteredData = result.data;
+                isFiltered = Object.keys(activeFilters).length > 0;
+                currentPage = 1; // Reset to first page when filter is applied
+                updatePagination();
+                updateTable(getPaginatedData());
+                updateFilterTags();
+                updateFilterCount();
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                if (modal) modal.hide();
+            } else {
+                alert('Error: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error applying filters: ' + error.message);
+        }
+    }
+
+    function updateFilterCount() {
+        const count = Object.keys(activeFilters).length;
+        const countBadge = document.getElementById('activeFilterCount');
+        const clearAllBtn = document.getElementById('clearAllFiltersBtn');
+        
+        if (count > 0) {
+            if (countBadge) {
+                countBadge.textContent = count;
+                countBadge.style.display = 'inline-block';
+            }
+            if (clearAllBtn) {
+                clearAllBtn.style.display = 'inline-block';
+            }
+        } else {
+            if (countBadge) {
+                countBadge.style.display = 'none';
+            }
+            if (clearAllBtn) {
+                clearAllBtn.style.display = 'none';
+            }
+        }
+    }
+
+    function getPaginatedData() {
+        if (!isFiltered || currentFilteredData.length === 0) {
+            return [];
+        }
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        return currentFilteredData.slice(start, end);
+    }
+
+    function updatePagination() {
+        const paginationContainer = document.querySelector('nav[aria-label="Page navigation"]');
+        const recordCountContainer = document.querySelector('.text-muted.mt-2');
+        
+        if (!isFiltered || currentFilteredData.length === 0) {
+            // Show server-side pagination when no filters
+            if (paginationContainer) paginationContainer.style.display = 'block';
+            if (recordCountContainer) recordCountContainer.style.display = 'block';
+            return;
+        }
+
+        // Hide server-side pagination
+        if (paginationContainer) paginationContainer.style.display = 'none';
+        
+        // Create client-side pagination
+        const totalCount = currentFilteredData.length;
+        const totalPages = Math.ceil(totalCount / pageSize);
+        const start = (currentPage - 1) * pageSize + 1;
+        const end = Math.min(currentPage * pageSize, totalCount);
+
+        // Update record count
+        if (recordCountContainer) {
+            recordCountContainer.style.display = 'block';
+            recordCountContainer.innerHTML = `Showing ${start} to ${end} of ${totalCount} filtered records`;
+        }
+
+        // Create pagination controls
+        if (paginationContainer) {
+            paginationContainer.style.display = 'block';
+            let paginationHTML = `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeFilteredPage(${currentPage - 1}); return false;">Previous</a>
+                </li>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                    </li>
+                `;
+            }
+            
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeFilteredPage(${currentPage + 1}); return false;">Next</a>
+                </li>
+            `;
+            
+            paginationContainer.querySelector('ul').innerHTML = paginationHTML;
+        }
+    }
+
+    function changeFilteredPage(page) {
+        const totalPages = Math.ceil(currentFilteredData.length / pageSize);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        updateTable(getPaginatedData());
+        updatePagination();
+        // Scroll to top of table
+        document.querySelector('#dataTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    function updateTable(data) {
+        const tbody = document.querySelector('#dataTable tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.id = `row-${item.organizationId}`;
+            const logoHtml = item.hasLogo 
+                ? `<img src="@Url.Action("GetLogo", "Organization")/${item.organizationId}" alt="Logo" style="width:60px; height:60px; object-fit:cover; border-radius:8px; border:1px solid #ccc;" />`
+                : '<span class="text-muted">No logo</span>';
+            row.innerHTML = `
+                <td data-column="OrganizationName">${escapeHtml(item.organizationName || '')}</td>
+                <td data-column="OrganizationType">${escapeHtml(item.organizationType || '')}</td>
+                <td data-column="Logo">${logoHtml}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a class="btn btn-info" href="@Url.Action("Details", "Organization")/${item.organizationId}">Details</a>
+                        <a class="btn btn-warning" href="@Url.Action("Edit", "Organization")/${item.organizationId}">Edit</a>
+                        <a href="#" class="btn btn-danger delete-btn" data-id="${item.organizationId}" data-name="${escapeHtml(item.organizationName || '')}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(row);
+        });
+        // Re-attach delete button handlers
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const organizationId = this.getAttribute('data-id');
+                const organizationName = this.getAttribute('data-name');
+                const organizationIdInput = document.getElementById('organizationIdToDelete');
+                const organizationNamePlaceholder = document.getElementById('organizationNamePlaceholder');
+                if (organizationIdInput) organizationIdInput.value = organizationId;
+                if (organizationNamePlaceholder) organizationNamePlaceholder.innerText = organizationName;
+            });
+        });
+    }
+
+    function updateFilterTags() {
+        const tagsContainer = document.getElementById('activeFilterTags');
+        if (!tagsContainer) return;
+        tagsContainer.innerHTML = '';
+        if (Object.keys(activeFilters).length === 0) {
+            return;
+        }
+        Object.keys(activeFilters).forEach(column => {
+            const columnName = document.querySelector(`thead th[data-column="${column}"]`)?.textContent.trim() || column;
+            const filterValue = activeFilters[column] === 'true' ? 'Yes' : (activeFilters[column] === 'false' ? 'No' : activeFilters[column]);
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-secondary me-1 mb-1';
+            badge.style.cursor = 'pointer';
+            badge.innerHTML = `${columnName}: ${escapeHtml(filterValue)} <i class="fa-solid fa-times ms-1"></i>`;
+            badge.addEventListener('click', function(e) {
+                e.stopPropagation();
+                delete activeFilters[column];
+                const filterInput = document.querySelector(`.filter-input[data-column="${column}"]`);
+                const filterToggle = document.querySelector(`.filter-toggle[data-column="${column}"]`);
+                const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);
+                if (filterInput) filterInput.value = '';
+                if (filterToggle) filterToggle.checked = false;
+                if (clearBtn) clearBtn.style.display = 'none';
+                updateFilterTags();
+                updateFilterCount();
+                // If no filters left, reload all data
+                if (Object.keys(activeFilters).length === 0) {
+                    isFiltered = false;
+                    currentPage = 1;
+                    window.location.reload();
+                } else {
+                    applyFilters();
+                }
+            });
+            tagsContainer.appendChild(badge);
+        });
+    }
+
+    async function downloadExcel() {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const response = await fetch('@Url.Action("Print", "Organization")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(activeFilters)
+            });
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                // Get filename from Content-Disposition header if available, otherwise use default
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const now = new Date();
+                const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+                const timeStr = String(now.getHours()).padStart(2, '0') + 
+                               String(now.getMinutes()).padStart(2, '0') + 
+                               String(now.getSeconds()).padStart(2, '0');
+                let filename = `Organizations_${dateStr}_${timeStr}.xlsx`;
+                if (contentDisposition) {
+                    // Try to match filename*=UTF-8''filename format first (RFC 5987)
+                    let filenameMatch = contentDisposition.match(/filename\*=UTF-8''([^;,\s]+)/);
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].trim());
+                    } else {
+                        // Fall back to regular filename="..." format
+                        filenameMatch = contentDisposition.match(/filename=([^;,\s]+)/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1].trim();
+                            // Remove quotes if present
+                            filename = filename.replace(/^["']|["']$/g, '');
+                        }
+                    }
+                    // Clean up: remove any extra parameters, encoding info, or spaces
+                    filename = filename.split(';')[0].split('filename_=')[0].trim();
+                    // Remove any parentheses and numbers like "(2)" at the end
+                    filename = filename.replace(/\s*\(\d+\)\s*$/, '');
+                    // Ensure it ends with .xlsx
+                    if (!filename.endsWith('.xlsx')) {
+                        const baseName = filename.split('.')[0];
+                        filename = baseName + '.xlsx';
+                    }
+                }
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            } else {
+                const result = await response.json();
+                alert('Error: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error generating Excel file.');
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
 </script>

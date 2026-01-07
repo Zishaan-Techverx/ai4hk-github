@@ -1,13 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
-using System;
 using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.ViewModels.Sale;
+using OfficeOpenXml;
 
 namespace TpaSodManagement.Controllers
 {
@@ -28,15 +32,64 @@ namespace TpaSodManagement.Controllers
             _logger = logger;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
         {
+            // Set filter columns for the partial view
+            ViewBag.FilterColumns = new Dictionary<string, string>
+            {
+                { "SaleNumber", "Sale Number" },
+                { "InvoiceNumber", "Invoice Number" },
+                { "PurchaseOrderNumber", "Purchase Order Number" },
+                { "SaleDate", "Sale Date" },
+                { "DueDate", "Due Date" },
+                { "SubtotalAmount", "Subtotal Amount" },
+                { "TaxAmount", "Tax Amount" },
+                { "DiscountAmount", "Discount Amount" },
+                { "TotalAmount", "Total Amount" },
+                { "PaymentTermsDays", "Payment Terms Days" },
+                { "Notes", "Notes" },
+                { "CreatedDate", "Created Date" },
+                { "UpdatedDate", "Updated Date" },
+                { "CurrencyName", "Currency" },
+                { "CustomerDisplay", "Customer" },
+                { "FarmLicenseNumber", "Farm" },
+                { "SaleTypeName", "Sale Type" },
+                { "StatusName", "Status" },
+                { "UpdatedByUserName", "Updated By User" },
+                { "UserName", "User" }
+            };
+            ViewBag.ModuleName = "Sales";
+            ViewBag.BooleanColumns = new HashSet<string>();
+            ViewBag.DateColumns = new HashSet<string> { "SaleDate", "DueDate", "CreatedDate", "UpdatedDate" };
+
             var result = await _saleService.GetAllAsync();
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
+                ViewBag.PageNumber = 1;
+                ViewBag.TotalPages = 1;
+                ViewBag.TotalCount = 0;
+                ViewBag.PageSize = pageSize;
                 return View(new List<SaleItemViewModel>());
             }
-            var vm = result.Data?.Select(MapToItemViewModel).ToList() ?? new List<SaleItemViewModel>();
+
+            var allSales = result.Data ?? new List<Sale>();
+            var totalCount = allSales.Count;
+            var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+
+            // Apply pagination
+            var paginatedSales = allSales
+                .Skip((pageNumber - 1) * pageSize)
+                .Take(pageSize)
+                .ToList();
+
+            var vm = paginatedSales.Select(MapToItemViewModel).ToList();
+
+            ViewBag.PageNumber = pageNumber;
+            ViewBag.TotalPages = totalPages;
+            ViewBag.TotalCount = totalCount;
+            ViewBag.PageSize = pageSize;
+
             return View(vm);
         }
 
@@ -150,6 +203,115 @@ namespace TpaSodManagement.Controllers
                 return Json(new { success = false, message = result.Message });
             }
             return Json(new { success = true, message = "Sale deleted successfully." });
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Filter([FromBody] Dictionary<string, string> filters)
+        {
+            try
+            {
+                var result = await _saleService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                if (!result.Success)
+                {
+                    return Json(new { success = false, message = result.Message });
+                }
+
+                var vm = result.Data?.Select(MapToItemViewModel).ToList() ?? new List<SaleItemViewModel>();
+                return Json(new { success = true, data = vm });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error filtering data: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        {
+            try
+            {
+                var result = await _saleService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                if (!result.Success)
+                {
+                    return Json(new { success = false, message = result.Message });
+                }
+
+                var sales = result.Data ?? new List<Sale>();
+                var vm = sales.Select(MapToItemViewModel).ToList();
+
+                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
+
+                using (var package = new ExcelPackage())
+                {
+                    var worksheet = package.Workbook.Worksheets.Add("Sales");
+
+                    // Headers
+                    worksheet.Cells[1, 1].Value = "Sale Number";
+                    worksheet.Cells[1, 2].Value = "Invoice Number";
+                    worksheet.Cells[1, 3].Value = "Purchase Order Number";
+                    worksheet.Cells[1, 4].Value = "Sale Date";
+                    worksheet.Cells[1, 5].Value = "Due Date";
+                    worksheet.Cells[1, 6].Value = "Subtotal Amount";
+                    worksheet.Cells[1, 7].Value = "Tax Amount";
+                    worksheet.Cells[1, 8].Value = "Discount Amount";
+                    worksheet.Cells[1, 9].Value = "Total Amount";
+                    worksheet.Cells[1, 10].Value = "Payment Terms Days";
+                    worksheet.Cells[1, 11].Value = "Notes";
+                    worksheet.Cells[1, 12].Value = "Currency";
+                    worksheet.Cells[1, 13].Value = "Customer";
+                    worksheet.Cells[1, 14].Value = "Farm";
+                    worksheet.Cells[1, 15].Value = "Sale Type";
+                    worksheet.Cells[1, 16].Value = "Status";
+                    worksheet.Cells[1, 17].Value = "Updated By User";
+                    worksheet.Cells[1, 18].Value = "User";
+
+                    // Style headers
+                    using (var range = worksheet.Cells[1, 1, 1, 18])
+                    {
+                        range.Style.Font.Bold = true;
+                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
+                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                    }
+
+                    // Data
+                    for (int i = 0; i < vm.Count; i++)
+                    {
+                        var row = i + 2;
+                        worksheet.Cells[row, 1].Value = vm[i].SaleNumber;
+                        worksheet.Cells[row, 2].Value = vm[i].InvoiceNumber;
+                        worksheet.Cells[row, 3].Value = vm[i].PurchaseOrderNumber;
+                        worksheet.Cells[row, 4].Value = vm[i].SaleDate.ToString();
+                        worksheet.Cells[row, 5].Value = vm[i].DueDate?.ToString() ?? "";
+                        worksheet.Cells[row, 6].Value = vm[i].SubtotalAmount;
+                        worksheet.Cells[row, 7].Value = vm[i].TaxAmount;
+                        worksheet.Cells[row, 8].Value = vm[i].DiscountAmount;
+                        worksheet.Cells[row, 9].Value = vm[i].TotalAmount;
+                        worksheet.Cells[row, 10].Value = vm[i].PaymentTermsDays;
+                        worksheet.Cells[row, 11].Value = vm[i].Notes;
+                        worksheet.Cells[row, 12].Value = vm[i].CurrencyName ?? "N/A";
+                        worksheet.Cells[row, 13].Value = vm[i].CustomerDisplay ?? $"Customer #{vm[i].CustomerId}";
+                        worksheet.Cells[row, 14].Value = vm[i].FarmDisplay ?? $"Farm #{vm[i].FarmId}";
+                        worksheet.Cells[row, 15].Value = vm[i].SaleTypeName ?? "N/A";
+                        worksheet.Cells[row, 16].Value = vm[i].StatusName ?? "N/A";
+                        worksheet.Cells[row, 17].Value = vm[i].UpdatedByUserName ?? "N/A";
+                        worksheet.Cells[row, 18].Value = vm[i].UserName ?? "N/A";
+                    }
+
+                    worksheet.Cells.AutoFitColumns();
+
+                    var stream = new MemoryStream();
+                    package.SaveAs(stream);
+                    stream.Position = 0;
+
+                    var fileName = $"Sales_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error generating Excel file: {ex.Message}" });
+            }
         }
 
         private static SaleItemViewModel MapToItemViewModel(Sale entity)

@@ -8,6 +8,7 @@ namespace TpaSodManagement.Services.Interfaces
     public interface ISaleService
     {
         Task<ServiceResponse<List<Sale>>> GetAllAsync();
+        Task<ServiceResponse<List<Sale>>> GetFilteredAsync(Dictionary<string, string> filters);
         Task<ServiceResponse<Sale>> GetByIdAsync(long id);
         Task<ServiceResponse<Sale>> CreateAsync(Sale sale);
         Task<ServiceResponse<Sale>> UpdateAsync(Sale sale);

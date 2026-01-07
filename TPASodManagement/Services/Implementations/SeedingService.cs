@@ -43,6 +43,147 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
+        public async Task<ServiceResponse<List<Seeding>>> GetFilteredAsync(Dictionary<string, string> filters)
+        {
+            var response = new ServiceResponse<List<Seeding>>();
+            try
+            {
+                var query = _context.Seedings
+                    .Include(s => s.AreaType)
+                    .Include(s => s.Farm)
+                    .Include(s => s.Field)
+                    .Include(s => s.TagRange)
+                    .Include(s => s.User)
+                    .AsQueryable();
+
+                // Apply filters
+                if (filters != null && filters.Count > 0)
+                {
+                    if (filters.ContainsKey("AreaAmount") && !string.IsNullOrWhiteSpace(filters["AreaAmount"]))
+                    {
+                        if (decimal.TryParse(filters["AreaAmount"], out decimal areaAmount))
+                        {
+                            query = query.Where(s => s.AreaAmount == areaAmount);
+                        }
+                    }
+
+                    if (filters.ContainsKey("SeedingMethod") && !string.IsNullOrWhiteSpace(filters["SeedingMethod"]))
+                    {
+                        var filterValue = filters["SeedingMethod"].Trim();
+                        query = query.Where(s => s.SeedingMethod != null && s.SeedingMethod.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("SeedRatePerUnit") && !string.IsNullOrWhiteSpace(filters["SeedRatePerUnit"]))
+                    {
+                        if (decimal.TryParse(filters["SeedRatePerUnit"], out decimal seedRate))
+                        {
+                            query = query.Where(s => s.SeedRatePerUnit == seedRate);
+                        }
+                    }
+
+                    if (filters.ContainsKey("WeatherConditions") && !string.IsNullOrWhiteSpace(filters["WeatherConditions"]))
+                    {
+                        var filterValue = filters["WeatherConditions"].Trim();
+                        query = query.Where(s => s.WeatherConditions != null && s.WeatherConditions.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("SoilTemperature") && !string.IsNullOrWhiteSpace(filters["SoilTemperature"]))
+                    {
+                        if (decimal.TryParse(filters["SoilTemperature"], out decimal soilTemp))
+                        {
+                            query = query.Where(s => s.SoilTemperature == soilTemp);
+                        }
+                    }
+
+                    if (filters.ContainsKey("SoilMoisture") && !string.IsNullOrWhiteSpace(filters["SoilMoisture"]))
+                    {
+                        var filterValue = filters["SoilMoisture"].Trim();
+                        query = query.Where(s => s.SoilMoisture != null && s.SoilMoisture.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("Notes") && !string.IsNullOrWhiteSpace(filters["Notes"]))
+                    {
+                        var filterValue = filters["Notes"].Trim();
+                        query = query.Where(s => s.Notes != null && s.Notes.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("AreaTypeName") && !string.IsNullOrWhiteSpace(filters["AreaTypeName"]))
+                    {
+                        var filterValue = filters["AreaTypeName"].Trim();
+                        query = query.Where(s => s.AreaType != null && s.AreaType.AreaTypeName != null && s.AreaType.AreaTypeName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("FarmLicenseNumber") && !string.IsNullOrWhiteSpace(filters["FarmLicenseNumber"]))
+                    {
+                        var filterValue = filters["FarmLicenseNumber"].Trim();
+                        query = query.Where(s => s.Farm != null && s.Farm.LicenseNumber != null && s.Farm.LicenseNumber.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("FieldName") && !string.IsNullOrWhiteSpace(filters["FieldName"]))
+                    {
+                        var filterValue = filters["FieldName"].Trim();
+                        query = query.Where(s => s.Field != null && s.Field.FieldName != null && s.Field.FieldName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("TagRangeCode") && !string.IsNullOrWhiteSpace(filters["TagRangeCode"]))
+                    {
+                        var filterValue = filters["TagRangeCode"].Trim();
+                        query = query.Where(s => s.TagRange != null && s.TagRange.TagRangeCode != null && s.TagRange.TagRangeCode.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("UserName") && !string.IsNullOrWhiteSpace(filters["UserName"]))
+                    {
+                        var filterValue = filters["UserName"].Trim();
+                        query = query.Where(s => s.User != null && s.User.UserName != null && s.User.UserName.Contains(filterValue));
+                    }
+
+                    // Date range filters for SeedingDate (DateOnly)
+                    if (filters.ContainsKey("SeedingDate_From") && !string.IsNullOrWhiteSpace(filters["SeedingDate_From"]))
+                    {
+                        if (DateOnly.TryParse(filters["SeedingDate_From"], out DateOnly fromDate))
+                        {
+                            query = query.Where(s => s.SeedingDate >= fromDate);
+                        }
+                    }
+
+                    if (filters.ContainsKey("SeedingDate_To") && !string.IsNullOrWhiteSpace(filters["SeedingDate_To"]))
+                    {
+                        if (DateOnly.TryParse(filters["SeedingDate_To"], out DateOnly toDate))
+                        {
+                            query = query.Where(s => s.SeedingDate <= toDate);
+                        }
+                    }
+
+                    // Date range filters for CreatedDate
+                    if (filters.ContainsKey("CreatedDate_From") && !string.IsNullOrWhiteSpace(filters["CreatedDate_From"]))
+                    {
+                        if (DateTimeOffset.TryParse(filters["CreatedDate_From"], out DateTimeOffset fromDate))
+                        {
+                            query = query.Where(s => s.CreatedDate >= fromDate);
+                        }
+                    }
+
+                    if (filters.ContainsKey("CreatedDate_To") && !string.IsNullOrWhiteSpace(filters["CreatedDate_To"]))
+                    {
+                        if (DateTimeOffset.TryParse(filters["CreatedDate_To"], out DateTimeOffset toDate))
+                        {
+                            // Add one day to include the entire end date
+                            toDate = toDate.AddDays(1).AddTicks(-1);
+                            query = query.Where(s => s.CreatedDate <= toDate);
+                        }
+                    }
+                }
+
+                response.Data = await query.OrderByDescending(s => s.CreatedDate).ToListAsync();
+            }
+            catch (System.Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error filtering seedings: {ex.Message}";
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<Seeding>> GetByIdAsync(long id)
         {
             var response = new ServiceResponse<Seeding>();

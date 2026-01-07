@@ -8,6 +8,7 @@ namespace TpaSodManagement.Services.Interfaces
     public interface ISeedingService
     {
         Task<ServiceResponse<List<Seeding>>> GetAllAsync();
+        Task<ServiceResponse<List<Seeding>>> GetFilteredAsync(Dictionary<string, string> filters);
         Task<ServiceResponse<Seeding>> GetByIdAsync(long id);
         Task<ServiceResponse<Seeding>> CreateAsync(Seeding seeding);
         Task<ServiceResponse<Seeding>> UpdateAsync(Seeding seeding);
