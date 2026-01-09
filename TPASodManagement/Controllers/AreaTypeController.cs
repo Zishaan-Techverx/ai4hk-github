@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.AreaType;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -12,10 +13,12 @@ namespace TpaSodManagement.Controllers
     public class AreaTypeController : Controller
     {
         private readonly IAreaTypeService _areaTypeService;
+        private readonly IExportToExcel _exportToExcel;
 
-        public AreaTypeController(IAreaTypeService areaTypeService)
+        public AreaTypeController(IAreaTypeService areaTypeService, IExportToExcel exportToExcel)
         {
             _areaTypeService = areaTypeService;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index()
@@ -63,12 +66,39 @@ namespace TpaSodManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
         {
             try
             {
-                // Get all filtered records (no pagination)
-                var result = await _areaTypeService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
+                var result = await _areaTypeService.GetFilteredAsync(filters);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -77,65 +107,41 @@ namespace TpaSodManagement.Controllers
                 var areaTypes = result.Data ?? new List<AreaType>();
                 var vm = areaTypes.Select(MapToItemViewModel).ToList();
 
-                // Set EPPlus license context (non-commercial use)
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                // Generate Excel file using EPPlus
-                using (var package = new ExcelPackage())
+                var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Area Types");
+                    ("Area Type Name", "AreaTypeName"),
+                    ("Unit Abbreviation", "UnitAbbreviation"),
+                    ("Unit System", "UnitSystem"),
+                    ("Conversion To Square Meters", "ConversionToSquareMeters"),
+                    ("Is Active", "IsActive")
+                };
 
-                    // Set header row
-                    worksheet.Cells[1, 1].Value = "Area Type Name";
-                    worksheet.Cells[1, 2].Value = "Unit Abbreviation";
-                    worksheet.Cells[1, 3].Value = "Unit System";
-                    worksheet.Cells[1, 4].Value = "Conversion To Square Meters";
-                    worksheet.Cells[1, 5].Value = "Is Active";
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
 
-                    // Style header row
-                    using (var range = worksheet.Cells[1, 1, 1, 5])
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "AreaTypes",
+                    worksheetName: "Area Types",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
                     {
-                        range.Style.Font.Bold = true;
-                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
-                        range.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
-                    }
-
-                    // Add data rows
-                    for (int i = 0; i < vm.Count; i++)
-                    {
-                        var row = i + 2;
-                        var item = vm[i];
-                        worksheet.Cells[row, 1].Value = item.AreaTypeName ?? "";
-                        worksheet.Cells[row, 2].Value = item.UnitAbbreviation ?? "";
-                        worksheet.Cells[row, 3].Value = item.UnitSystem ?? "";
-                        worksheet.Cells[row, 4].Value = item.ConversionToSquareMeters?.ToString("N2") ?? "";
-                        worksheet.Cells[row, 5].Value = item.IsActive ? "Yes" : "No";
-                    }
-
-                    // Auto-fit columns
-                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-
-                    // Add borders to data cells
-                    if (vm.Count > 0)
-                    {
-                        using (var range = worksheet.Cells[1, 1, vm.Count + 1, 5])
+                        var allValues = new List<object>
                         {
-                            range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        }
+                            item.AreaTypeName ?? "",
+                            item.UnitAbbreviation ?? "",
+                            item.UnitSystem ?? "",
+                            item.ConversionToSquareMeters?.ToString("N2") ?? "",
+                            item.IsActive ? "Yes" : "No"
+                        };
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
+                );
 
-                    var stream = new MemoryStream();
-                    package.SaveAs(stream);
-                    stream.Position = 0;
-
-                    var fileName = $"AreaTypes_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                }
+                var fileName = $"AreaTypes_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {

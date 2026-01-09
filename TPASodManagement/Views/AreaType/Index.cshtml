@@ -282,6 +282,8 @@
                 updateHiddenColumnsUI(hiddenColumns, columnMap);
                 applyColumnVisibility(hiddenColumns);
                 updateDropdownButton();
+                // Update filter inputs state
+                updateFilterInputsState(hiddenColumns);
             });
         });
         
@@ -295,6 +297,8 @@
         updateHiddenColumnsUI(hiddenColumns, columnMap);
         applyColumnVisibility(hiddenColumns);
         updateDropdownButton();
+        // Update filter inputs state
+        updateFilterInputsState(hiddenColumns);
         
         // Handle "Show All" option click
         showAllOption.addEventListener('click', function(e) {
@@ -315,6 +319,8 @@
             updateHiddenColumnsUI(hiddenColumns, columnMap);
             applyColumnVisibility(hiddenColumns);
             updateDropdownButton();
+            // Update filter inputs state
+            updateFilterInputsState(hiddenColumns);
         });
         
         // Handle individual checkbox changes
@@ -407,10 +413,12 @@
                         // Save to localStorage
                         localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
                         
-                        // Update UI
-                        updateHiddenColumnsUI(hiddenColumns, columnMap);
-                        applyColumnVisibility(hiddenColumns);
-                        updateDropdownButton();
+                // Update UI
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
+                // Update filter inputs state
+                updateFilterInputsState(hiddenColumns);
                     }
                 });
                 hiddenColumnsBadges.appendChild(badge);
@@ -418,7 +426,12 @@
         }
         
         function applyColumnVisibility(hiddenCols) {
-            headers.forEach(header => {
+            // Get table and headers from DOM each time (not from closure) to ensure fresh references
+            const currentTable = document.getElementById('dataTable');
+            if (!currentTable) return;
+            
+            const currentHeaders = currentTable.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+            currentHeaders.forEach(header => {
                 const columnName = header.getAttribute('data-column');
                 const isHidden = hiddenCols.includes(columnName);
                 
@@ -426,17 +439,87 @@
                 header.style.display = isHidden ? 'none' : '';
                 
                 // Hide/show all cells in this column
-                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                const cells = currentTable.querySelectorAll(`tbody td[data-column="${columnName}"]`);
                 cells.forEach(cell => {
                     cell.style.display = isHidden ? 'none' : '';
                 });
             });
             
             // Ensure Actions column is always visible
-            const actionsHeaders = table.querySelectorAll('thead th[data-column="Actions"]');
-            const actionsCells = table.querySelectorAll('tbody td[data-column="Actions"]');
+            const actionsHeaders = currentTable.querySelectorAll('thead th[data-column="Actions"]');
+            const actionsCells = currentTable.querySelectorAll('tbody td[data-column="Actions"]');
             actionsHeaders.forEach(header => header.style.display = '');
             actionsCells.forEach(cell => cell.style.display = '');
+            
+            // Disable/enable filter inputs for hidden columns
+            updateFilterInputsState(hiddenCols);
+        }
+        
+        // Make applyColumnVisibility globally accessible
+        window.applyColumnVisibility = applyColumnVisibility;
+        
+        function updateFilterInputsState(hiddenCols) {
+            // Get all filter items
+            const filterItems = document.querySelectorAll('.filter-item[data-column]');
+            filterItems.forEach(item => {
+                const columnName = item.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                // Find all filter inputs for this column
+                const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
+                const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
+                const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
+                const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
+                const clearDateFromBtn = item.querySelector(`.clear-date-from-filter[data-column="${columnName}"]`);
+                const clearDateToBtn = item.querySelector(`.clear-date-to-filter[data-column="${columnName}"]`);
+                
+                // Disable/enable inputs
+                if (filterInput) {
+                    filterInput.disabled = isHidden;
+                    filterInput.style.opacity = isHidden ? '0.5' : '1';
+                    filterInput.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterToggle) {
+                    filterToggle.disabled = isHidden;
+                    filterToggle.style.opacity = isHidden ? '0.5' : '1';
+                    filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterDateFrom) {
+                    filterDateFrom.disabled = isHidden;
+                    filterDateFrom.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateFrom.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterDateTo) {
+                    filterDateTo.disabled = isHidden;
+                    filterDateTo.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateTo.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                
+                // Disable clear buttons
+                if (clearBtn) {
+                    clearBtn.disabled = isHidden;
+                    clearBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateFromBtn) {
+                    clearDateFromBtn.disabled = isHidden;
+                    clearDateFromBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateFromBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateToBtn) {
+                    clearDateToBtn.disabled = isHidden;
+                    clearDateToBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateToBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                
+                // Update label style
+                const label = item.querySelector('label');
+                if (label) {
+                    label.style.opacity = isHidden ? '0.5' : '1';
+                    label.style.cursor = isHidden ? 'not-allowed' : 'default';
+                }
+            });
         }
         
         // Delete functionality
@@ -510,16 +593,35 @@
         });
     });
     
-    function changePageSize(size) {
-        const url = new URL(window.location.href);
-        url.searchParams.set('pageSize', size);
-        url.searchParams.set('pageNumber', '1'); // Reset to first page
-        window.location.href = url.toString();
-    }
-
     // Filter Functionality
     let activeFilters = {};
     let currentFilteredData = [];
+    let isFiltered = false;
+    let currentPage = 1;
+    let pageSize = @pageSize;
+
+    function changePageSize(size) {
+        // If filters are active, update pageSize and re-paginate
+        if (isFiltered) {
+            pageSize = parseInt(size);
+            currentPage = 1;
+            updatePagination();
+            updateTable(getPaginatedData());
+            
+            // Reapply column visibility
+            const storageKey = `hiddenColumns_AreaType`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            if (typeof applyColumnVisibility === 'function') {
+                applyColumnVisibility(hiddenCols);
+            }
+        } else {
+            // Server-side pagination
+            const url = new URL(window.location.href);
+            url.searchParams.set('pageSize', size);
+            url.searchParams.set('pageNumber', '1'); // Reset to first page
+            window.location.href = url.toString();
+        }
+    }
 
     (function() {
         const table = document.getElementById('dataTable');
@@ -588,17 +690,22 @@
         // Clear all filters button (outside modal)
         const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
         if (clearAllFiltersBtn) {
-            clearAllFiltersBtn.addEventListener('click', function() {
+            clearAllFiltersBtn.addEventListener('click', async function() {
                 document.querySelectorAll('.filter-input').forEach(input => {
                     input.value = '';
+                });
+                document.querySelectorAll('.filter-toggle').forEach(toggle => {
+                    toggle.checked = false;
                 });
                 document.querySelectorAll('.clear-column-filter').forEach(btn => {
                     btn.style.display = 'none';
                 });
                 activeFilters = {};
+                isFiltered = false;
+                currentPage = 1;
                 updateFilterTags();
                 updateFilterCount();
-                loadAllData();
+                await loadAllData();
             });
         }
 
@@ -636,8 +743,8 @@
             // Collect all filter values from inputs and toggles
             activeFilters = {};
             
-            // Collect from text inputs
-            const filterInputs = document.querySelectorAll('.filter-input');
+            // Collect from text inputs (skip disabled ones)
+            const filterInputs = document.querySelectorAll('.filter-input:not(:disabled)');
             filterInputs.forEach(input => {
                 const column = input.getAttribute('data-column');
                 const value = input.value.trim();
@@ -646,12 +753,31 @@
                 }
             });
             
-            // Collect from toggle switches
-            const filterToggles = document.querySelectorAll('.filter-toggle');
+            // Collect from toggle switches (skip disabled ones)
+            const filterToggles = document.querySelectorAll('.filter-toggle:not(:disabled)');
             filterToggles.forEach(toggle => {
                 const column = toggle.getAttribute('data-column');
                 if (toggle.checked) {
                     activeFilters[column] = 'true';
+                }
+            });
+            
+            // Collect from date inputs (skip disabled ones)
+            const filterDateFroms = document.querySelectorAll('.filter-date-from:not(:disabled)');
+            filterDateFroms.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value;
+                if (value) {
+                    activeFilters[`${column}_From`] = value;
+                }
+            });
+            
+            const filterDateTos = document.querySelectorAll('.filter-date-to:not(:disabled)');
+            filterDateTos.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value;
+                if (value) {
+                    activeFilters[`${column}_To`] = value;
                 }
             });
 
@@ -664,9 +790,13 @@
             const result = await response.json();
             if (result.success) {
                 currentFilteredData = result.data;
-                updateTable(result.data);
+                isFiltered = Object.keys(activeFilters).length > 0;
+                currentPage = 1; // Reset to first page when filter is applied
+                updatePagination();
+                updateTable(getPaginatedData()); // updateTable already calls applyColumnVisibility at the end
                 updateFilterTags();
                 updateFilterCount();
+                
                 // Close modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
                 if (modal) modal.hide();
@@ -702,10 +832,91 @@
         }
     }
 
+    function getPaginatedData() {
+        if (!isFiltered || currentFilteredData.length === 0) {
+            return [];
+        }
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        return currentFilteredData.slice(start, end);
+    }
+
+    function updatePagination() {
+        const paginationContainer = document.querySelector('nav[aria-label="Page navigation"]');
+        const recordCountContainer = document.querySelector('.text-muted.mt-2');
+        
+        if (!isFiltered || currentFilteredData.length === 0) {
+            // Show server-side pagination when no filters
+            if (paginationContainer) paginationContainer.style.display = 'block';
+            if (recordCountContainer) recordCountContainer.style.display = 'block';
+            return;
+        }
+
+        // Hide server-side pagination
+        if (paginationContainer) paginationContainer.style.display = 'none';
+        
+        // Create client-side pagination
+        const totalCount = currentFilteredData.length;
+        const totalPages = Math.ceil(totalCount / pageSize);
+        const start = (currentPage - 1) * pageSize + 1;
+        const end = Math.min(currentPage * pageSize, totalCount);
+
+        // Update record count
+        if (recordCountContainer) {
+            recordCountContainer.style.display = 'block';
+            recordCountContainer.innerHTML = `Showing ${start} to ${end} of ${totalCount} filtered records`;
+        }
+
+        // Create pagination controls
+        if (paginationContainer) {
+            paginationContainer.style.display = 'block';
+            let paginationHTML = `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeFilteredPage(${currentPage - 1}); return false;">Previous</a>
+                </li>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                    </li>
+                `;
+            }
+            
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeFilteredPage(${currentPage + 1}); return false;">Next</a>
+                </li>
+            `;
+            
+            paginationContainer.querySelector('ul').innerHTML = paginationHTML;
+        }
+    }
+
+    function changeFilteredPage(page) {
+        const totalPages = Math.ceil(currentFilteredData.length / pageSize);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        updateTable(getPaginatedData());
+        updatePagination();
+        // Scroll to top of table
+        document.querySelector('#dataTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // Reapply column visibility
+        const storageKey = `hiddenColumns_AreaType`;
+        const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        if (typeof applyColumnVisibility === 'function') {
+            applyColumnVisibility(hiddenCols);
+        }
+    }
+
     function updateTable(data) {
         const tbody = document.querySelector('#dataTable tbody');
         if (!tbody) return;
-        tbody.innerHTML = '';
+        
+        // Use DocumentFragment to build all rows first, then replace in one go (no flicker)
+        const fragment = document.createDocumentFragment();
         data.forEach(item => {
             const row = document.createElement('tr');
             row.id = `row-${item.areaTypeId}`;
@@ -723,14 +934,32 @@
                     </div>
                 </td>
             `;
-            tbody.appendChild(row);
+            fragment.appendChild(row);
         });
+        
+        // Replace all content in one operation (no flicker)
+        tbody.innerHTML = '';
+        tbody.appendChild(fragment);
+        
+        // Re-attach delete button handlers
         document.querySelectorAll('.delete-btn').forEach(button => {
-            button.addEventListener('click', function() {
-                document.getElementById('areaTypeIdToDelete').value = this.getAttribute('data-id');
-                document.getElementById('areaTypeNamePlaceholder').textContent = this.getAttribute('data-name');
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const areaTypeId = this.getAttribute('data-id');
+                const areaTypeName = this.getAttribute('data-name');
+                const areaTypeIdInput = document.getElementById('areaTypeIdToDelete');
+                const areaTypeNamePlaceholder = document.getElementById('areaTypeNamePlaceholder');
+                if (areaTypeIdInput) areaTypeIdInput.value = areaTypeId;
+                if (areaTypeNamePlaceholder) areaTypeNamePlaceholder.innerText = areaTypeName;
             });
         });
+        
+        // Reapply column visibility and filter inputs state after table update
+        const storageKey = `hiddenColumns_AreaType`;
+        const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        if (typeof applyColumnVisibility === 'function') {
+            applyColumnVisibility(hiddenCols);
+        }
     }
 
     function updateFilterTags() {
@@ -767,16 +996,29 @@
     async function downloadExcel() {
         try {
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            
+            // Get hidden columns from localStorage
+            const storageKey = `hiddenColumns_AreaType`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            // Prepare request data with filters and hidden columns
+            const requestData = {
+                filters: activeFilters || {},
+                hiddenColumns: hiddenCols
+            };
+            
             const response = await fetch('@Url.Action("Print", "AreaType")', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
-                body: JSON.stringify(activeFilters)
+                body: JSON.stringify(requestData),
+                cache: 'no-cache' // Prevent caching
             });
             if (response.ok) {
                 const blob = await response.blob();
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
+                a.style.display = 'none';
                 // Get filename from Content-Disposition header if available, otherwise use default
                 const contentDisposition = response.headers.get('Content-Disposition');
                 const now = new Date();
@@ -812,11 +1054,27 @@
                 a.download = filename;
                 document.body.appendChild(a);
                 a.click();
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
+                // Delay revoking URL to ensure download starts
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
             } else {
-                const result = await response.json();
-                alert('Error: ' + (result.message || 'Unknown error'));
+                // Try to parse error response as JSON, but handle non-JSON responses
+                let errorMessage = 'Unknown error';
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const result = await response.json();
+                        errorMessage = result.message || result.error || 'Unknown error';
+                    } else {
+                        const errorText = await response.text();
+                        errorMessage = errorText || `Server returned status ${response.status}`;
+                    }
+                } catch (e) {
+                    errorMessage = `Server returned status ${response.status}`;
+                }
+                alert('Error: ' + errorMessage);
             }
         } catch (error) {
             console.error('Error:', error);
@@ -826,19 +1084,48 @@
 
     async function loadAllData() {
         try {
+            // When filters are cleared, fetch all data via Filter action and use client-side pagination
+            // This approach is smooth - no page reload, no flicker
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
             const response = await fetch('@Url.Action("Filter", "AreaType")', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'RequestVerificationToken': token 
+                },
                 body: JSON.stringify({})
             });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response error:', response.status, errorText);
+                alert('Error: Server returned status ' + response.status);
+                return;
+            }
+            
             const result = await response.json();
             if (result.success) {
+                // Store all data and use client-side pagination (smooth, no flicker)
                 currentFilteredData = result.data;
-                updateTable(result.data);
+                isFiltered = true; // Keep as filtered to use client-side pagination
+                currentPage = 1;
+                
+                // Get paginated data first
+                const paginatedData = getPaginatedData();
+                
+                // Update everything in a single batch using requestAnimationFrame to minimize flicker
+                requestAnimationFrame(() => {
+                    updatePagination();
+                    updateTable(paginatedData); // updateTable already calls applyColumnVisibility at the end
+                    updateFilterTags();
+                    updateFilterCount();
+                });
+            } else {
+                alert('Error: ' + (result.message || 'Unknown error'));
             }
         } catch (error) {
             console.error('Error:', error);
+            alert('Error loading data: ' + error.message);
         }
     }
 

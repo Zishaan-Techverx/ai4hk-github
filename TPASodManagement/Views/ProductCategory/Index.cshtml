@@ -276,6 +276,8 @@
                 updateHiddenColumnsUI(hiddenColumns, columnMap);
                 applyColumnVisibility(hiddenColumns);
                 updateDropdownButton();
+                // Update filter inputs state
+                updateFilterInputsState(hiddenColumns);
             });
         });
         
@@ -289,6 +291,8 @@
         updateHiddenColumnsUI(hiddenColumns, columnMap);
         applyColumnVisibility(hiddenColumns);
         updateDropdownButton();
+        // Update filter inputs state
+        updateFilterInputsState(hiddenColumns);
         
         // Handle "Show All" option click
         showAllOption.addEventListener('click', function(e) {
@@ -309,6 +313,8 @@
             updateHiddenColumnsUI(hiddenColumns, columnMap);
             applyColumnVisibility(hiddenColumns);
             updateDropdownButton();
+            // Update filter inputs state
+            updateFilterInputsState(hiddenColumns);
         });
         
         // Handle individual checkbox changes
@@ -340,6 +346,8 @@
                 updateHiddenColumnsUI(hiddenColumns, columnMap);
                 applyColumnVisibility(hiddenColumns);
                 updateDropdownButton();
+                // Update filter inputs state
+                updateFilterInputsState(hiddenColumns);
             }
         });
         
@@ -405,6 +413,8 @@
                         updateHiddenColumnsUI(hiddenColumns, columnMap);
                         applyColumnVisibility(hiddenColumns);
                         updateDropdownButton();
+                        // Update filter inputs state
+                        updateFilterInputsState(hiddenColumns);
                     }
                 });
                 hiddenColumnsBadges.appendChild(badge);
@@ -431,6 +441,73 @@
             const actionsCells = table.querySelectorAll('tbody td[data-column="Actions"]');
             actionsHeaders.forEach(header => header.style.display = '');
             actionsCells.forEach(cell => cell.style.display = '');
+            
+            // Disable/enable filter inputs for hidden columns
+            updateFilterInputsState(hiddenCols);
+        }
+        
+        function updateFilterInputsState(hiddenCols) {
+            // Get all filter items
+            const filterItems = document.querySelectorAll('.filter-item[data-column]');
+            filterItems.forEach(item => {
+                const columnName = item.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                // Find all filter inputs for this column
+                const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
+                const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
+                const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
+                const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
+                const clearDateFromBtn = item.querySelector(`.clear-date-from-filter[data-column="${columnName}"]`);
+                const clearDateToBtn = item.querySelector(`.clear-date-to-filter[data-column="${columnName}"]`);
+                
+                // Disable/enable inputs
+                if (filterInput) {
+                    filterInput.disabled = isHidden;
+                    filterInput.style.opacity = isHidden ? '0.5' : '1';
+                    filterInput.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterToggle) {
+                    filterToggle.disabled = isHidden;
+                    filterToggle.style.opacity = isHidden ? '0.5' : '1';
+                    filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterDateFrom) {
+                    filterDateFrom.disabled = isHidden;
+                    filterDateFrom.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateFrom.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterDateTo) {
+                    filterDateTo.disabled = isHidden;
+                    filterDateTo.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateTo.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                
+                // Disable clear buttons
+                if (clearBtn) {
+                    clearBtn.disabled = isHidden;
+                    clearBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateFromBtn) {
+                    clearDateFromBtn.disabled = isHidden;
+                    clearDateFromBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateFromBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateToBtn) {
+                    clearDateToBtn.disabled = isHidden;
+                    clearDateToBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateToBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                
+                // Update label style
+                const label = item.querySelector('label');
+                if (label) {
+                    label.style.opacity = isHidden ? '0.5' : '1';
+                    label.style.cursor = isHidden ? 'not-allowed' : 'default';
+                }
+            });
         }
 
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
@@ -578,7 +655,7 @@
 
         const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
         if (clearAllFiltersBtn) {
-            clearAllFiltersBtn.addEventListener('click', function() {
+            clearAllFiltersBtn.addEventListener('click', async function() {
                 document.querySelectorAll('.filter-input').forEach(input => input.value = '');
                 document.querySelectorAll('.filter-toggle').forEach(toggle => toggle.checked = false);
                 document.querySelectorAll('.clear-column-filter').forEach(btn => btn.style.display = 'none');
@@ -587,7 +664,7 @@
                 currentPage = 1;
                 updateFilterTags();
                 updateFilterCount();
-                window.location.reload();
+                await loadAllData();
             });
         }
 
@@ -622,7 +699,8 @@
         try {
             activeFilters = {};
             
-            const filterInputs = document.querySelectorAll('.filter-input');
+            // Collect from text inputs (skip disabled ones)
+            const filterInputs = document.querySelectorAll('.filter-input:not(:disabled)');
             filterInputs.forEach(input => {
                 const column = input.getAttribute('data-column');
                 const value = input.value.trim();
@@ -631,11 +709,31 @@
                 }
             });
             
-            const filterToggles = document.querySelectorAll('.filter-toggle');
+            // Collect from toggle switches (skip disabled ones)
+            const filterToggles = document.querySelectorAll('.filter-toggle:not(:disabled)');
             filterToggles.forEach(toggle => {
                 const column = toggle.getAttribute('data-column');
                 if (toggle.checked) {
                     activeFilters[column] = 'true';
+                }
+            });
+            
+            // Collect from date inputs (skip disabled ones)
+            const filterDateFroms = document.querySelectorAll('.filter-date-from:not(:disabled)');
+            filterDateFroms.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value;
+                if (value) {
+                    activeFilters[`${column}_From`] = value;
+                }
+            });
+            
+            const filterDateTos = document.querySelectorAll('.filter-date-to:not(:disabled)');
+            filterDateTos.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value;
+                if (value) {
+                    activeFilters[`${column}_To`] = value;
                 }
             });
 
@@ -652,6 +750,7 @@
                 currentPage = 1;
                 updatePagination();
                 updateTable(getPaginatedData());
+                // Column visibility is already reapplied in updateTable function
                 updateFilterTags();
                 updateFilterCount();
                 const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
@@ -757,7 +856,9 @@
     function updateTable(data) {
         const tbody = document.querySelector('#dataTable tbody');
         if (!tbody) return;
-        tbody.innerHTML = '';
+        
+        // Use DocumentFragment to build all rows first, then replace in one go (no flicker)
+        const fragment = document.createDocumentFragment();
         data.forEach(item => {
             const row = document.createElement('tr');
             row.id = `row-${item.productCategoryId}`;
@@ -774,8 +875,12 @@
                     </div>
                 </td>
             `;
-            tbody.appendChild(row);
+            fragment.appendChild(row);
         });
+        
+        // Replace all content in one operation (no flicker)
+        tbody.innerHTML = '';
+        tbody.appendChild(fragment);
         document.querySelectorAll('.delete-btn').forEach(button => {
             button.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -787,6 +892,90 @@
                 if (categoryNamePlaceholder) categoryNamePlaceholder.innerText = categoryName;
             });
         });
+        
+        // Reapply column visibility and filter inputs state after table update
+        const storageKey = `hiddenColumns_ProductCategory`;
+        const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        const table = document.getElementById('dataTable');
+        if (table) {
+            const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+            headers.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                // Hide/show header
+                header.style.display = isHidden ? 'none' : '';
+                
+                // Hide/show all cells in this column
+                const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = isHidden ? 'none' : '';
+                });
+            });
+            
+            // Ensure Actions column is always visible
+            const actionsHeaders = table.querySelectorAll('thead th[data-column="Actions"]');
+            const actionsCells = table.querySelectorAll('tbody td[data-column="Actions"]');
+            actionsHeaders.forEach(header => header.style.display = '');
+            actionsCells.forEach(cell => cell.style.display = '');
+            
+            // Update filter inputs state
+            const filterItems = document.querySelectorAll('.filter-item[data-column]');
+            filterItems.forEach(item => {
+                const columnName = item.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
+                const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
+                const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
+                const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
+                const clearDateFromBtn = item.querySelector(`.clear-date-from-filter[data-column="${columnName}"]`);
+                const clearDateToBtn = item.querySelector(`.clear-date-to-filter[data-column="${columnName}"]`);
+                
+                if (filterInput) {
+                    filterInput.disabled = isHidden;
+                    filterInput.style.opacity = isHidden ? '0.5' : '1';
+                    filterInput.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterToggle) {
+                    filterToggle.disabled = isHidden;
+                    filterToggle.style.opacity = isHidden ? '0.5' : '1';
+                    filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterDateFrom) {
+                    filterDateFrom.disabled = isHidden;
+                    filterDateFrom.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateFrom.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterDateTo) {
+                    filterDateTo.disabled = isHidden;
+                    filterDateTo.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateTo.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (clearBtn) {
+                    clearBtn.disabled = isHidden;
+                    clearBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateFromBtn) {
+                    clearDateFromBtn.disabled = isHidden;
+                    clearDateFromBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateFromBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateToBtn) {
+                    clearDateToBtn.disabled = isHidden;
+                    clearDateToBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateToBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                
+                const label = item.querySelector('label');
+                if (label) {
+                    label.style.opacity = isHidden ? '0.5' : '1';
+                    label.style.cursor = isHidden ? 'not-allowed' : 'default';
+                }
+            });
+        }
     }
 
     function updateFilterTags() {
@@ -817,7 +1006,7 @@
                 if (Object.keys(activeFilters).length === 0) {
                     isFiltered = false;
                     currentPage = 1;
-                    window.location.reload();
+                    loadAllData();
                 } else {
                     applyFilters();
                 }
@@ -829,10 +1018,22 @@
     async function downloadExcel() {
         try {
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            
+            // Get hidden columns from localStorage
+            const storageKey = `hiddenColumns_ProductCategory`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            // Prepare request data with filters and hidden columns
+            const requestData = {
+                filters: activeFilters || {},
+                hiddenColumns: hiddenCols
+            };
+            
             const response = await fetch('@Url.Action("Print", "ProductCategory")', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
-                body: JSON.stringify(activeFilters)
+                body: JSON.stringify(requestData),
+                cache: 'no-cache' // Prevent caching
             });
             if (response.ok) {
                 const blob = await response.blob();
@@ -883,6 +1084,58 @@
         } catch (error) {
             console.error('Error:', error);
             alert('Error generating Excel file.');
+        }
+    }
+
+    async function loadAllData() {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const response = await fetch('@Url.Action("Filter", "ProductCategory")', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'RequestVerificationToken': token 
+                },
+                body: JSON.stringify({})
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response error:', response.status, errorText);
+                alert('Error: Server returned status ' + response.status);
+                return;
+            }
+            
+            const result = await response.json();
+            if (result.success) {
+                // Store all data and use client-side pagination (smooth, no flicker)
+                currentFilteredData = result.data;
+                isFiltered = true; // Keep as filtered to use client-side pagination
+                currentPage = 1;
+                
+                // Get paginated data first
+                const paginatedData = getPaginatedData();
+                
+                // Update everything in a single batch using requestAnimationFrame to minimize flicker
+                requestAnimationFrame(() => {
+                    updatePagination();
+                    updateTable(paginatedData);
+                    updateFilterTags();
+                    updateFilterCount();
+                    
+                    // Reapply column visibility and filter inputs state
+                    const storageKey = `hiddenColumns_ProductCategory`;
+                    const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                    if (typeof applyColumnVisibility === 'function') {
+                        applyColumnVisibility(hiddenCols);
+                    }
+                });
+            } else {
+                alert('Error: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error loading data: ' + error.message);
         }
     }
 

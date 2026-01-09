@@ -1,11 +1,15 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Farm;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -13,10 +17,12 @@ namespace TpaSodManagement.Controllers
     public class FarmController : Controller
     {
         private readonly IFarmService _farmService;
+        private readonly IExportToExcel _exportToExcel;
 
-        public FarmController(IFarmService farmService)
+        public FarmController(IFarmService farmService, IExportToExcel exportToExcel)
         {
             _farmService = farmService;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -178,12 +184,39 @@ namespace TpaSodManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
         {
             try
             {
-                // Get all filtered records (no pagination)
-                var result = await _farmService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
+                var result = await _farmService.GetFilteredAsync(filters);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -192,79 +225,55 @@ namespace TpaSodManagement.Controllers
                 var farms = result.Data ?? new List<Farm>();
                 var vm = farms.Select(MapToItemViewModel).ToList();
 
-                // Set EPPlus license context (non-commercial use)
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                // Generate Excel file using EPPlus
-                using (var package = new ExcelPackage())
+                var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Farms");
+                    ("Total Area", "TotalArea"),
+                    ("Organic Certified", "OrganicCertified"),
+                    ("License Number", "LicenseNumber"),
+                    ("Certification Details", "CertificationDetails"),
+                    ("Latitude", "Latitude"),
+                    ("Longitude", "Longitude"),
+                    ("Elevation Meters", "ElevationMeters"),
+                    ("Soil Type", "SoilType"),
+                    ("Irrigation Type", "IrrigationType"),
+                    ("Climate Zone", "ClimateZone"),
+                    ("Area Type", "AreaType"),
+                    ("Organization", "Organization")
+                };
 
-                    // Set header row
-                    worksheet.Cells[1, 1].Value = "Total Area";
-                    worksheet.Cells[1, 2].Value = "Organic Certified";
-                    worksheet.Cells[1, 3].Value = "License Number";
-                    worksheet.Cells[1, 4].Value = "Certification Details";
-                    worksheet.Cells[1, 5].Value = "Latitude";
-                    worksheet.Cells[1, 6].Value = "Longitude";
-                    worksheet.Cells[1, 7].Value = "Elevation Meters";
-                    worksheet.Cells[1, 8].Value = "Soil Type";
-                    worksheet.Cells[1, 9].Value = "Irrigation Type";
-                    worksheet.Cells[1, 10].Value = "Climate Zone";
-                    worksheet.Cells[1, 11].Value = "Area Type";
-                    worksheet.Cells[1, 12].Value = "Organization";
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
 
-                    // Style header row
-                    using (var range = worksheet.Cells[1, 1, 1, 12])
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "Farms",
+                    worksheetName: "Farms",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
                     {
-                        range.Style.Font.Bold = true;
-                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
-                        range.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
-                    }
-
-                    // Add data rows
-                    for (int i = 0; i < vm.Count; i++)
-                    {
-                        var row = i + 2;
-                        var item = vm[i];
-                        worksheet.Cells[row, 1].Value = item.TotalArea?.ToString("N2") ?? "";
-                        worksheet.Cells[row, 2].Value = item.OrganicCertified ? "Yes" : "No";
-                        worksheet.Cells[row, 3].Value = item.LicenseNumber ?? "";
-                        worksheet.Cells[row, 4].Value = item.CertificationDetails ?? "";
-                        worksheet.Cells[row, 5].Value = item.Latitude?.ToString("N6") ?? "";
-                        worksheet.Cells[row, 6].Value = item.Longitude?.ToString("N6") ?? "";
-                        worksheet.Cells[row, 7].Value = item.ElevationMeters ?? 0;
-                        worksheet.Cells[row, 8].Value = item.SoilType ?? "";
-                        worksheet.Cells[row, 9].Value = item.IrrigationType ?? "";
-                        worksheet.Cells[row, 10].Value = item.ClimateZone ?? "";
-                        worksheet.Cells[row, 11].Value = item.AreaTypeName ?? "";
-                        worksheet.Cells[row, 12].Value = item.OrganizationName ?? "";
-                    }
-
-                    // Auto-fit columns
-                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-
-                    // Add borders to data cells
-                    if (vm.Count > 0)
-                    {
-                        using (var range = worksheet.Cells[1, 1, vm.Count + 1, 12])
+                        var allValues = new List<object>
                         {
-                            range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        }
+                            item.TotalArea?.ToString("N2") ?? "",
+                            item.OrganicCertified ? "Yes" : "No",
+                            item.LicenseNumber ?? "",
+                            item.CertificationDetails ?? "",
+                            item.Latitude?.ToString("N6") ?? "",
+                            item.Longitude?.ToString("N6") ?? "",
+                            item.ElevationMeters ?? 0,
+                            item.SoilType ?? "",
+                            item.IrrigationType ?? "",
+                            item.ClimateZone ?? "",
+                            item.AreaTypeName ?? "",
+                            item.OrganizationName ?? ""
+                        };
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
+                );
 
-                    var stream = new MemoryStream();
-                    package.SaveAs(stream);
-                    stream.Position = 0;
-
-                    var fileName = $"Farms_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                }
+                var fileName = $"Farms_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {

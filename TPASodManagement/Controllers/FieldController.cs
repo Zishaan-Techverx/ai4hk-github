@@ -5,11 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Field;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -17,10 +18,12 @@ namespace TpaSodManagement.Controllers
     public class FieldController : Controller
     {
         private readonly IFieldService _fieldService;
+        private readonly IExportToExcel _exportToExcel;
 
-        public FieldController(IFieldService fieldService)
+        public FieldController(IFieldService fieldService, IExportToExcel exportToExcel)
         {
             _fieldService = fieldService;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -179,12 +182,39 @@ namespace TpaSodManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
         {
             try
             {
-                // Get all filtered records (no pagination)
-                var result = await _fieldService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
+                var result = await _fieldService.GetFilteredAsync(filters);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -193,60 +223,51 @@ namespace TpaSodManagement.Controllers
                 var fields = result.Data ?? new List<Field>();
                 var vm = fields.Select(MapToItemViewModel).ToList();
 
-                // Set EPPlus license context (non-commercial use)
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                using (var package = new ExcelPackage())
+                var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Fields");
+                    ("Field Name", "FieldName"),
+                    ("Field Code", "FieldCode"),
+                    ("Area Amount", "AreaAmount"),
+                    ("Area Type", "AreaType"),
+                    ("Farm", "Farm"),
+                    ("Soil Type", "SoilType"),
+                    ("Irrigation Available", "IrrigationAvailable"),
+                    ("Is Active", "IsActive")
+                };
 
-                    // Headers
-                    worksheet.Cells[1, 1].Value = "Field Name";
-                    worksheet.Cells[1, 2].Value = "Field Code";
-                    worksheet.Cells[1, 3].Value = "Area Amount";
-                    worksheet.Cells[1, 4].Value = "Area Type";
-                    worksheet.Cells[1, 5].Value = "Farm";
-                    worksheet.Cells[1, 6].Value = "Soil Type";
-                    worksheet.Cells[1, 7].Value = "Irrigation Available";
-                    worksheet.Cells[1, 8].Value = "Is Active";
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
 
-                    // Style headers
-                    using (var range = worksheet.Cells[1, 1, 1, 8])
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "Fields",
+                    worksheetName: "Fields",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
                     {
-                        range.Style.Font.Bold = true;
-                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                        var allValues = new List<object>
+                        {
+                            item.FieldName ?? "",
+                            item.FieldCode ?? "",
+                            item.AreaAmount?.ToString("N2") ?? "",
+                            item.AreaTypeName ?? "N/A",
+                            !string.IsNullOrEmpty(item.FarmLicenseNumber) ? item.FarmLicenseNumber : $"Farm #{item.FarmId}",
+                            item.SoilType ?? "",
+                            item.IrrigationAvailable ? "Yes" : "No",
+                            item.IsActive ? "Active" : "Inactive"
+                        };
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
+                );
 
-                    // Data
-                    for (int i = 0; i < vm.Count; i++)
-                    {
-                        var row = i + 2;
-                        worksheet.Cells[row, 1].Value = vm[i].FieldName;
-                        worksheet.Cells[row, 2].Value = vm[i].FieldCode;
-                        worksheet.Cells[row, 3].Value = vm[i].AreaAmount;
-                        worksheet.Cells[row, 4].Value = vm[i].AreaTypeName ?? "N/A";
-                        worksheet.Cells[row, 5].Value = !string.IsNullOrEmpty(vm[i].FarmLicenseNumber) ? vm[i].FarmLicenseNumber : $"Farm #{vm[i].FarmId}";
-                        worksheet.Cells[row, 6].Value = vm[i].SoilType;
-                        worksheet.Cells[row, 7].Value = vm[i].IrrigationAvailable ? "Yes" : "No";
-                        worksheet.Cells[row, 8].Value = vm[i].IsActive ? "Active" : "Inactive";
-                    }
-
-                    // Auto-fit columns
-                    worksheet.Cells.AutoFitColumns();
-
-                    var stream = new MemoryStream();
-                    package.SaveAs(stream);
-                    stream.Position = 0;
-
-                    var fileName = $"Fields_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                }
+                var fileName = $"Fields_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error generating Excel file: {ex.Message}" });
+                return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
             }
         }
 

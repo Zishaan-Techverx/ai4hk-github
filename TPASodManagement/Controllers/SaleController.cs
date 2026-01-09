@@ -5,13 +5,14 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.ViewModels.Sale;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -20,16 +21,19 @@ namespace TpaSodManagement.Controllers
     {
         private readonly ISaleService _saleService;
         private readonly UserManager<TpaSodManagementUser> _userManager;
-        private readonly ILogger<SaleController> _logger; 
+        private readonly ILogger<SaleController> _logger;
+        private readonly IExportToExcel _exportToExcel; 
 
         public SaleController(
             ISaleService saleService,
             UserManager<TpaSodManagementUser> userManager,
-            ILogger<SaleController> logger)
+            ILogger<SaleController> logger,
+            IExportToExcel exportToExcel)
         {
             _saleService = saleService;
             _userManager = userManager;
             _logger = logger;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -226,11 +230,39 @@ namespace TpaSodManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
         {
             try
             {
-                var result = await _saleService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
+                var result = await _saleService.GetFilteredAsync(filters);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -239,78 +271,71 @@ namespace TpaSodManagement.Controllers
                 var sales = result.Data ?? new List<Sale>();
                 var vm = sales.Select(MapToItemViewModel).ToList();
 
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                using (var package = new ExcelPackage())
+                var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Sales");
+                    ("Sale Number", "SaleNumber"),
+                    ("Invoice Number", "InvoiceNumber"),
+                    ("Purchase Order Number", "PurchaseOrderNumber"),
+                    ("Sale Date", "SaleDate"),
+                    ("Due Date", "DueDate"),
+                    ("Subtotal Amount", "SubtotalAmount"),
+                    ("Tax Amount", "TaxAmount"),
+                    ("Discount Amount", "DiscountAmount"),
+                    ("Total Amount", "TotalAmount"),
+                    ("Payment Terms Days", "PaymentTermsDays"),
+                    ("Notes", "Notes"),
+                    ("Currency", "Currency"),
+                    ("Customer", "Customer"),
+                    ("Farm", "Farm"),
+                    ("Sale Type", "SaleType"),
+                    ("Status", "Status"),
+                    ("Updated By User", "UpdatedByUser"),
+                    ("User", "User")
+                };
 
-                    // Headers
-                    worksheet.Cells[1, 1].Value = "Sale Number";
-                    worksheet.Cells[1, 2].Value = "Invoice Number";
-                    worksheet.Cells[1, 3].Value = "Purchase Order Number";
-                    worksheet.Cells[1, 4].Value = "Sale Date";
-                    worksheet.Cells[1, 5].Value = "Due Date";
-                    worksheet.Cells[1, 6].Value = "Subtotal Amount";
-                    worksheet.Cells[1, 7].Value = "Tax Amount";
-                    worksheet.Cells[1, 8].Value = "Discount Amount";
-                    worksheet.Cells[1, 9].Value = "Total Amount";
-                    worksheet.Cells[1, 10].Value = "Payment Terms Days";
-                    worksheet.Cells[1, 11].Value = "Notes";
-                    worksheet.Cells[1, 12].Value = "Currency";
-                    worksheet.Cells[1, 13].Value = "Customer";
-                    worksheet.Cells[1, 14].Value = "Farm";
-                    worksheet.Cells[1, 15].Value = "Sale Type";
-                    worksheet.Cells[1, 16].Value = "Status";
-                    worksheet.Cells[1, 17].Value = "Updated By User";
-                    worksheet.Cells[1, 18].Value = "User";
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
 
-                    // Style headers
-                    using (var range = worksheet.Cells[1, 1, 1, 18])
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "Sales",
+                    worksheetName: "Sales",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
                     {
-                        range.Style.Font.Bold = true;
-                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                        var allValues = new List<object>
+                        {
+                            item.SaleNumber ?? "",
+                            item.InvoiceNumber ?? "",
+                            item.PurchaseOrderNumber ?? "",
+                            item.SaleDate.HasValue ? item.SaleDate.Value.ToString("yyyy-MM-dd") : "",
+                            item.DueDate?.ToString("yyyy-MM-dd") ?? "",
+                            item.SubtotalAmount?.ToString("N2") ?? "",
+                            item.TaxAmount?.ToString("N2") ?? "",
+                            item.DiscountAmount?.ToString("N2") ?? "",
+                            item.TotalAmount?.ToString("N2") ?? "",
+                            item.PaymentTermsDays ?? 0,
+                            item.Notes ?? "",
+                            item.CurrencyName ?? "N/A",
+                            item.CustomerDisplay ?? $"Customer #{item.CustomerId}",
+                            item.FarmDisplay ?? $"Farm #{item.FarmId}",
+                            item.SaleTypeName ?? "N/A",
+                            item.StatusName ?? "N/A",
+                            item.UpdatedByUserName ?? "N/A",
+                            item.UserName ?? "N/A"
+                        };
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
+                );
 
-                    // Data
-                    for (int i = 0; i < vm.Count; i++)
-                    {
-                        var row = i + 2;
-                        worksheet.Cells[row, 1].Value = vm[i].SaleNumber;
-                        worksheet.Cells[row, 2].Value = vm[i].InvoiceNumber;
-                        worksheet.Cells[row, 3].Value = vm[i].PurchaseOrderNumber;
-                        worksheet.Cells[row, 4].Value = vm[i].SaleDate.ToString();
-                        worksheet.Cells[row, 5].Value = vm[i].DueDate?.ToString() ?? "";
-                        worksheet.Cells[row, 6].Value = vm[i].SubtotalAmount;
-                        worksheet.Cells[row, 7].Value = vm[i].TaxAmount;
-                        worksheet.Cells[row, 8].Value = vm[i].DiscountAmount;
-                        worksheet.Cells[row, 9].Value = vm[i].TotalAmount;
-                        worksheet.Cells[row, 10].Value = vm[i].PaymentTermsDays;
-                        worksheet.Cells[row, 11].Value = vm[i].Notes;
-                        worksheet.Cells[row, 12].Value = vm[i].CurrencyName ?? "N/A";
-                        worksheet.Cells[row, 13].Value = vm[i].CustomerDisplay ?? $"Customer #{vm[i].CustomerId}";
-                        worksheet.Cells[row, 14].Value = vm[i].FarmDisplay ?? $"Farm #{vm[i].FarmId}";
-                        worksheet.Cells[row, 15].Value = vm[i].SaleTypeName ?? "N/A";
-                        worksheet.Cells[row, 16].Value = vm[i].StatusName ?? "N/A";
-                        worksheet.Cells[row, 17].Value = vm[i].UpdatedByUserName ?? "N/A";
-                        worksheet.Cells[row, 18].Value = vm[i].UserName ?? "N/A";
-                    }
-
-                    worksheet.Cells.AutoFitColumns();
-
-                    var stream = new MemoryStream();
-                    package.SaveAs(stream);
-                    stream.Position = 0;
-
-                    var fileName = $"Sales_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                }
+                var fileName = $"Sales_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error generating Excel file: {ex.Message}" });
+                return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
             }
         }
 

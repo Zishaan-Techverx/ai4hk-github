@@ -4,10 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Organization;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -15,10 +16,12 @@ namespace TpaSodManagement.Controllers
     public class OrganizationController : Controller
         {
             private readonly IOrganizationService _organizationService;
+            private readonly IExportToExcel _exportToExcel;
 
-            public OrganizationController(IOrganizationService organizationService)
+            public OrganizationController(IOrganizationService organizationService, IExportToExcel exportToExcel)
             {
                 _organizationService = organizationService;
+                _exportToExcel = exportToExcel;
             }
 
             public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -88,76 +91,91 @@ namespace TpaSodManagement.Controllers
 
             [HttpPost]
             [IgnoreAntiforgeryToken]
-            public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+            public async Task<IActionResult> Print([FromBody] JsonElement requestData)
             {
                 try
                 {
-                    // Get all filtered records (no pagination)
-                    var result = await _organizationService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                    // Extract filters and hiddenColumns from request
+                    Dictionary<string, string> filters = new Dictionary<string, string>();
+                    List<string> hiddenColumns = new List<string>();
+
+                    if (requestData.ValueKind == JsonValueKind.Object)
+                    {
+                        // Extract filters
+                        if (requestData.TryGetProperty("filters", out var filtersElement))
+                        {
+                            filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                        }
+                        else
+                        {
+                            // Backward compatibility: if filters are sent directly (old format)
+                            var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                            if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                            {
+                                filters = directFilters;
+                            }
+                        }
+
+                        // Extract hiddenColumns
+                        if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                        {
+                            hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                        }
+                    }
+
+                    // Get all filtered records (no pagination) - same as Filter action
+                    var result = await _organizationService.GetFilteredAsync(filters);
                     if (!result.Success)
                     {
                         return Json(new { success = false, message = result.Message });
                     }
 
-                    var organizations = result.Data ?? new List<Organization>();
-
-                    // Set EPPlus license context (non-commercial use)
-                    ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                    // Generate Excel file using EPPlus
-                    using (var package = new ExcelPackage())
+                    // Convert to ViewModel (same as what's shown in the table)
+                    var vm = result.Data?.Select(o => new OrganizationItemViewModel
                     {
-                        var worksheet = package.Workbook.Worksheets.Add("Organizations");
+                        OrganizationId = o.OrganizationId,
+                        OrganizationName = o.OrganizationName,
+                        OrganizationType = o.OrganizationType,
+                        HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
+                    }).ToList() ?? new List<OrganizationItemViewModel>();
 
-                        // Set header row
-                        worksheet.Cells[1, 1].Value = "Organization Name";
-                        worksheet.Cells[1, 2].Value = "Organization Type";
-                        worksheet.Cells[1, 3].Value = "Organization Code";
-                        worksheet.Cells[1, 4].Value = "Is Active";
+                    // Define all column headers with their corresponding property names (matching table columns)
+                    var allColumns = new List<(string Header, string PropertyName)>
+                    {
+                        ("Organization Name", "OrganizationName"),
+                        ("Organization Type", "OrganizationType"),
+                        ("Logo", "Logo")
+                    };
 
-                        // Style header row
-                        using (var range = worksheet.Cells[1, 1, 1, 4])
+                    // Filter out hidden columns
+                    var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+
+                    // Create filtered column headers and row mapper
+                    var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                    var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
+
+                    // Generate Excel with only visible columns - using ViewModel data
+                    var stream = _exportToExcel.GenerateExcel(
+                        moduleName: "Organizations",
+                        worksheetName: "Organizations",
+                        columnHeaders: columnHeaders,
+                        data: vm,
+                        rowMapper: item =>
                         {
-                            range.Style.Font.Bold = true;
-                            range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                            range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
-                            range.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
-                        }
-
-                        // Add data rows
-                        for (int i = 0; i < organizations.Count; i++)
-                        {
-                            var row = i + 2;
-                            var item = organizations[i];
-                            worksheet.Cells[row, 1].Value = item.OrganizationName ?? "";
-                            worksheet.Cells[row, 2].Value = item.OrganizationType ?? "";
-                            worksheet.Cells[row, 3].Value = item.OrganizationCode ?? "";
-                            worksheet.Cells[row, 4].Value = item.IsActive ? "Yes" : "No";
-                        }
-
-                        // Auto-fit columns
-                        worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-
-                        // Add borders to data cells
-                        if (organizations.Count > 0)
-                        {
-                            using (var range = worksheet.Cells[1, 1, organizations.Count + 1, 4])
+                            var allValues = new List<object>
                             {
-                                range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                                range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                                range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                                range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            }
+                                item.OrganizationName ?? "",
+                                item.OrganizationType ?? "",
+                                item.HasLogo ? "Yes" : "No"
+                            };
+                            // Return only visible column values
+                            return columnIndices.Select(idx => allValues[idx]).ToList();
                         }
+                    );
 
-                        var stream = new MemoryStream();
-                        package.SaveAs(stream);
-                        stream.Position = 0;
-
-                        var fileName = $"Organizations_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                        Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                        return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                    }
+                    var fileName = $"Organizations_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
                 }
                 catch (Exception ex)
                 {

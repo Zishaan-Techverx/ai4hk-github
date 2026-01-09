@@ -5,11 +5,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Seeding;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -17,10 +18,12 @@ namespace TpaSodManagement.Controllers
     public class SeedingController : Controller
     {
         private readonly ISeedingService _seedingService;
+        private readonly IExportToExcel _exportToExcel;
 
-        public SeedingController(ISeedingService seedingService)
+        public SeedingController(ISeedingService seedingService, IExportToExcel exportToExcel)
         {
             _seedingService = seedingService;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -190,11 +193,39 @@ namespace TpaSodManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
         {
             try
             {
-                var result = await _seedingService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
+                var result = await _seedingService.GetFilteredAsync(filters);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -203,68 +234,63 @@ namespace TpaSodManagement.Controllers
                 var seedings = result.Data ?? new List<Seeding>();
                 var vm = seedings.Select(MapToItemViewModel).ToList();
 
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                using (var package = new ExcelPackage())
+                var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Seedings");
+                    ("Area Amount", "AreaAmount"),
+                    ("Seeding Date", "SeedingDate"),
+                    ("Seeding Method", "SeedingMethod"),
+                    ("Seed Rate Per Unit", "SeedRatePerUnit"),
+                    ("Weather Conditions", "WeatherConditions"),
+                    ("Soil Temperature", "SoilTemperature"),
+                    ("Soil Moisture", "SoilMoisture"),
+                    ("Notes", "Notes"),
+                    ("Created Date", "CreatedDate"),
+                    ("Area Type", "AreaType"),
+                    ("Farm", "Farm"),
+                    ("Field", "Field"),
+                    ("Tag Range", "TagRange"),
+                    ("User", "User")
+                };
 
-                    // Headers
-                    worksheet.Cells[1, 1].Value = "Area Amount";
-                    worksheet.Cells[1, 2].Value = "Seeding Date";
-                    worksheet.Cells[1, 3].Value = "Seeding Method";
-                    worksheet.Cells[1, 4].Value = "Seed Rate Per Unit";
-                    worksheet.Cells[1, 5].Value = "Weather Conditions";
-                    worksheet.Cells[1, 6].Value = "Soil Temperature";
-                    worksheet.Cells[1, 7].Value = "Soil Moisture";
-                    worksheet.Cells[1, 8].Value = "Notes";
-                    worksheet.Cells[1, 9].Value = "Area Type";
-                    worksheet.Cells[1, 10].Value = "Farm";
-                    worksheet.Cells[1, 11].Value = "Field";
-                    worksheet.Cells[1, 12].Value = "Tag Range";
-                    worksheet.Cells[1, 13].Value = "User";
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
 
-                    // Style headers
-                    using (var range = worksheet.Cells[1, 1, 1, 13])
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "Seedings",
+                    worksheetName: "Seedings",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
                     {
-                        range.Style.Font.Bold = true;
-                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                        var allValues = new List<object>
+                        {
+                            item.AreaAmount?.ToString("N2") ?? "",
+                            item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("yyyy-MM-dd") : "",
+                            item.SeedingMethod ?? "",
+                            item.SeedRatePerUnit?.ToString("N2") ?? "",
+                            item.WeatherConditions ?? "",
+                            item.SoilTemperature?.ToString("N2") ?? "",
+                            item.SoilMoisture != null ? Convert.ToDecimal(item.SoilMoisture).ToString("N2") : "",
+                            item.Notes ?? "",
+                            item.CreatedDate?.ToString("yyyy-MM-dd") ?? "",
+                            item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}",
+                            item.FarmDisplay ?? $"Farm #{item.FarmId}",
+                            item.FieldName ?? "N/A",
+                            item.TagRangeCode ?? $"TagRange #{item.TagRangeId}",
+                            item.UserName ?? "N/A"
+                        };
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
+                );
 
-                    // Data
-                    for (int i = 0; i < vm.Count; i++)
-                    {
-                        var row = i + 2;
-                        worksheet.Cells[row, 1].Value = vm[i].AreaAmount;
-                        worksheet.Cells[row, 2].Value = vm[i].SeedingDate.ToString();
-                        worksheet.Cells[row, 3].Value = vm[i].SeedingMethod;
-                        worksheet.Cells[row, 4].Value = vm[i].SeedRatePerUnit;
-                        worksheet.Cells[row, 5].Value = vm[i].WeatherConditions;
-                        worksheet.Cells[row, 6].Value = vm[i].SoilTemperature;
-                        worksheet.Cells[row, 7].Value = vm[i].SoilMoisture;
-                        worksheet.Cells[row, 8].Value = vm[i].Notes;
-                        worksheet.Cells[row, 9].Value = vm[i].AreaTypeName ?? $"AreaType #{vm[i].AreaTypeId}";
-                        worksheet.Cells[row, 10].Value = vm[i].FarmDisplay ?? $"Farm #{vm[i].FarmId}";
-                        worksheet.Cells[row, 11].Value = vm[i].FieldName ?? "N/A";
-                        worksheet.Cells[row, 12].Value = vm[i].TagRangeCode ?? $"TagRange #{vm[i].TagRangeId}";
-                        worksheet.Cells[row, 13].Value = vm[i].UserName ?? "N/A";
-                    }
-
-                    worksheet.Cells.AutoFitColumns();
-
-                    var stream = new MemoryStream();
-                    package.SaveAs(stream);
-                    stream.Position = 0;
-
-                    var fileName = $"Seedings_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                }
+                var fileName = $"Seedings_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error generating Excel file: {ex.Message}" });
+                return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
             }
         }
 

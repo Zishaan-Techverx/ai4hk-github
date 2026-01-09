@@ -1,10 +1,11 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Currency;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -12,10 +13,12 @@ namespace TpaSodManagement.Controllers
     public class CurrencyController : Controller
     {
         private readonly ICurrencyService _currencyService;
+        private readonly IExportToExcel _exportToExcel;
 
-        public CurrencyController(ICurrencyService currencyService)
+        public CurrencyController(ICurrencyService currencyService, IExportToExcel exportToExcel)
         {
             _currencyService = currencyService;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -187,12 +190,40 @@ namespace TpaSodManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
         {
             try
             {
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
                 // Get all filtered records (no pagination)
-                var result = await _currencyService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                var result = await _currencyService.GetFilteredAsync(filters);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -201,65 +232,47 @@ namespace TpaSodManagement.Controllers
                 var currencies = result.Data ?? new List<Currency>();
                 var vm = currencies.Select(MapToItemViewModel).ToList();
 
-                // Set EPPlus license context (non-commercial use)
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                // Generate Excel file using EPPlus
-                using (var package = new ExcelPackage())
+                // Define all column headers with their corresponding property names
+                var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Currencies");
+                    ("Currency Code", "CurrencyCode"),
+                    ("Currency Name", "CurrencyName"),
+                    ("Currency Symbol", "CurrencySymbol"),
+                    ("Decimal Places", "DecimalPlaces"),
+                    ("Is Active", "IsActive")
+                };
 
-                    // Set header row
-                    worksheet.Cells[1, 1].Value = "Currency Code";
-                    worksheet.Cells[1, 2].Value = "Currency Name";
-                    worksheet.Cells[1, 3].Value = "Currency Symbol";
-                    worksheet.Cells[1, 4].Value = "Decimal Places";
-                    worksheet.Cells[1, 5].Value = "Is Active";
+                // Filter out hidden columns
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
 
-                    // Style header row
-                    using (var range = worksheet.Cells[1, 1, 1, 5])
+                // Create filtered column headers and row mapper
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
+
+                // Generate Excel with only visible columns
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "Currencies",
+                    worksheetName: "Currencies",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
                     {
-                        range.Style.Font.Bold = true;
-                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
-                        range.Style.Border.BorderAround(OfficeOpenXml.Style.ExcelBorderStyle.Thin);
-                    }
-
-                    // Add data rows
-                    for (int i = 0; i < vm.Count; i++)
-                    {
-                        var row = i + 2;
-                        var item = vm[i];
-                        worksheet.Cells[row, 1].Value = item.CurrencyCode ?? "";
-                        worksheet.Cells[row, 2].Value = item.CurrencyName ?? "";
-                        worksheet.Cells[row, 3].Value = item.CurrencySymbol ?? "";
-                        worksheet.Cells[row, 4].Value = item.DecimalPlaces;
-                        worksheet.Cells[row, 5].Value = item.IsActive ? "Yes" : "No";
-                    }
-
-                    // Auto-fit columns
-                    worksheet.Cells[worksheet.Dimension.Address].AutoFitColumns();
-
-                    // Add borders to data cells
-                    if (vm.Count > 0)
-                    {
-                        using (var range = worksheet.Cells[1, 1, vm.Count + 1, 5])
+                        var allValues = new List<object>
                         {
-                            range.Style.Border.Top.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Bottom.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Left.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                            range.Style.Border.Right.Style = OfficeOpenXml.Style.ExcelBorderStyle.Thin;
-                        }
+                            item.CurrencyCode ?? "",
+                            item.CurrencyName ?? "",
+                            item.CurrencySymbol ?? "",
+                            item.DecimalPlaces,
+                            item.IsActive ? "Yes" : "No"
+                        };
+                        // Return only visible column values
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
+                );
 
-                    var stream = new MemoryStream();
-                    package.SaveAs(stream);
-                    stream.Position = 0;
-
-                    var fileName = $"Currencies_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                }
+                var fileName = $"Currencies_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {

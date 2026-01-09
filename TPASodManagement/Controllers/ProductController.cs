@@ -7,12 +7,13 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Product;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -22,15 +23,18 @@ namespace TpaSodManagement.Controllers
         private readonly IProductService _productService;
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly SodDbContext _context;
+        private readonly IExportToExcel _exportToExcel;
 
         public ProductController(
             IProductService productService, 
             UserManager<TpaSodManagementUser> userManager,
-            SodDbContext context)
+            SodDbContext context,
+            IExportToExcel exportToExcel)
         {
             _productService = productService;
             _userManager = userManager;
             _context = context;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -225,11 +229,39 @@ namespace TpaSodManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
         {
             try
             {
-                var result = await _productService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
+                var result = await _productService.GetFilteredAsync(filters);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -238,64 +270,59 @@ namespace TpaSodManagement.Controllers
                 var products = result.Data ?? new List<Product>();
                 var vm = products.Select(MapToItemViewModel).ToList();
 
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                using (var package = new ExcelPackage())
+                var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("Products");
+                    ("Product Code", "ProductCode"),
+                    ("Product Name", "ProductName"),
+                    ("Unit Of Measure", "UnitOfMeasure"),
+                    ("Standard Price", "StandardPrice"),
+                    ("Requires Certificate", "RequiresCertificate"),
+                    ("Description", "Description"),
+                    ("Is Active", "IsActive"),
+                    ("Created Date", "CreatedDate"),
+                    ("Certificate Type", "CertificateType"),
+                    ("Created By User", "CreatedByUser"),
+                    ("Currency", "Currency"),
+                    ("Product Category", "ProductCategory")
+                };
 
-                    // Headers
-                    worksheet.Cells[1, 1].Value = "Product Code";
-                    worksheet.Cells[1, 2].Value = "Product Name";
-                    worksheet.Cells[1, 3].Value = "Unit Of Measure";
-                    worksheet.Cells[1, 4].Value = "Standard Price";
-                    worksheet.Cells[1, 5].Value = "Requires Certificate";
-                    worksheet.Cells[1, 6].Value = "Description";
-                    worksheet.Cells[1, 7].Value = "Is Active";
-                    worksheet.Cells[1, 8].Value = "Certificate Type";
-                    worksheet.Cells[1, 9].Value = "Created By User";
-                    worksheet.Cells[1, 10].Value = "Currency";
-                    worksheet.Cells[1, 11].Value = "Product Category";
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
 
-                    // Style headers
-                    using (var range = worksheet.Cells[1, 1, 1, 11])
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "Products",
+                    worksheetName: "Products",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
                     {
-                        range.Style.Font.Bold = true;
-                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                        var allValues = new List<object>
+                        {
+                            item.ProductCode ?? "",
+                            item.ProductName ?? "",
+                            item.UnitOfMeasure ?? "",
+                            item.StandardPrice?.ToString("N2") ?? "",
+                            item.RequiresCertificate ? "Yes" : "No",
+                            item.Description ?? "",
+                            item.IsActive ? "Active" : "Inactive",
+                            item.CreatedDate?.ToString("yyyy-MM-dd") ?? "",
+                            item.CertificateTypeName ?? "N/A",
+                            item.CreatedByUserName ?? "N/A",
+                            item.CurrencyCode ?? "N/A",
+                            item.ProductCategoryName ?? "N/A"
+                        };
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
+                );
 
-                    // Data
-                    for (int i = 0; i < vm.Count; i++)
-                    {
-                        var row = i + 2;
-                        worksheet.Cells[row, 1].Value = vm[i].ProductCode;
-                        worksheet.Cells[row, 2].Value = vm[i].ProductName;
-                        worksheet.Cells[row, 3].Value = vm[i].UnitOfMeasure;
-                        worksheet.Cells[row, 4].Value = vm[i].StandardPrice;
-                        worksheet.Cells[row, 5].Value = vm[i].RequiresCertificate ? "Yes" : "No";
-                        worksheet.Cells[row, 6].Value = vm[i].Description;
-                        worksheet.Cells[row, 7].Value = vm[i].IsActive ? "Active" : "Inactive";
-                        worksheet.Cells[row, 8].Value = vm[i].CertificateTypeName ?? "N/A";
-                        worksheet.Cells[row, 9].Value = vm[i].CreatedByUserName ?? "N/A";
-                        worksheet.Cells[row, 10].Value = vm[i].CurrencyCode ?? "N/A";
-                        worksheet.Cells[row, 11].Value = vm[i].ProductCategoryName ?? "N/A";
-                    }
-
-                    worksheet.Cells.AutoFitColumns();
-
-                    var stream = new MemoryStream();
-                    package.SaveAs(stream);
-                    stream.Position = 0;
-
-                    var fileName = $"Products_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                }
+                var fileName = $"Products_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error generating Excel file: {ex.Message}" });
+                return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
             }
         }
 

@@ -4,11 +4,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
 using System.Threading.Tasks;
 using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.ProductCategory;
-using OfficeOpenXml;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Controllers
 {
@@ -16,10 +17,12 @@ namespace TpaSodManagement.Controllers
     public class ProductCategoryController : Controller
     {
         private readonly IProductCategoryService _productCategoryService;
+        private readonly IExportToExcel _exportToExcel;
 
-        public ProductCategoryController(IProductCategoryService productCategoryService)
+        public ProductCategoryController(IProductCategoryService productCategoryService, IExportToExcel exportToExcel)
         {
             _productCategoryService = productCategoryService;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -174,11 +177,39 @@ namespace TpaSodManagement.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Print([FromBody] Dictionary<string, string> filters)
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
         {
             try
             {
-                var result = await _productCategoryService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
+                var result = await _productCategoryService.GetFilteredAsync(filters);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -187,50 +218,43 @@ namespace TpaSodManagement.Controllers
                 var categories = result.Data ?? new List<ProductCategory>();
                 var vm = categories.Select(MapToItemViewModel).ToList();
 
-                ExcelPackage.LicenseContext = LicenseContext.NonCommercial;
-
-                using (var package = new ExcelPackage())
+                var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    var worksheet = package.Workbook.Worksheets.Add("ProductCategories");
+                    ("Category Code", "CategoryCode"),
+                    ("Category Name", "CategoryName"),
+                    ("Description", "Description"),
+                    ("Is Active", "IsActive")
+                };
 
-                    // Headers
-                    worksheet.Cells[1, 1].Value = "Category Code";
-                    worksheet.Cells[1, 2].Value = "Category Name";
-                    worksheet.Cells[1, 3].Value = "Description";
-                    worksheet.Cells[1, 4].Value = "Is Active";
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
 
-                    // Style headers
-                    using (var range = worksheet.Cells[1, 1, 1, 4])
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "ProductCategories",
+                    worksheetName: "ProductCategories",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
                     {
-                        range.Style.Font.Bold = true;
-                        range.Style.Fill.PatternType = OfficeOpenXml.Style.ExcelFillStyle.Solid;
-                        range.Style.Fill.BackgroundColor.SetColor(System.Drawing.Color.LightGray);
+                        var allValues = new List<object>
+                        {
+                            item.CategoryCode ?? "",
+                            item.CategoryName ?? "",
+                            item.Description ?? "",
+                            item.IsActive ? "Active" : "Inactive"
+                        };
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
+                );
 
-                    // Data
-                    for (int i = 0; i < vm.Count; i++)
-                    {
-                        var row = i + 2;
-                        worksheet.Cells[row, 1].Value = vm[i].CategoryCode;
-                        worksheet.Cells[row, 2].Value = vm[i].CategoryName;
-                        worksheet.Cells[row, 3].Value = vm[i].Description;
-                        worksheet.Cells[row, 4].Value = vm[i].IsActive ? "Active" : "Inactive";
-                    }
-
-                    worksheet.Cells.AutoFitColumns();
-
-                    var stream = new MemoryStream();
-                    package.SaveAs(stream);
-                    stream.Position = 0;
-
-                    var fileName = $"ProductCategories_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
-                    Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
-                    return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
-                }
+                var fileName = $"ProductCategories_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
             }
             catch (Exception ex)
             {
-                return Json(new { success = false, message = $"Error generating Excel file: {ex.Message}" });
+                return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
             }
         }
 

@@ -48,6 +48,7 @@ builder.Services.AddScoped<IFieldService, FieldService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>(); 
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+builder.Services.AddScoped<TpaSodManagement.Utilities.IExportToExcel, TpaSodManagement.Utilities.ExportToExcel>();
 
 builder.Services.AddAuthorization(options =>
 {
