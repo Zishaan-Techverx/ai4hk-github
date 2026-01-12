@@ -1,21 +1,16 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using TpaSodManagement.Data;
-using TpaSodManagement.Models.Db;
-using TpaSodManagement.Services;
+﻿using Microsoft.EntityFrameworkCore;
+using TpaSodManagement.Database;
+using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Services.Implementations
 {
     public class OrganizationService : IOrganizationService
     {
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
 
         // Remove IWebHostEnvironment dependency since we're not using file system
-        public OrganizationService(SodDbContext context)
+        public OrganizationService(ApplicationDbContext context)
         {
             _context = context;
         }

@@ -2,10 +2,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
-using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Currency;
 using TpaSodManagement.Utilities;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Controllers
 {

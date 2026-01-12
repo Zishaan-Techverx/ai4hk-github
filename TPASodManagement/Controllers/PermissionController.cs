@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using TpaSodManagement.Models;
+using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Permission;
 

@@ -31,8 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Data\Migrations\Identity\" />
-    <Folder Include="Data\Migrations\Sod\" />
+    <Folder Include="Database\Migrations\" />
   </ItemGroup>
 
 </Project>

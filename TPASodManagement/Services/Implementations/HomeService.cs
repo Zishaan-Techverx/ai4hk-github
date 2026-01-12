@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Home;
 
@@ -7,9 +7,9 @@ namespace TpaSodManagement.Services.Implementations
 {
     public class HomeService : IHomeService
     {
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public HomeService(SodDbContext context)
+        public HomeService(ApplicationDbContext context)
         {
             _context = context;
         }

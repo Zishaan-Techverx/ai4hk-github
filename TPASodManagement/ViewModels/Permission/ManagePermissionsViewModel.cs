@@ -1,7 +1,6 @@
 using System.Collections.Generic;
-using TpaSodManagement.Models;
-using Perm = TpaSodManagement.Models.Permission;
-using RolePerm = TpaSodManagement.Models.RolePermission;
+using Perm = TpaSodManagement.Database.Entities.Permission;
+using RolePerm = TpaSodManagement.Database.Entities.RolePermission;
 
 namespace TpaSodManagement.ViewModels.Permission
 {

@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services;
 
 namespace TpaSodManagement.Services.Interfaces

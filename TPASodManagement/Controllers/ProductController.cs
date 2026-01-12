@@ -2,18 +2,13 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Text.Json;
-using System.Threading.Tasks;
 using TpaSodManagement.Areas.Identity.Data;
-using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Product;
 using TpaSodManagement.Utilities;
+using TpaSodManagement.Database.Entities;
+using TpaSodManagement.Database;
 
 namespace TpaSodManagement.Controllers
 {
@@ -22,13 +17,13 @@ namespace TpaSodManagement.Controllers
     {
         private readonly IProductService _productService;
         private readonly UserManager<TpaSodManagementUser> _userManager;
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IExportToExcel _exportToExcel;
 
         public ProductController(
             IProductService productService, 
             UserManager<TpaSodManagementUser> userManager,
-            SodDbContext context,
+            ApplicationDbContext context,
             IExportToExcel exportToExcel)
         {
             _productService = productService;

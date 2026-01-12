@@ -1,12 +1,11 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
-using System.Threading.Tasks;
 using TpaSodManagement.Areas.Identity.Data;
-using TpaSodManagement.Models;
+using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
-namespace TsaSodManagement.Controllers;
+namespace TpaSodManagement.Controllers;
 
 public class HomeController : Controller
 {

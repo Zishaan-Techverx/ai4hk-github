@@ -1,18 +1,15 @@
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using TpaSodManagement.Data;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database;
+using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Services.Implementations
 {
     public class ProductCategoryService : IProductCategoryService
     {
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public ProductCategoryService(SodDbContext context)
+        public ProductCategoryService(ApplicationDbContext context)
         {
             _context = context;
         }

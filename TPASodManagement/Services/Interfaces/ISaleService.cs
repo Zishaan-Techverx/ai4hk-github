@@ -1,7 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Services.Interfaces
 {

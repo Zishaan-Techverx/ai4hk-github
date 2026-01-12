@@ -6,10 +6,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Farm;
 using TpaSodManagement.Utilities;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Controllers
 {

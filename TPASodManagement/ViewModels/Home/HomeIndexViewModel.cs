@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using OrgEntity = TpaSodManagement.Models.Db.Organization;
+using OrgEntity = TpaSodManagement.Database.Entities.Organization;
 
 namespace TpaSodManagement.ViewModels.Home
 {

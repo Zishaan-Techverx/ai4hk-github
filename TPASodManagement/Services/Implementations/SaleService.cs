@@ -1,22 +1,19 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
-using TpaSodManagement.Data;
-using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Entities;
+using TpaSodManagement.Database;
 
 namespace TpaSodManagement.Services.Implementations
 {
     public class SaleService : ISaleService
     {
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly UserManager<TpaSodManagementUser> _userManager;
 
-        public SaleService(SodDbContext context, UserManager<TpaSodManagementUser> userManager)
+        public SaleService(ApplicationDbContext context, UserManager<TpaSodManagementUser> userManager)
         {
             _context = context;
             _userManager = userManager;

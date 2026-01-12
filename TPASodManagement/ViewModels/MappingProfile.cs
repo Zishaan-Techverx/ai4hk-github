@@ -1,10 +1,10 @@
 ﻿using AutoMapper;
-using TpaSodManagement.Models.Db;
-using FarmEntity = TpaSodManagement.Models.Db.Farm;
-using CustomerEntity = TpaSodManagement.Models.Db.Customer;
-using SaleEntity = TpaSodManagement.Models.Db.Sale;
-using SeedingEntity = TpaSodManagement.Models.Db.Seeding;
-using ProductEntity = TpaSodManagement.Models.Db.Product;
+using FarmEntity = TpaSodManagement.Database.Entities.Farm;
+using CustomerEntity = TpaSodManagement.Database.Entities.Customer;
+using SaleEntity = TpaSodManagement.Database.Entities.Sale;
+using SeedingEntity = TpaSodManagement.Database.Entities.Seeding;
+using ProductEntity = TpaSodManagement.Database.Entities.Product;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.ViewModels;
 

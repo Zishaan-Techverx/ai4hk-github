@@ -1,8 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using TpaSodManagement.Data;
-using TpaSodManagement.Models;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database;
+using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Services.Implementations

@@ -7,12 +7,12 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.ViewModels.Sale;
 using TpaSodManagement.Utilities;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Controllers
 {

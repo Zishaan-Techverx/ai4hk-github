@@ -1,16 +1,15 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
-using TpaSodManagement.Data;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database;
 using TpaSodManagement.Services.Implementations;
 using TpaSodManagement.Services.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Configure DbContext
-builder.Services.AddDbContext<SodDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+//// Configure DbContext
+//builder.Services.AddDbContext<SodDbContext>(options =>
+//    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>

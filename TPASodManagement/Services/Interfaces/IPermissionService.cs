@@ -1,5 +1,5 @@
 ﻿using Microsoft.AspNetCore.Identity;
-using TpaSodManagement.Models;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Services.Interfaces
 {

@@ -6,10 +6,10 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
-using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.ProductCategory;
 using TpaSodManagement.Utilities;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Controllers
 {

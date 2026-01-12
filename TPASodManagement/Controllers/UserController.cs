@@ -5,10 +5,10 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
-using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.User;
-using System.Linq;
+using TpaSodManagement.Database.Entities;
+using TpaSodManagement.Database;
 
 namespace TpaSodManagement.Controllers
 {
@@ -19,7 +19,7 @@ namespace TpaSodManagement.Controllers
         private readonly IAdminService _adminService;
         private readonly IOrganizationService _organizationService;
         private readonly IRegistrationService _registrationService;
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<UserController> _logger;
         private readonly UserManager<TpaSodManagementUser> _userManager;
 
@@ -28,7 +28,7 @@ namespace TpaSodManagement.Controllers
             IAdminService adminService,
             IOrganizationService organizationService,
             IRegistrationService registrationService,
-            SodDbContext context,
+            ApplicationDbContext context,
             ILogger<UserController> logger,
             UserManager<TpaSodManagementUser> userManager)
         {

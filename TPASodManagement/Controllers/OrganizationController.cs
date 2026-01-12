@@ -5,10 +5,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using TpaSodManagement.Models.Db;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Organization;
 using TpaSodManagement.Utilities;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Controllers
 {

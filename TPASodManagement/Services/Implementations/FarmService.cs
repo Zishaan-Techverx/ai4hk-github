@@ -1,15 +1,16 @@
 ﻿using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database;
+using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Services.Implementations
 {
     public class FarmService : IFarmService
     {
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
 
-        public FarmService(SodDbContext context)
+        public FarmService(ApplicationDbContext context)
         {
             _context = context;
         }

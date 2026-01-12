@@ -2,7 +2,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Services.Interfaces;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database.Entities;
+using TpaSodManagement.Database;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -11,14 +12,14 @@ namespace TpaSodManagement.Services.Implementations
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ILogger<UserService> _logger;
         private readonly IRegistrationService _registrationService;
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly IEmailService _emailService;
 
         public UserService(
             UserManager<TpaSodManagementUser> userManager,
             ILogger<UserService> logger,
             IRegistrationService registrationService,
-            SodDbContext context,
+            ApplicationDbContext context,
             IEmailService emailService)
         {
             _userManager = userManager;

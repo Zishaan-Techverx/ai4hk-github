@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Services.Interfaces;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.ViewComponents
 {

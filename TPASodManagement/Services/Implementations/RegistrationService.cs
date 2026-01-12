@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using TpaSodManagement.Areas.Identity.Data;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database;
+using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
 namespace TpaSodManagement.Services.Implementations
@@ -10,12 +10,12 @@ namespace TpaSodManagement.Services.Implementations
     public class RegistrationService : IRegistrationService
     {
         private readonly UserManager<TpaSodManagementUser> _userManager;
-        private readonly SodDbContext _context;
+        private readonly ApplicationDbContext _context;
         private readonly ILogger<RegistrationService> _logger;
 
         public RegistrationService(
             UserManager<TpaSodManagementUser> userManager,
-            SodDbContext context,
+            ApplicationDbContext context,
             ILogger<RegistrationService> logger)
         {
             _userManager = userManager;

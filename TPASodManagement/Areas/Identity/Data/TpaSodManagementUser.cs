@@ -2,7 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
-using TpaSodManagement.Models.Db;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Areas.Identity.Data;
 
