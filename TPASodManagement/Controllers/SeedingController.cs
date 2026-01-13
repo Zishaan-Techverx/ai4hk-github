@@ -11,6 +11,8 @@ using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Seeding;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
+using Microsoft.AspNetCore.Identity;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Controllers
 {
@@ -19,11 +21,13 @@ namespace TpaSodManagement.Controllers
     {
         private readonly ISeedingService _seedingService;
         private readonly IExportToExcel _exportToExcel;
+        private readonly UserManager<TpaSodManagementUser> _userManager;
 
-        public SeedingController(ISeedingService seedingService, IExportToExcel exportToExcel)
+        public SeedingController(ISeedingService seedingService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager)
         {
             _seedingService = seedingService;
             _exportToExcel = exportToExcel;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -164,7 +168,10 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(long id)
         {
-            var result = await _seedingService.DeleteAsync(id);
+            var currentUser = await _userManager.GetUserAsync(User);
+            long? deletedByUserId = currentUser?.Id;
+            
+            var result = await _seedingService.DeleteAsync(id, deletedByUserId);
             if (!result.Success)
             {
                 return Json(new { success = false, message = result.Message });

@@ -48,6 +48,10 @@ public partial class Sale
 
     public long UpdatedByUserId { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
     public virtual Currency Currency { get; set; } = null!;

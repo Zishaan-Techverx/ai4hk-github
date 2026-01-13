@@ -15,6 +15,10 @@ public partial class WasteCertificate
 
     public string? Notes { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual Certificate Certificate { get; set; } = null!;
 
     public virtual Waste Waste { get; set; } = null!;

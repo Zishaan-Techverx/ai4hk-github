@@ -23,6 +23,10 @@ public partial class Website
     public DateTimeOffset CreatedDate { get; set; }
 
     public DateTimeOffset UpdatedDate { get; set; }
+
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
     
     public virtual ICollection<TpaSodManagementUser> TpaUsers { get; set; } = new List<TpaSodManagementUser>();
 }

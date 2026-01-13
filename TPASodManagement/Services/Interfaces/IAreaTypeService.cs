@@ -11,7 +11,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<AreaType>> GetByIdAsync(int id);
         Task<ServiceResponse<AreaType>> CreateAsync(AreaType areaType);
         Task<ServiceResponse<AreaType>> UpdateAsync(AreaType areaType);
-        Task<ServiceResponse<bool>> DeleteAsync(int id);
+        Task<ServiceResponse<bool>> DeleteAsync(int id, long? deletedByUserId);
         Task<ServiceResponse<bool>> ExisTpasync(int id);
     }
 }

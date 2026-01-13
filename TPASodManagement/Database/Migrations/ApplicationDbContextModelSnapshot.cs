@@ -179,6 +179,12 @@ namespace TpaSodManagement.Database.Migrations
                         .IsConcurrencyToken()
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Email")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
@@ -302,6 +308,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -358,6 +370,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -385,6 +403,12 @@ namespace TpaSodManagement.Database.Migrations
                         .HasColumnType("decimal(18,2)");
 
                     b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
@@ -428,6 +452,12 @@ namespace TpaSodManagement.Database.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("DigitalSignature")
@@ -513,6 +543,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -555,6 +591,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<string>("CurrencyCode")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -591,6 +633,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<byte>("DecimalPlaces")
                         .HasColumnType("tinyint");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -619,6 +667,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<string>("CustomerType")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -666,6 +720,12 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.Property<string>("ClimateZone")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<decimal?>("ElevationMeters")
                         .HasColumnType("decimal(18,2)");
@@ -727,6 +787,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<long>("FarmId")
                         .HasColumnType("bigint");
 
@@ -776,6 +842,12 @@ namespace TpaSodManagement.Database.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("OrganizationId"));
 
                     b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
@@ -830,6 +902,12 @@ namespace TpaSodManagement.Database.Migrations
                         .HasColumnType("nvarchar(50)")
                         .HasColumnName("Category");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Description")
                         .IsRequired()
                         .HasMaxLength(255)
@@ -867,6 +945,12 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.Property<DateOnly?>("DateOfBirth")
                         .HasColumnType("date");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("FirstName")
                         .IsRequired()
@@ -915,6 +999,12 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.Property<int?>("CurrencyId")
                         .HasColumnType("int");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
@@ -975,6 +1065,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -1031,6 +1127,12 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.Property<long>("CustomerId")
                         .HasColumnType("bigint");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<decimal>("DiscountAmount")
                         .HasColumnType("decimal(18,2)");
@@ -1120,6 +1222,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<long?>("CertificateSequenceNumber")
                         .HasColumnType("bigint");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<long?>("FieldId")
                         .HasColumnType("bigint");
 
@@ -1190,6 +1298,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
@@ -1232,6 +1346,12 @@ namespace TpaSodManagement.Database.Migrations
                         .HasColumnType("int");
 
                     b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<long>("FarmId")
@@ -1296,6 +1416,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<DateTimeOffset>("CreatedDate")
                         .HasColumnType("datetimeoffset");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -1323,6 +1449,12 @@ namespace TpaSodManagement.Database.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("StatusId"));
 
                     b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
@@ -1363,6 +1495,12 @@ namespace TpaSodManagement.Database.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("TagRangeId"));
 
                     b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<bool>("IsActive")
@@ -1417,6 +1555,12 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.Property<long?>("CustomerId")
                         .HasColumnType("bigint");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
 
                     b.Property<int?>("DisplayOrder")
                         .HasColumnType("int");
@@ -1510,6 +1654,12 @@ namespace TpaSodManagement.Database.Migrations
                     b.Property<int?>("CurrencyId")
                         .HasColumnType("int");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("DisposalLocation")
                         .HasColumnType("nvarchar(max)");
 
@@ -1582,6 +1732,12 @@ namespace TpaSodManagement.Database.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("CertificateNumber");
 
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
+                        .HasColumnType("datetimeoffset");
+
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)")
                         .HasColumnName("Notes");
@@ -1609,6 +1765,12 @@ namespace TpaSodManagement.Database.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("WasteReasonId"));
 
                     b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<string>("Description")
@@ -1643,6 +1805,12 @@ namespace TpaSodManagement.Database.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("WebsiteId"));
 
                     b.Property<DateTimeOffset>("CreatedDate")
+                        .HasColumnType("datetimeoffset");
+
+                    b.Property<long?>("DeletedByUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTimeOffset?>("DeletedDate")
                         .HasColumnType("datetimeoffset");
 
                     b.Property<bool>("IsActive")

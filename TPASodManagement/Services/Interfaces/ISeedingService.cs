@@ -12,7 +12,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<Seeding>> GetByIdAsync(long id);
         Task<ServiceResponse<Seeding>> CreateAsync(Seeding seeding);
         Task<ServiceResponse<Seeding>> UpdateAsync(Seeding seeding);
-        Task<ServiceResponse<bool>> DeleteAsync(long id);
+        Task<ServiceResponse<bool>> DeleteAsync(long id, long? deletedByUserId);
         Task<ServiceResponse<(SelectList AreaTypes, SelectList Farms, SelectList Fields, SelectList TagRanges, SelectList Users)>> GetDropdownDataAsync();
         Task<ServiceResponse<bool>> ExisTpasync(long id);
     }

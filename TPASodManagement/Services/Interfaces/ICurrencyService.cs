@@ -11,7 +11,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<Currency>> GetByIdAsync(int id);
         Task<ServiceResponse<Currency>> CreateAsync(Currency currency);
         Task<ServiceResponse<Currency>> UpdateAsync(Currency currency);
-        Task<ServiceResponse<bool>> DeleteAsync(int id);
+        Task<ServiceResponse<bool>> DeleteAsync(int id, long? deletedByUserId);
         Task<ServiceResponse<bool>> ExisTpasync(int id);
     }
 }

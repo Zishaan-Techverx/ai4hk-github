@@ -2,7 +2,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using System.Reflection.Emit;
+using System.Linq.Expressions;
+using System.Reflection;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Entities;
 
@@ -222,8 +223,188 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
                 .HasConstraintName("FK_WasteCertificate_waste");
         });
 
+        // Configure soft delete properties for all entities
+        builder.Entity<Address>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<AddressType>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<AreaType>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Certificate>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<CertificateType>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Country>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Currency>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Customer>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Farm>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Field>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Organization>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Person>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Product>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<ProductCategory>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Sale>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<SaleLineItem>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<SaleType>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Seeding>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<StateProvince>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Status>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<TagRange>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Testimonial>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Waste>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<WasteCertificate>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<WasteReason>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Website>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<Permission>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
         base.OnModelCreating(builder);
         builder.ApplyConfiguration(new IdentityTestUserEntityConfiguration());
+
+        foreach (var entityType in builder.Model.GetEntityTypes())
+        {
+            var deletedDateProperty = entityType.ClrType.GetProperty("DeletedDate");
+            if (deletedDateProperty != null && deletedDateProperty.PropertyType == typeof(DateTimeOffset?))
+            {
+                var method = typeof(ApplicationDbContext)
+                    .GetMethod(nameof(SetGlobalQueryFilter), BindingFlags.NonPublic | BindingFlags.Static)
+                    ?.MakeGenericMethod(entityType.ClrType);
+                method?.Invoke(null, new object[] { builder });
+            }
+        }
+    }
+
+    private static void SetGlobalQueryFilter<TEntity>(ModelBuilder builder) where TEntity : class
+    {
+        builder.Entity<TEntity>().HasQueryFilter(e => EF.Property<DateTimeOffset?>(e, "DeletedDate") == null);
     }
 }
 
@@ -247,6 +428,11 @@ public class IdentityTestUserEntityConfiguration : IEntityTypeConfiguration<TpaS
         builder.Property(u => u.PersonId);
         builder.Property(u => u.WebsiteId);
         builder.Property(u => u.FarmId);
+        
+        // Soft delete properties
+        builder.Property(u => u.DeletedByUserId);
+        builder.Property(u => u.DeletedDate);
+        // Note: Soft delete query filter is applied globally in OnModelCreating
         
         builder.Property(u => u.EmailConfirmed).HasDefaultValue(false);
         builder.Property(u => u.PhoneNumberConfirmed).HasDefaultValue(false);

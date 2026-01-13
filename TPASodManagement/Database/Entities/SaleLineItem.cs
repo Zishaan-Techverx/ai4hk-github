@@ -39,6 +39,10 @@ public partial class SaleLineItem
 
     public string? Notes { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual AreaType? AreaType { get; set; }
 
     public virtual Field? Field { get; set; }

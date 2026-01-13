@@ -29,6 +29,10 @@ public partial class Customer
 
     public DateTimeOffset UpdatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual Organization? Organization { get; set; }
 
     public virtual Person? Person { get; set; }

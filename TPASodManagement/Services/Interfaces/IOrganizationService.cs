@@ -12,7 +12,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<Organization> GetOrganizationByNameAsync(string organizationName);
         Task<Organization> CreateOrganizationAsync(Organization organization, IFormFile logoFile);
         Task<Organization> UpdateOrganizationAsync(long id, Organization updatedOrg, IFormFile logoFile);
-        Task<bool> DeleteOrganizationAsync(long id);
+        Task<bool> DeleteOrganizationAsync(long id, long? deletedByUserId);
         Task<bool> OrganizationExistsAsync(long id);
         Task<ServiceResponse<List<Organization>>> GetFilteredAsync(Dictionary<string, string> filters);
     }

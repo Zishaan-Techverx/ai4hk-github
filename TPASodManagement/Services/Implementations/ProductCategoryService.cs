@@ -182,14 +182,13 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<bool>> DeleteAsync(int id)
+        public async Task<ServiceResponse<bool>> DeleteAsync(int id, long? deletedByUserId)
         {
             var response = new ServiceResponse<bool>();
             try
             {
                 var productCategory = await _context.ProductCategories
-                    .Include(pc => pc.Products)
-                    .FirstOrDefaultAsync(pc => pc.ProductCategoryId == id);
+                    .FirstOrDefaultAsync(pc => pc.ProductCategoryId == id && pc.DeletedDate == null);
                 
                 if (productCategory == null)
                 {
@@ -199,16 +198,10 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                // Check if category has associated products
-                if (productCategory.Products != null && productCategory.Products.Any())
-                {
-                    response.Success = false;
-                    response.Message = "Cannot delete product category as it has associated products";
-                    response.Data = false;
-                    return response;
-                }
-
-                _context.ProductCategories.Remove(productCategory);
+                // Soft delete: Set DeletedDate and DeletedByUserId
+                productCategory.DeletedDate = DateTimeOffset.UtcNow;
+                productCategory.DeletedByUserId = deletedByUserId;
+                
                 await _context.SaveChangesAsync();
                 response.Data = true;
             }

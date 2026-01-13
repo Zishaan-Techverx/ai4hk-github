@@ -6,6 +6,8 @@ using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.AreaType;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
+using Microsoft.AspNetCore.Identity;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Controllers
 {
@@ -14,11 +16,13 @@ namespace TpaSodManagement.Controllers
     {
         private readonly IAreaTypeService _areaTypeService;
         private readonly IExportToExcel _exportToExcel;
+        private readonly UserManager<TpaSodManagementUser> _userManager;
 
-        public AreaTypeController(IAreaTypeService areaTypeService, IExportToExcel exportToExcel)
+        public AreaTypeController(IAreaTypeService areaTypeService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager)
         {
             _areaTypeService = areaTypeService;
             _exportToExcel = exportToExcel;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index()
@@ -241,7 +245,10 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(int id)
         {
-            var result = await _areaTypeService.DeleteAsync(id);
+            var currentUser = await _userManager.GetUserAsync(User);
+            long? deletedByUserId = currentUser?.Id;
+            
+            var result = await _areaTypeService.DeleteAsync(id, deletedByUserId);
             if (!result.Success)
             {
                 return Json(new { success = false, message = result.Message });

@@ -44,6 +44,10 @@ public partial class Certificate
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual CertificateType CertificateType { get; set; } = null!;
 
     public virtual Farm Farm { get; set; } = null!;

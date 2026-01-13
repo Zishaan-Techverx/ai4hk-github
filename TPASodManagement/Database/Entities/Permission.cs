@@ -8,6 +8,8 @@ namespace TpaSodManagement.Database.Entities
         public string Name { get; set; }
         public string Description { get; set; }
         public string Category { get; set; }
+        public long? DeletedByUserId { get; set; }
+        public DateTimeOffset? DeletedDate { get; set; }
     }
 
     public class RolePermission

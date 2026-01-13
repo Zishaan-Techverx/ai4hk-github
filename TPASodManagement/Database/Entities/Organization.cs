@@ -31,6 +31,10 @@ public partial class Organization
 
     public byte[]? LogoBytes { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     [NotMapped]
     public IFormFile? LogoFile { get; set; }
 

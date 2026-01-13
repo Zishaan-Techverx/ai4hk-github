@@ -40,6 +40,10 @@ public partial class Address
 
     public DateTimeOffset UpdatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual AddressType AddressType { get; set; } = null!;
 
     public virtual StateProvince? StateProvince { get; set; } // Changed to nullable

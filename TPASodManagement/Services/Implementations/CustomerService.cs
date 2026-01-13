@@ -241,12 +241,13 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<bool>> DeleteAsync(long id)
+        public async Task<ServiceResponse<bool>> DeleteAsync(long id, long? deletedByUserId)
         {
             var response = new ServiceResponse<bool>();
             try
             {
-                var customer = await _context.Customers.FindAsync(id);
+                var customer = await _context.Customers
+                    .FirstOrDefaultAsync(c => c.CustomerId == id && c.DeletedDate == null);
                 if (customer == null)
                 {
                     response.Success = false;
@@ -255,7 +256,10 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                _context.Customers.Remove(customer);
+                // Soft delete: Set DeletedDate and DeletedByUserId
+                customer.DeletedDate = DateTimeOffset.UtcNow;
+                customer.DeletedByUserId = deletedByUserId;
+                
                 await _context.SaveChangesAsync();
                 response.Data = true;
             }

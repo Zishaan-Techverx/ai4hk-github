@@ -23,6 +23,10 @@ public partial class CertificateType
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();

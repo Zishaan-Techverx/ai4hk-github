@@ -9,6 +9,8 @@ using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Organization;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
+using Microsoft.AspNetCore.Identity;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Controllers
 {
@@ -17,11 +19,13 @@ namespace TpaSodManagement.Controllers
         {
             private readonly IOrganizationService _organizationService;
             private readonly IExportToExcel _exportToExcel;
+            private readonly UserManager<TpaSodManagementUser> _userManager;
 
-            public OrganizationController(IOrganizationService organizationService, IExportToExcel exportToExcel)
+            public OrganizationController(IOrganizationService organizationService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager)
             {
                 _organizationService = organizationService;
                 _exportToExcel = exportToExcel;
+                _userManager = userManager;
             }
 
             public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -287,7 +291,10 @@ namespace TpaSodManagement.Controllers
             {
                 try
                 {
-                    await _organizationService.DeleteOrganizationAsync(id);
+                    var currentUser = await _userManager.GetUserAsync(User);
+                    long? deletedByUserId = currentUser?.Id;
+                    
+                    await _organizationService.DeleteOrganizationAsync(id, deletedByUserId);
                     return Json(new { success = true, message = "Organization deleted successfully." });
                 }
                 catch (Exception ex)

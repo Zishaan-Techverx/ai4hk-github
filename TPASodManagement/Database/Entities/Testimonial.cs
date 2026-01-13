@@ -56,6 +56,10 @@ public partial class Testimonial
 
     public string? ApproverName { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual TpaSodManagementUser? ApprovedByUser { get; set; }
 
     public virtual Customer? Customer { get; set; }

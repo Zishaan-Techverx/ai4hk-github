@@ -19,5 +19,9 @@ public partial class Country
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual ICollection<StateProvince> StateProvinces { get; set; } = new List<StateProvince>();
 }

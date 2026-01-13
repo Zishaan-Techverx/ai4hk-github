@@ -32,6 +32,10 @@ public partial class Farm
 
     public string? ClimateZone { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual AreaType? AreaType { get; set; }
 
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();

@@ -19,5 +19,9 @@ public partial class WasteReason
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual ICollection<Waste> Wastes { get; set; } = new List<Waste>();
 }

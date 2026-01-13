@@ -32,6 +32,10 @@ public partial class Product
 
     public long CreatedByUserId { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual CertificateType? CertificateType { get; set; }
 
     public virtual TpaSodManagementUser CreatedByUser { get; set; } = null!;
