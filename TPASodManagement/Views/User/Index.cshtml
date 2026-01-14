@@ -14,11 +14,16 @@
     <div class="row">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center mb-4">
-                <h1>User Management</h1>
-                @if (User.HasPermission("User.Create"))
-                {
-                    <a asp-action="Create" class="btn btn-primary">Create New</a>
-                }
+                <h1 class="mb-0">User Management</h1>
+                <div>
+                    <button type="button" class="btn btn-secondary me-2" id="printBtn">
+                        <i class="fas fa-download me-1"></i> Export to Excel
+                    </button>
+                    @if (User.HasPermission("User.Create"))
+                    {
+                        <a asp-action="Create" class="btn btn-primary">Create New</a>
+                    }
+                </div>
             </div>
 
             @if (TempData["SuccessMessage"] != null)
@@ -29,117 +34,151 @@
                 </div>
             }
 
-            @if (TempData["ErrorMessage"] != null)
+            @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
             {
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <strong>Error!</strong> @TempData["ErrorMessage"]
-                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                <div class="alert alert-danger alert-dismissible fade show">
+                    <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             }
 
-            <div class="card">
-                <div class="card-header">
-                    <h5 class="card-title mb-0">All Users</h5>
-                </div>
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table class="table table-striped table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>User Name</th>
-                                    <th>Email</th>
-                                    <th>First Name</th>
-                                    <th>Last Name</th>
-                                    <th>Phone Number</th>
-                                    <th>Address</th>
-                                    <th>City</th>
-                                    <th>State</th>
-                                    <th>Postal Code</th>
-                                    <th>Is Active</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach (var user in Model)
-                                {
-                                    <tr>
-                                        <td>@user.UserName</td>
-                                        <td>@user.Email</td>
-                                        <td>@(user.FirstName ?? "N/A")</td>
-                                        <td>@(user.LastName ?? "N/A")</td>
-                                        <td>@user.PhoneNumber</td>
-                                        <td>@(user.AddressLine1 ?? "N/A")</td>
-                                        <td>@(user.City ?? "N/A")</td>
-                                        <td>@(user.StateName ?? "N/A")</td>
-                                        <td>@(user.PostalCode ?? "N/A")</td>
-                                        <td>
-                                            @if (user.IsActive)
-                                            {
-                                                <span class="badge bg-success">Active</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-danger">Inactive</span>
-                                            }
-                                        </td>
-                                        <td>
-                                            <div class="btn-group btn-group-sm">
+            <br />
 
-                                                <!-- DETAILS BUTTON -->
-                                                @if (User.HasPermission("User.Detail"))
-                                                {
-                                                    <a class="btn btn-info"
-                                                       asp-action="Details"
-                                                       asp-route-id="@user.Id">
-                                                        Details
-                                                    </a>
-                                                }
+            @Html.AntiForgeryToken()
 
-                                                <!-- EDIT BUTTON -->
-                                                @if (User.HasPermission("User.Edit"))
-                                                {
-                                                    <a class="btn btn-warning"
-                                                       asp-action="Edit"
-                                                       asp-route-id="@user.Id">
-                                                        Edit
-                                                    </a>
-                                                }
-
-                                                <!-- RESET PASSWORD BUTTON -->
-                                                @if (User.HasPermission("User.Edit"))
-                                                {
-                                                    <button type="button" class="btn btn-secondary reset-password-btn"
-                                                            data-user-id="@user.Id"
-                                                            data-user-name="@user.UserName"
-                                                            data-bs-toggle="modal"
-                                                            data-bs-target="#resetPasswordModal"
-                                                            title="Reset Password">
-                                                        Reset Password
-                                                    </button>
-                                                }
-
-                                                <!-- DELETE BUTTON -->
-                                                @if (User.HasPermission("User.Delete"))
-                                                {
-                                                    <a href="#" class="btn btn-danger delete-user-btn"
-                                                       data-user-id="@user.Id"
-                                                       data-user-name="@user.UserName"
-                                                       data-user-email="@user.Email"
-                                                       data-bs-toggle="modal"
-                                                       data-bs-target="#deleteUserModal"
-                                                       title="Delete User">
-                                                        Delete
-                                                    </a>
-                                                }
-
-                                            </div>
-                                        </td>
-                                    </tr>
-
-                                }
-                            </tbody>
-                        </table>
+            <!-- Column Filter and Page Size Controls -->
+            <div class="row mb-3">
+                <div class="col-md-6">
+                    <label class="form-label">Hide Columns</label>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="dropdown">
+                            <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="columnFilterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="min-width: 200px;">
+                                Show All
+                            </button>
+                            <ul class="dropdown-menu" id="columnFilterMenu" aria-labelledby="columnFilterDropdown" style="max-height: 300px; overflow-y: auto;">
+                                <li>
+                                    <a class="dropdown-item" href="#" id="showAllOption">
+                                        <input type="checkbox" id="showAllCheckbox" class="form-check-input me-2" checked>
+                                        <label class="form-check-label" for="showAllCheckbox" style="cursor: pointer; width: 100%;">Show All</label>
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                            </ul>
+                        </div>
+                        @await Html.PartialAsync("_FilterPartial", new Dictionary<string, string>())
                     </div>
+                    <div id="hiddenColumnsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
+                    <div id="activeFilterTags" class="mt-2 d-flex flex-wrap gap-1"></div>
+                </div>
+                <div class="col-md-6 text-end">
+                    <label for="pageSizeSelect" class="form-label">Page Size</label>
+                    <select id="pageSizeSelect" class="form-select d-inline-block" style="width: auto;"
+                        onchange="changePageSize(this.value)">
+                        <option value="10" selected="@(pageSize == 10)">10</option>
+                        <option value="15" selected="@(pageSize == 15)">15</option>
+                        <option value="20" selected="@(pageSize == 20)">20</option>
+                        <option value="25" selected="@(pageSize == 25)">25</option>
+                        <option value="50" selected="@(pageSize == 50)">50</option>
+                        <option value="100" selected="@(pageSize == 100)">100</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card card-body shadow-sm">
+                <div class="table-responsive">
+                    <table class="table" id="dataTable">
+                        <thead>
+                            <tr>
+                                <th data-column="UserName">User Name</th>
+                                <th data-column="Email">Email</th>
+                                <th data-column="FirstName">First Name</th>
+                                <th data-column="LastName">Last Name</th>
+                                <th data-column="PhoneNumber">Phone Number</th>
+                                <th data-column="AddressLine1">Address</th>
+                                <th data-column="City">City</th>
+                                <th data-column="StateName">State</th>
+                                <th data-column="PostalCode">Postal Code</th>
+                                <th data-column="IsActive">Is Active</th>
+                                <th data-column="Actions" class="no-hide-column">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var user in Model)
+                            {
+                                <tr id="row-@user.Id">
+                                    <td data-column="UserName">@Html.DisplayFor(modelItem => user.UserName)</td>
+                                    <td data-column="Email">@Html.DisplayFor(modelItem => user.Email)</td>
+                                    <td data-column="FirstName">@Html.DisplayFor(modelItem => user.FirstName)</td>
+                                    <td data-column="LastName">@Html.DisplayFor(modelItem => user.LastName)</td>
+                                    <td data-column="PhoneNumber">@Html.DisplayFor(modelItem => user.PhoneNumber)</td>
+                                    <td data-column="AddressLine1">@Html.DisplayFor(modelItem => user.AddressLine1)</td>
+                                    <td data-column="City">@Html.DisplayFor(modelItem => user.City)</td>
+                                    <td data-column="StateName">@Html.DisplayFor(modelItem => user.StateName)</td>
+                                    <td data-column="PostalCode">@Html.DisplayFor(modelItem => user.PostalCode)</td>
+                                    <td data-column="IsActive">
+                                        @if (user.IsActive)
+                                        {
+                                            <span class="badge bg-success">Active</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-danger">Inactive</span>
+                                        }
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <!-- DETAILS BUTTON -->
+                                            @if (User.HasPermission("User.Detail"))
+                                            {
+                                                <a class="btn btn-info"
+                                                   asp-action="Details"
+                                                   asp-route-id="@user.Id">
+                                                    Details
+                                                </a>
+                                            }
+
+                                            <!-- EDIT BUTTON -->
+                                            @if (User.HasPermission("User.Edit"))
+                                            {
+                                                <a class="btn btn-warning"
+                                                   asp-action="Edit"
+                                                   asp-route-id="@user.Id">
+                                                    Edit
+                                                </a>
+                                            }
+
+                                            <!-- RESET PASSWORD BUTTON -->
+                                            @if (User.HasPermission("User.Edit"))
+                                            {
+                                                <button type="button" class="btn btn-secondary reset-password-btn"
+                                                        data-user-id="@user.Id"
+                                                        data-user-name="@user.UserName"
+                                                        data-bs-toggle="modal"
+                                                        data-bs-target="#resetPasswordModal"
+                                                        title="Reset Password">
+                                                    Reset Password
+                                                </button>
+                                            }
+
+                                            <!-- DELETE BUTTON -->
+                                            @if (User.HasPermission("User.Delete"))
+                                            {
+                                                <a href="#" class="btn btn-danger delete-user-btn"
+                                                   data-user-id="@user.Id"
+                                                   data-user-name="@user.UserName"
+                                                   data-user-email="@user.Email"
+                                                   data-bs-toggle="modal"
+                                                   data-bs-target="#deleteUserModal"
+                                                   title="Delete User">
+                                                    Delete
+                                                </a>
+                                            }
+                                        </div>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
                 </div>
             </div>
 
@@ -168,6 +207,24 @@
 
             <div class="text-muted mt-2">
                 Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records
+            </div>
+        </div>
+    </div>
+</div>
+
+<br />
+<br />
+
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="deleteSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Record deleted successfully!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
             </div>
         </div>
     </div>
@@ -241,407 +298,1031 @@
     </div>
 </div>
 
-@section Scripts {
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const moduleName = 'User';
-            const storageKey = `hiddenColumns_${moduleName}`;
-            const table = document.getElementById('dataTable');
-            const filterSelect = document.getElementById('columnFilterSelect');
-            const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const moduleName = 'User';
+        const storageKey = `hiddenColumns_${moduleName}`;
+        const table = document.getElementById('dataTable');
+        const columnFilterDropdown = document.getElementById('columnFilterDropdown');
+        const columnFilterMenu = document.getElementById('columnFilterMenu');
+        const showAllOption = document.getElementById('showAllOption');
+        const showAllCheckbox = document.getElementById('showAllCheckbox');
+        const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
+        
+        if (!table || !columnFilterMenu) return;
+        
+        // Get all column headers except Actions
+        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+        const columnMap = new Map(); // Store column name -> display name mapping
+        
+        // Populate dropdown with checkboxes
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            const displayName = header.textContent.trim();
+            columnMap.set(columnName, displayName);
             
-            if (table && filterSelect) {
-                // Get all column headers except Actions
-                const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
-                const columnMap = new Map(); // Store column name -> display name mapping
+            const listItem = document.createElement('li');
+            const checkboxId = `colCheckbox_${columnName}`;
+            
+            listItem.innerHTML = `
+                <a class="dropdown-item" href="#" style="pointer-events: none;">
+                    <input type="checkbox" id="${checkboxId}" class="form-check-input me-2" data-column="${columnName}" style="pointer-events: auto;">
+                    <label class="form-check-label" for="${checkboxId}" style="cursor: pointer; width: 100%; pointer-events: auto;">${displayName}</label>
+                </a>
+            `;
+            
+            columnFilterMenu.appendChild(listItem);
+            
+            // Get the checkbox after it's been added to DOM
+            const checkbox = document.getElementById(checkboxId);
+            
+            // Handle checkbox click directly to toggle state
+            checkbox.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent dropdown from closing
                 
-                // Populate dropdown
-                headers.forEach(header => {
-                    const columnName = header.getAttribute('data-column');
-                    const displayName = header.textContent.trim();
-                    columnMap.set(columnName, displayName);
-                    
-                    const option = document.createElement('option');
-                    option.value = columnName;
-                    option.textContent = displayName;
-                    filterSelect.appendChild(option);
-                });
+                const columnName = this.dataset.column;
+                const isChecked = this.checked;
                 
-                // Load saved preferences
-                let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                // Update hiddenColumns array
+                if (isChecked) {
+                    // Hide the column
+                    if (!hiddenColumns.includes(columnName)) {
+                        hiddenColumns.push(columnName);
+                    }
+                } else {
+                    // Show the column
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                }
                 
-                // Update UI based on saved preferences
+                // Update "Show All" checkbox state
+                updateShowAllCheckbox();
+                
+                // Save to localStorage
+                localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                
+                // Update UI
                 updateHiddenColumnsUI(hiddenColumns, columnMap);
                 applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
+                // Update filter inputs state
+                updateFilterInputsState(hiddenColumns);
+            });
+        });
+        
+        // Load saved preferences
+        let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        
+        // Update checkboxes based on saved preferences
+        updateCheckboxes();
+        
+        // Update UI based on saved preferences
+        updateHiddenColumnsUI(hiddenColumns, columnMap);
+        applyColumnVisibility(hiddenColumns);
+        updateDropdownButton();
+        // Update filter inputs state
+        updateFilterInputsState(hiddenColumns);
+        
+        // Handle "Show All" option click
+        showAllOption.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Uncheck all column checkboxes
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            allCheckboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Update hiddenColumns
+            hiddenColumns = [];
+            localStorage.setItem(storageKey, JSON.stringify([]));
+            
+            // Update UI
+            updateHiddenColumnsUI(hiddenColumns, columnMap);
+            applyColumnVisibility(hiddenColumns);
+            updateDropdownButton();
+            // Update filter inputs state
+            updateFilterInputsState(hiddenColumns);
+        });
+        
+        // Handle individual checkbox changes
+        columnFilterMenu.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox' && e.target.dataset.column) {
+                e.stopPropagation(); // Prevent dropdown from closing
                 
-                // Handle dropdown selection
-                filterSelect.addEventListener('change', function() {
-                    const selectedColumn = this.value;
-                    if (!selectedColumn) return;
-                    
-                    // Toggle column visibility
-                    if (hiddenColumns.includes(selectedColumn)) {
-                        // Column is already hidden, show it
-                        hiddenColumns = hiddenColumns.filter(col => col !== selectedColumn);
-                    } else {
-                        // Hide the column
-                        hiddenColumns.push(selectedColumn);
+                const columnName = e.target.dataset.column;
+                const isChecked = e.target.checked;
+                
+                // Update hiddenColumns array
+                if (isChecked) {
+                    // Hide the column
+                    if (!hiddenColumns.includes(columnName)) {
+                        hiddenColumns.push(columnName);
                     }
-                    
-                    // Save to localStorage
-                    localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
-                    
-                    // Update UI
-                    updateHiddenColumnsUI(hiddenColumns, columnMap);
-                    applyColumnVisibility(hiddenColumns);
-                    
-                    // Reset dropdown
-                    this.value = '';
-                });
-                
-                function updateHiddenColumnsUI(hiddenCols, colMap) {
-                    hiddenColumnsBadges.innerHTML = '';
-                    hiddenCols.forEach(columnName => {
-                        const displayName = colMap.get(columnName);
-                        const badge = document.createElement('span');
-                        badge.className = 'badge bg-secondary me-1 mb-1';
-                        badge.style.cursor = 'pointer';
-                        badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
-                        badge.addEventListener('click', function(e) {
-                            e.stopPropagation();
-                            hiddenColumns = hiddenColumns.filter(col => col !== columnName);
-                            localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
-                            updateHiddenColumnsUI(hiddenColumns, columnMap);
-                            applyColumnVisibility(hiddenColumns);
-                            if (typeof updateDropdownButton === 'function') {
-                                updateDropdownButton();
-                            }
-                        });
-                        hiddenColumnsBadges.appendChild(badge);
-                    });
+                } else {
+                    // Show the column
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
                 }
                 
-                function applyColumnVisibility(hiddenCols) {
-                    headers.forEach(header => {
-                        const columnName = header.getAttribute('data-column');
-                        const isHidden = hiddenCols.includes(columnName);
-                        
-                        // Hide/show header
-                        header.style.display = isHidden ? 'none' : '';
-                        
-                        // Hide/show all cells in this column
-                        const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
-                        cells.forEach(cell => {
-                            cell.style.display = isHidden ? 'none' : '';
-                        });
-                    });
-                    
-                    // Ensure Actions column is always visible
-                    const actionsHeaders = table.querySelectorAll('thead th[data-column="Actions"]');
-                    const actionsCells = table.querySelectorAll('tbody td[data-column="Actions"]');
-                    actionsHeaders.forEach(header => header.style.display = '');
-                    actionsCells.forEach(cell => cell.style.display = '');
-                }
+                // Update "Show All" checkbox state
+                updateShowAllCheckbox();
                 
-                // Make clearColumnFilter accessible and update hiddenColumns variable
-                window.clearColumnFilter = function() {
-                    // Reset hiddenColumns variable to empty array
-                    hiddenColumns = [];
-                    
-                    // Clear localStorage
-                    localStorage.setItem(storageKey, JSON.stringify([]));
-                    
-                    // Show all columns
-                    headers.forEach(header => {
-                        const columnName = header.getAttribute('data-column');
-                        header.style.display = '';
-                        
-                        const cells = table.querySelectorAll(`tbody td[data-column="${columnName}"]`);
-                        cells.forEach(cell => {
-                            cell.style.display = '';
-                        });
-                    });
-                    
-                    // Clear badges and update UI
-                    updateHiddenColumnsUI(hiddenColumns, columnMap);
-                    
-                    // Reset dropdown
-                    filterSelect.value = '';
-                };
-            }
-
-            setTimeout(function () {
-                const alerts = document.querySelectorAll('.alert-success, .alert-danger');
-                alerts.forEach(alert => {
-                    if (typeof bootstrap !== 'undefined' && bootstrap.Alert) {
-                        const bsAlert = bootstrap.Alert.getOrCreateInstance(alert);
-                        bsAlert.close();
-                    }
-                });
-            }, 5000);
-
-            // Modal and delete button elements
-            const deleteUserModalEl = document.getElementById('deleteUserModal');
-            const userIdInput = document.getElementById('userIdToDelete');
-            const userNamePlaceholder = document.getElementById('userNamePlaceholder');
-            const userEmailPlaceholder = document.getElementById('userEmailPlaceholder');
-            const confirmDeleteBtn = document.getElementById('confirmUserDeleteBtn');
-            const deleteErrorAlert = document.getElementById('deleteUserError');
-
-            // Anti-Forgery Token
-            const antiForgeryTokenInput = document.querySelector('input[name="__RequestVerificationToken"]');
-            const antiForgeryToken = antiForgeryTokenInput ? antiForgeryTokenInput.value : '';
-
-            // Handle all delete user buttons
-            document.querySelectorAll('.delete-user-btn').forEach(function (deleteBtn) {
-                deleteBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-
-                    // Get user data from button attributes
-                    const userId = this.getAttribute('data-user-id');
-                    const userName = this.getAttribute('data-user-name');
-                    const userEmail = this.getAttribute('data-user-email');
-
-                    // Set user info in modal
-                    if (userIdInput) {
-                        userIdInput.value = userId || '';
-                    }
-                    if (userNamePlaceholder) {
-                        userNamePlaceholder.textContent = userName || 'Unknown User';
-                    }
-                    if (userEmailPlaceholder) {
-                        userEmailPlaceholder.textContent = userEmail || '';
-                    }
-
-                    // Reset modal state
-                    if (deleteErrorAlert) {
-                        deleteErrorAlert.classList.add('d-none');
-                    }
-                    if (confirmDeleteBtn) {
-                        confirmDeleteBtn.disabled = false;
-                        confirmDeleteBtn.innerHTML = 'Delete User';
-                    }
-                });
-            });
-
-            // Delete confirmation button click
-            if (confirmDeleteBtn) {
-                confirmDeleteBtn.addEventListener('click', function () {
-                    const userId = userIdInput.value;
-
-                    if (!userId || !antiForgeryToken) {
-                        if (deleteErrorAlert) {
-                            deleteErrorAlert.innerText = 'Error: User ID or Anti-Forgery Token is missing.';
-                            deleteErrorAlert.classList.remove('d-none');
-                        }
-                        console.error('Missing userId or antiForgeryToken');
-                        return;
-                    }
-
-                    console.log('Deleting user:', userId);
-
-                    // Show loading state
-                    confirmDeleteBtn.disabled = true;
-                    confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
-                    if (deleteErrorAlert) {
-                        deleteErrorAlert.classList.add('d-none');
-                    }
-
-                    // Prepare request body
-                    const requestBody = 'id=' + encodeURIComponent(userId) +
-                        '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
-
-                    console.log('Sending request to:', '@Url.Action("DeleteUser", "User")');
-
-                    // Send AJAX POST request
-                    fetch('@Url.Action("DeleteUser", "User")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: requestBody
-                    })
-                        .then(response => {
-                            console.log('Response status:', response.status);
-                            console.log('Response ok:', response.ok);
-                            
-                            if (response.ok) {
-                                return response.json().catch(() => response.text());
-                            } else {
-                                // Try to get error message
-                                return response.json()
-                                    .then(err => { throw new Error(err.message || 'Server returned an error.'); })
-                                    .catch(() => response.text().then(text => { throw new Error(text || 'Server returned an error.'); }));
-                            }
-                        })
-                        .then(data => {
-                            console.log('Delete successful:', data);
-                            // Deletion successful, refresh the page
-                            window.location.reload();
-                        })
-                        .catch(error => {
-                            console.error('User Deletion failed:', error);
-
-                            // Show error in modal
-                            if (deleteErrorAlert) {
-                                deleteErrorAlert.innerText = 'Deletion failed: ' + (error.message || 'Unknown error.');
-                                deleteErrorAlert.classList.remove('d-none');
-                            }
-
-                            // Restore button state
-                            confirmDeleteBtn.disabled = false;
-                            confirmDeleteBtn.innerHTML = 'Delete User';
-                        });
-                });
-            }
-
-            // Reset Password Modal elements
-            const resetPasswordModalEl = document.getElementById('resetPasswordModal');
-            const userIdToResetInput = document.getElementById('userIdToResetPassword');
-            const resetPasswordUserNamePlaceholder = document.getElementById('resetPasswordUserNamePlaceholder');
-            const newPasswordInput = document.getElementById('newPasswordInput');
-            const confirmResetPasswordBtn = document.getElementById('confirmResetPasswordBtn');
-            const resetPasswordErrorAlert = document.getElementById('resetPasswordError');
-
-            // Handle Reset Password buttons - Show modal
-            document.querySelectorAll('.reset-password-btn').forEach(function (resetBtn) {
-                resetBtn.addEventListener('click', function (e) {
-                    e.preventDefault();
-
-                    const userId = this.getAttribute('data-user-id');
-                    const userName = this.getAttribute('data-user-name');
-
-                    if (!userId) {
-                        alert('Error: User ID is missing.');
-                        return;
-                    }
-
-                    // Set user info in modal
-                    if (userIdToResetInput) {
-                        userIdToResetInput.value = userId || '';
-                    }
-                    if (resetPasswordUserNamePlaceholder) {
-                        resetPasswordUserNamePlaceholder.textContent = userName || 'Unknown User';
-                    }
-                    
-                    // Generate default password and set in input
-                    const defaultPassword = userName + '@@123';
-                    if (newPasswordInput) {
-                        newPasswordInput.value = defaultPassword;
-                    }
-
-                    // Reset modal state
-                    if (resetPasswordErrorAlert) {
-                        resetPasswordErrorAlert.classList.add('d-none');
-                    }
-                    if (confirmResetPasswordBtn) {
-                        confirmResetPasswordBtn.disabled = false;
-                        confirmResetPasswordBtn.innerHTML = 'Reset Password';
-                    }
-                });
-            });
-
-            // Reset Password confirmation button click
-            if (confirmResetPasswordBtn) {
-                confirmResetPasswordBtn.addEventListener('click', function () {
-                    const userId = userIdToResetInput.value;
-                    const newPassword = newPasswordInput.value;
-
-                    if (!userId) {
-                        if (resetPasswordErrorAlert) {
-                            resetPasswordErrorAlert.innerText = 'Error: User ID is missing.';
-                            resetPasswordErrorAlert.classList.remove('d-none');
-                        }
-                        return;
-                    }
-
-                    if (!newPassword || newPassword.trim() === '') {
-                        if (resetPasswordErrorAlert) {
-                            resetPasswordErrorAlert.innerText = 'Error: Please enter a password.';
-                            resetPasswordErrorAlert.classList.remove('d-none');
-                        }
-                        newPasswordInput.focus();
-                        return;
-                    }
-
-                    // Show loading state
-                    confirmResetPasswordBtn.disabled = true;
-                    confirmResetPasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Resetting...';
-                    if (resetPasswordErrorAlert) {
-                        resetPasswordErrorAlert.classList.add('d-none');
-                    }
-
-                    // Prepare request body
-                    const requestBody = 'id=' + encodeURIComponent(userId) +
-                        '&newPassword=' + encodeURIComponent(newPassword) +
-                        '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
-
-                    // Send AJAX POST request
-                    fetch('@Url.Action("ResetPassword", "User")', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/x-www-form-urlencoded'
-                        },
-                        body: requestBody
-                    })
-                        .then(response => {
-                            if (response.ok) {
-                                return response.json().catch(() => response.text());
-                            } else {
-                                return response.json()
-                                    .then(err => { throw new Error(err.message || 'Server returned an error.'); })
-                                    .catch(() => response.text().then(text => { throw new Error(text || 'Server returned an error.'); }));
-                            }
-                        })
-                        .then(data => {
-                            console.log('Password reset successful:', data);
-                            
-                            // Show success message
-                            if (data.success) {
-                                alert('Password reset successfully!\n\nAn email has been sent to the user with the new password.');
-                                
-                                // Close modal
-                                if (resetPasswordModalEl) {
-                                    const modal = bootstrap.Modal.getInstance(resetPasswordModalEl);
-                                    if (modal) {
-                                        modal.hide();
-                                    }
-                                }
-                                
-                                // Optionally refresh the page
-                                // window.location.reload();
-                            } else {
-                                if (resetPasswordErrorAlert) {
-                                    resetPasswordErrorAlert.innerText = 'Error: ' + (data.message || 'Unknown error occurred.');
-                                    resetPasswordErrorAlert.classList.remove('d-none');
-                                }
-                            }
-
-                            // Restore button state
-                            confirmResetPasswordBtn.disabled = false;
-                            confirmResetPasswordBtn.innerHTML = 'Reset Password';
-                        })
-                        .catch(error => {
-                            console.error('Password reset failed:', error);
-                            
-                            if (resetPasswordErrorAlert) {
-                                resetPasswordErrorAlert.innerText = 'Password reset failed: ' + (error.message || 'Unknown error.');
-                                resetPasswordErrorAlert.classList.remove('d-none');
-                            }
-
-                            // Restore button state
-                            confirmResetPasswordBtn.disabled = false;
-                            confirmResetPasswordBtn.innerHTML = 'Reset Password';
-                        });
-                });
+                // Save to localStorage
+                localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                
+                // Update UI
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
             }
         });
         
-        function changePageSize(size) {
+        // Prevent dropdown from closing when clicking inside the menu (but allow checkbox clicks)
+        columnFilterMenu.addEventListener('click', function(e) {
+            // Don't stop propagation for checkbox clicks - let them work normally
+            if (e.target.type !== 'checkbox' && !e.target.closest('input[type="checkbox"]') && !e.target.closest('label')) {
+                e.stopPropagation();
+            }
+        });
+        
+        function updateCheckboxes() {
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            allCheckboxes.forEach(checkbox => {
+                const columnName = checkbox.dataset.column;
+                checkbox.checked = hiddenColumns.includes(columnName);
+            });
+            updateShowAllCheckbox();
+        }
+        
+        function updateShowAllCheckbox() {
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+            const allUnchecked = Array.from(allCheckboxes).every(cb => !cb.checked);
+            
+            // Show All checkbox should be checked only if all columns are visible (unchecked)
+            showAllCheckbox.checked = allUnchecked;
+        }
+        
+        function updateDropdownButton() {
+            if (hiddenColumns.length === 0) {
+                columnFilterDropdown.textContent = 'Show All';
+            } else {
+                columnFilterDropdown.textContent = `${hiddenColumns.length} Column(s) Hidden`;
+            }
+        }
+        
+        function updateHiddenColumnsUI(hiddenCols, colMap) {
+            hiddenColumnsBadges.innerHTML = '';
+            hiddenCols.forEach(columnName => {
+                const displayName = colMap.get(columnName);
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-secondary me-1 mb-1';
+                badge.style.cursor = 'pointer';
+                badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
+                badge.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // Uncheck the corresponding checkbox
+                    const checkbox = columnFilterMenu.querySelector(`input[data-column="${columnName}"]`);
+                    if (checkbox) {
+                        checkbox.checked = false;
+                        
+                        // Remove from hiddenColumns array
+                        hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                        
+                        // Update "Show All" checkbox state
+                        updateShowAllCheckbox();
+                        
+                        // Save to localStorage
+                        localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                        
+                // Update UI
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
+                // Update filter inputs state
+                updateFilterInputsState(hiddenColumns);
+                    }
+                });
+                hiddenColumnsBadges.appendChild(badge);
+            });
+        }
+        
+        function applyColumnVisibility(hiddenCols) {
+            // Get table and headers from DOM each time (not from closure) to ensure fresh references
+            const currentTable = document.getElementById('dataTable');
+            if (!currentTable) return;
+            
+            const currentHeaders = currentTable.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+            currentHeaders.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                // Hide/show header
+                header.style.display = isHidden ? 'none' : '';
+                
+                // Hide/show all cells in this column
+                const cells = currentTable.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = isHidden ? 'none' : '';
+                });
+            });
+            
+            // Ensure Actions column is always visible
+            const actionsHeaders = currentTable.querySelectorAll('thead th[data-column="Actions"]');
+            const actionsCells = currentTable.querySelectorAll('tbody td[data-column="Actions"]');
+            actionsHeaders.forEach(header => header.style.display = '');
+            actionsCells.forEach(cell => cell.style.display = '');
+            
+            // Disable/enable filter inputs for hidden columns
+            updateFilterInputsState(hiddenCols);
+        }
+        
+        // Make applyColumnVisibility globally accessible
+        window.applyColumnVisibility = applyColumnVisibility;
+        
+        function updateFilterInputsState(hiddenCols) {
+            // Get all filter items
+            const filterItems = document.querySelectorAll('.filter-item[data-column]');
+            filterItems.forEach(item => {
+                const columnName = item.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                // Find all filter inputs for this column
+                const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
+                const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
+                const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
+                const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
+                const clearDateFromBtn = item.querySelector(`.clear-date-from-filter[data-column="${columnName}"]`);
+                const clearDateToBtn = item.querySelector(`.clear-date-to-filter[data-column="${columnName}"]`);
+                
+                // Disable/enable inputs
+                if (filterInput) {
+                    filterInput.disabled = isHidden;
+                    filterInput.style.opacity = isHidden ? '0.5' : '1';
+                    filterInput.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterToggle) {
+                    filterToggle.disabled = isHidden;
+                    filterToggle.style.opacity = isHidden ? '0.5' : '1';
+                    filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterDateFrom) {
+                    filterDateFrom.disabled = isHidden;
+                    filterDateFrom.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateFrom.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterDateTo) {
+                    filterDateTo.disabled = isHidden;
+                    filterDateTo.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateTo.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                
+                // Disable clear buttons
+                if (clearBtn) {
+                    clearBtn.disabled = isHidden;
+                    clearBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateFromBtn) {
+                    clearDateFromBtn.disabled = isHidden;
+                    clearDateFromBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateFromBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateToBtn) {
+                    clearDateToBtn.disabled = isHidden;
+                    clearDateToBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateToBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                
+                // Update label style
+                const label = item.querySelector('label');
+                if (label) {
+                    label.style.opacity = isHidden ? '0.5' : '1';
+                    label.style.cursor = isHidden ? 'not-allowed' : 'default';
+                }
+            });
+        }
+        
+        // Delete functionality
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
+        const userIdInput = document.getElementById('userIdToDelete');
+        const userNamePlaceholder = document.getElementById('userNamePlaceholder');
+        const userEmailPlaceholder = document.getElementById('userEmailPlaceholder');
+        const confirmDeleteBtn = document.getElementById('confirmUserDeleteBtn');
+        const deleteErrorAlert = document.getElementById('deleteUserError');
+        const deleteSuccessToast = document.getElementById('deleteSuccessToast');
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        document.querySelectorAll('.delete-user-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+                const userEmail = this.getAttribute('data-user-email');
+
+                userIdInput.value = userId;
+                userNamePlaceholder.innerText = userName;
+                userEmailPlaceholder.innerText = userEmail;
+                deleteErrorAlert.classList.add('d-none');
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = 'Delete User';
+            });
+        });
+
+        confirmDeleteBtn.addEventListener('click', function () {
+            const userId = userIdInput.value;
+            if (!userId) {
+                deleteErrorAlert.innerText = 'Error: User ID not found.';
+                deleteErrorAlert.classList.remove('d-none');
+                return;
+            }
+
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+
+            const requestBody = 'id=' + encodeURIComponent(userId) +
+                '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+
+            fetch('@Url.Action("DeleteUser", "User")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: requestBody
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const rowToRemove = document.getElementById('row-' + userId);
+                        if (rowToRemove) {
+                            rowToRemove.remove();
+                        }
+                        deleteModal.hide();
+                        if (deleteSuccessToast) {
+                            const toast = new bootstrap.Toast(deleteSuccessToast);
+                            toast.show();
+                        }
+                    } else {
+                        deleteErrorAlert.innerText = data.message || 'Error deleting the record. Please try again.';
+                        deleteErrorAlert.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Delete failed:', error);
+                    deleteErrorAlert.innerText = 'Deletion failed: ' + error.message;
+                    deleteErrorAlert.classList.remove('d-none');
+                })
+                .finally(() => {
+                    confirmDeleteBtn.disabled = false;
+                    confirmDeleteBtn.innerHTML = 'Delete User';
+                });
+        });
+
+        // Reset Password functionality
+        const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
+        const userIdToResetInput = document.getElementById('userIdToResetPassword');
+        const resetPasswordUserNamePlaceholder = document.getElementById('resetPasswordUserNamePlaceholder');
+        const newPasswordInput = document.getElementById('newPasswordInput');
+        const confirmResetPasswordBtn = document.getElementById('confirmResetPasswordBtn');
+        const resetPasswordErrorAlert = document.getElementById('resetPasswordError');
+
+        document.querySelectorAll('.reset-password-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+
+                userIdToResetInput.value = userId;
+                resetPasswordUserNamePlaceholder.innerText = userName;
+                
+                // Generate default password
+                const defaultPassword = userName + '@@123';
+                newPasswordInput.value = defaultPassword;
+                
+                resetPasswordErrorAlert.classList.add('d-none');
+                confirmResetPasswordBtn.disabled = false;
+                confirmResetPasswordBtn.innerHTML = 'Reset Password';
+            });
+        });
+
+        confirmResetPasswordBtn.addEventListener('click', function () {
+            const userId = userIdToResetInput.value;
+            const newPassword = newPasswordInput.value;
+
+            if (!userId) {
+                resetPasswordErrorAlert.innerText = 'Error: User ID not found.';
+                resetPasswordErrorAlert.classList.remove('d-none');
+                return;
+            }
+
+            if (!newPassword || newPassword.trim() === '') {
+                resetPasswordErrorAlert.innerText = 'Error: Please enter a password.';
+                resetPasswordErrorAlert.classList.remove('d-none');
+                newPasswordInput.focus();
+                return;
+            }
+
+            confirmResetPasswordBtn.disabled = true;
+            confirmResetPasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Resetting...';
+
+            const requestBody = 'id=' + encodeURIComponent(userId) +
+                '&newPassword=' + encodeURIComponent(newPassword) +
+                '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+
+            fetch('@Url.Action("ResetPassword", "User")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: requestBody
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Password reset successfully!\n\nAn email has been sent to the user with the new password.');
+                        resetPasswordModal.hide();
+                    } else {
+                        resetPasswordErrorAlert.innerText = data.message || 'Error resetting password. Please try again.';
+                        resetPasswordErrorAlert.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Password reset failed:', error);
+                    resetPasswordErrorAlert.innerText = 'Password reset failed: ' + error.message;
+                    resetPasswordErrorAlert.classList.remove('d-none');
+                })
+                .finally(() => {
+                    confirmResetPasswordBtn.disabled = false;
+                    confirmResetPasswordBtn.innerHTML = 'Reset Password';
+                });
+        });
+    });
+    
+    // Filter Functionality
+    let activeFilters = {};
+    let currentFilteredData = [];
+    let isFiltered = false;
+    let currentPage = 1;
+    let pageSize = @pageSize;
+
+    function changePageSize(size) {
+        // If filters are active, update pageSize and re-paginate
+        if (isFiltered) {
+            pageSize = parseInt(size);
+            currentPage = 1;
+            updatePagination();
+            updateTable(getPaginatedData());
+            
+            // Reapply column visibility
+            const storageKey = `hiddenColumns_User`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            if (typeof applyColumnVisibility === 'function') {
+                applyColumnVisibility(hiddenCols);
+            }
+        } else {
+            // Server-side pagination
             const url = new URL(window.location.href);
             url.searchParams.set('pageSize', size);
-            url.searchParams.set('pageNumber', '1');
+            url.searchParams.set('pageNumber', '1'); // Reset to first page
             window.location.href = url.toString();
         }
-    </script>
-}
+    }
+
+    (function() {
+        const table = document.getElementById('dataTable');
+        if (!table) return;
+
+        const filterContainer = document.getElementById('filterContainer');
+        
+        // Handle input changes to show/hide clear buttons
+        const filterInputs = document.querySelectorAll('.filter-input');
+        filterInputs.forEach(input => {
+            const columnName = input.getAttribute('data-column');
+            const clearBtn = document.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
+            
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    if (clearBtn) clearBtn.style.display = 'block';
+                } else {
+                    if (clearBtn) clearBtn.style.display = 'none';
+                }
+            });
+
+            // Show clear button if input has value on load
+            if (input.value.trim() && clearBtn) {
+                clearBtn.style.display = 'block';
+            }
+        });
+
+        // Handle clear column filter button clicks
+        const clearColumnButtons = document.querySelectorAll('.clear-column-filter');
+        clearColumnButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const columnName = this.getAttribute('data-column');
+                const input = document.querySelector(`.filter-input[data-column="${columnName}"]`);
+                const toggle = document.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                if (input) {
+                    input.value = '';
+                    this.style.display = 'none';
+                }
+                if (toggle) {
+                    toggle.checked = false;
+                }
+                // Remove from active filters
+                if (activeFilters[columnName]) {
+                    delete activeFilters[columnName];
+                }
+            });
+        });
+
+        // Clear all filters in modal
+        const clearAllFiltersInModalBtn = document.getElementById('clearAllFiltersInModalBtn');
+        if (clearAllFiltersInModalBtn) {
+            clearAllFiltersInModalBtn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-input').forEach(input => {
+                    input.value = '';
+                });
+                document.querySelectorAll('.filter-toggle').forEach(toggle => {
+                    toggle.checked = false;
+                });
+                document.querySelectorAll('.clear-column-filter').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                activeFilters = {};
+            });
+        }
+
+        // Clear all filters button (outside modal)
+        const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
+        if (clearAllFiltersBtn) {
+            clearAllFiltersBtn.addEventListener('click', async function() {
+                document.querySelectorAll('.filter-input').forEach(input => {
+                    input.value = '';
+                });
+                document.querySelectorAll('.filter-toggle').forEach(toggle => {
+                    toggle.checked = false;
+                });
+                document.querySelectorAll('.clear-column-filter').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                activeFilters = {};
+                isFiltered = false;
+                currentPage = 1;
+                updateFilterTags();
+                updateFilterCount();
+                await loadAllData();
+            });
+        }
+
+        // Handle toggle switches for boolean columns
+        const filterToggles = document.querySelectorAll('.filter-toggle');
+        filterToggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const column = this.getAttribute('data-column');
+                if (this.checked) {
+                    activeFilters[column] = 'true';
+                } else {
+                    delete activeFilters[column];
+                }
+            });
+        });
+
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        if (applyFilterBtn) {
+            applyFilterBtn.addEventListener('click', async function() {
+                await applyFilters();
+            });
+        }
+
+
+        const printBtn = document.getElementById('printBtn');
+        if (printBtn) {
+            printBtn.addEventListener('click', async function() {
+                await downloadExcel();
+            });
+        }
+    })();
+
+    async function applyFilters() {
+        try {
+            // Collect all filter values from inputs and toggles
+            activeFilters = {};
+            
+            // Collect from text inputs (skip disabled ones)
+            const filterInputs = document.querySelectorAll('.filter-input:not(:disabled)');
+            filterInputs.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value.trim();
+                if (value) {
+                    activeFilters[column] = value;
+                }
+            });
+            
+            // Collect from toggle switches (skip disabled ones)
+            const filterToggles = document.querySelectorAll('.filter-toggle:not(:disabled)');
+            filterToggles.forEach(toggle => {
+                const column = toggle.getAttribute('data-column');
+                if (toggle.checked) {
+                    activeFilters[column] = 'true';
+                }
+            });
+            
+            // Collect from date inputs (skip disabled ones)
+            const filterDateFroms = document.querySelectorAll('.filter-date-from:not(:disabled)');
+            filterDateFroms.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value;
+                if (value) {
+                    activeFilters[`${column}_From`] = value;
+                }
+            });
+            
+            const filterDateTos = document.querySelectorAll('.filter-date-to:not(:disabled)');
+            filterDateTos.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value;
+                if (value) {
+                    activeFilters[`${column}_To`] = value;
+                }
+            });
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const response = await fetch('@Url.Action("Filter", "User")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(activeFilters)
+            });
+            const result = await response.json();
+            if (result.success) {
+                currentFilteredData = result.data;
+                isFiltered = Object.keys(activeFilters).length > 0;
+                currentPage = 1; // Reset to first page when filter is applied
+                updatePagination();
+                updateTable(getPaginatedData()); // updateTable already calls applyColumnVisibility at the end
+                updateFilterTags();
+                updateFilterCount();
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                if (modal) modal.hide();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error applying filters.');
+        }
+    }
+
+    function updateFilterCount() {
+        const count = Object.keys(activeFilters).length;
+        const countBadge = document.getElementById('activeFilterCount');
+        const clearAllBtn = document.getElementById('clearAllFiltersBtn');
+        
+        if (count > 0) {
+            if (countBadge) {
+                countBadge.textContent = count;
+                countBadge.style.display = 'inline-block';
+            }
+            if (clearAllBtn) {
+                clearAllBtn.style.display = 'inline-block';
+            }
+        } else {
+            if (countBadge) {
+                countBadge.style.display = 'none';
+            }
+            if (clearAllBtn) {
+                clearAllBtn.style.display = 'none';
+            }
+        }
+    }
+
+    function getPaginatedData() {
+        if (!isFiltered || currentFilteredData.length === 0) {
+            return [];
+        }
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        return currentFilteredData.slice(start, end);
+    }
+
+    function updatePagination() {
+        const paginationContainer = document.querySelector('nav[aria-label="Page navigation"]');
+        const recordCountContainer = document.querySelector('.text-muted.mt-2');
+        
+        if (!isFiltered || currentFilteredData.length === 0) {
+            // Show server-side pagination when no filters
+            if (paginationContainer) paginationContainer.style.display = 'block';
+            if (recordCountContainer) recordCountContainer.style.display = 'block';
+            return;
+        }
+
+        // Hide server-side pagination
+        if (paginationContainer) paginationContainer.style.display = 'none';
+        
+        // Create client-side pagination
+        const totalCount = currentFilteredData.length;
+        const totalPages = Math.ceil(totalCount / pageSize);
+        const start = (currentPage - 1) * pageSize + 1;
+        const end = Math.min(currentPage * pageSize, totalCount);
+
+        // Update record count
+        if (recordCountContainer) {
+            recordCountContainer.style.display = 'block';
+            recordCountContainer.innerHTML = `Showing ${start} to ${end} of ${totalCount} filtered records`;
+        }
+
+        // Create pagination controls
+        if (paginationContainer) {
+            paginationContainer.style.display = 'block';
+            let paginationHTML = `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeFilteredPage(${currentPage - 1}); return false;">Previous</a>
+                </li>
+            `;
+            
+            for (let i = 1; i <= totalPages; i++) {
+                paginationHTML += `
+                    <li class="page-item ${i === currentPage ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                    </li>
+                `;
+            }
+            
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeFilteredPage(${currentPage + 1}); return false;">Next</a>
+                </li>
+            `;
+            
+            paginationContainer.querySelector('ul').innerHTML = paginationHTML;
+        }
+    }
+
+    function changeFilteredPage(page) {
+        const totalPages = Math.ceil(currentFilteredData.length / pageSize);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        updateTable(getPaginatedData());
+        updatePagination();
+        // Scroll to top of table
+        document.querySelector('#dataTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // Reapply column visibility
+        const storageKey = `hiddenColumns_User`;
+        const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        if (typeof applyColumnVisibility === 'function') {
+            applyColumnVisibility(hiddenCols);
+        }
+    }
+
+    function updateTable(data) {
+        const tbody = document.querySelector('#dataTable tbody');
+        if (!tbody) return;
+        
+        // Use DocumentFragment to build all rows first, then replace in one go (no flicker)
+        const fragment = document.createDocumentFragment();
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.id = `row-${item.id}`;
+            row.innerHTML = `
+                <td data-column="UserName">${escapeHtml(item.userName || '')}</td>
+                <td data-column="Email">${escapeHtml(item.email || '')}</td>
+                <td data-column="FirstName">${escapeHtml(item.firstName || '')}</td>
+                <td data-column="LastName">${escapeHtml(item.lastName || '')}</td>
+                <td data-column="PhoneNumber">${escapeHtml(item.phoneNumber || '')}</td>
+                <td data-column="AddressLine1">${escapeHtml(item.addressLine1 || '')}</td>
+                <td data-column="City">${escapeHtml(item.city || '')}</td>
+                <td data-column="StateName">${escapeHtml(item.stateName || '')}</td>
+                <td data-column="PostalCode">${escapeHtml(item.postalCode || '')}</td>
+                <td data-column="IsActive">${item.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'}</td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a class="btn btn-info" href="@Url.Action("Details", "User")/${item.id}">Details</a>
+                        <a class="btn btn-warning" href="@Url.Action("Edit", "User")/${item.id}">Edit</a>
+                        <button type="button" class="btn btn-secondary reset-password-btn" data-user-id="${item.id}" data-user-name="${escapeHtml(item.userName || '')}" data-bs-toggle="modal" data-bs-target="#resetPasswordModal">Reset Password</button>
+                        <a href="#" class="btn btn-danger delete-user-btn" data-user-id="${item.id}" data-user-name="${escapeHtml(item.userName || '')}" data-user-email="${escapeHtml(item.email || '')}" data-bs-toggle="modal" data-bs-target="#deleteUserModal">Delete</a>
+                    </div>
+                </td>
+            `;
+            fragment.appendChild(row);
+        });
+        
+        // Replace all content in one operation (no flicker)
+        tbody.innerHTML = '';
+        tbody.appendChild(fragment);
+        
+        // Re-attach delete button handlers
+        document.querySelectorAll('.delete-user-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+                const userEmail = this.getAttribute('data-user-email');
+                const userIdInput = document.getElementById('userIdToDelete');
+                const userNamePlaceholder = document.getElementById('userNamePlaceholder');
+                const userEmailPlaceholder = document.getElementById('userEmailPlaceholder');
+                if (userIdInput) userIdInput.value = userId;
+                if (userNamePlaceholder) userNamePlaceholder.innerText = userName;
+                if (userEmailPlaceholder) userEmailPlaceholder.innerText = userEmail;
+            });
+        });
+
+        // Re-attach reset password button handlers
+        document.querySelectorAll('.reset-password-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const userId = this.getAttribute('data-user-id');
+                const userName = this.getAttribute('data-user-name');
+                const userIdToResetInput = document.getElementById('userIdToResetPassword');
+                const resetPasswordUserNamePlaceholder = document.getElementById('resetPasswordUserNamePlaceholder');
+                const newPasswordInput = document.getElementById('newPasswordInput');
+                if (userIdToResetInput) userIdToResetInput.value = userId;
+                if (resetPasswordUserNamePlaceholder) resetPasswordUserNamePlaceholder.innerText = userName;
+                if (newPasswordInput) newPasswordInput.value = userName + '@@123';
+            });
+        });
+        
+        // Reapply column visibility and filter inputs state after table update
+        const storageKey = `hiddenColumns_User`;
+        const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        if (typeof applyColumnVisibility === 'function') {
+            applyColumnVisibility(hiddenCols);
+        }
+    }
+
+    function updateFilterTags() {
+        const tagsContainer = document.getElementById('activeFilterTags');
+        if (!tagsContainer) return;
+        tagsContainer.innerHTML = '';
+        if (Object.keys(activeFilters).length === 0) {
+            return;
+        }
+        Object.keys(activeFilters).forEach(column => {
+            const columnName = document.querySelector(`thead th[data-column="${column}"]`)?.textContent.trim() || column;
+            const filterValue = activeFilters[column] === 'true' ? 'Yes' : (activeFilters[column] === 'false' ? 'No' : activeFilters[column]);
+            const badge = document.createElement('span');
+            badge.className = 'badge bg-secondary me-1 mb-1';
+            badge.style.cursor = 'pointer';
+            badge.innerHTML = `${columnName}: ${escapeHtml(filterValue)} <i class="fa-solid fa-times ms-1"></i>`;
+            badge.addEventListener('click', function(e) {
+                e.stopPropagation();
+                delete activeFilters[column];
+                const filterInput = document.querySelector(`.filter-input[data-column="${column}"]`);
+                const filterToggle = document.querySelector(`.filter-toggle[data-column="${column}"]`);
+                const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);
+                if (filterInput) filterInput.value = '';
+                if (filterToggle) filterToggle.checked = false;
+                if (clearBtn) clearBtn.style.display = 'none';
+                updateFilterTags();
+                updateFilterCount();
+                applyFilters();
+            });
+            tagsContainer.appendChild(badge);
+        });
+    }
+
+    async function downloadExcel() {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            
+            // Get hidden columns from localStorage
+            const storageKey = `hiddenColumns_User`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            // Prepare request data with filters and hidden columns
+            const requestData = {
+                filters: activeFilters || {},
+                hiddenColumns: hiddenCols
+            };
+            
+            const response = await fetch('@Url.Action("Print", "User")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(requestData),
+                cache: 'no-cache' // Prevent caching
+            });
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.style.display = 'none';
+                // Get filename from Content-Disposition header if available, otherwise use default
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const now = new Date();
+                const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+                const timeStr = String(now.getHours()).padStart(2, '0') + 
+                               String(now.getMinutes()).padStart(2, '0') + 
+                               String(now.getSeconds()).padStart(2, '0');
+                let filename = `Users_${dateStr}_${timeStr}.xlsx`;
+                if (contentDisposition) {
+                    // Try to match filename*=UTF-8''filename format first (RFC 5987)
+                    let filenameMatch = contentDisposition.match(/filename\*=UTF-8''([^;,\s]+)/);
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].trim());
+                    } else {
+                        // Fall back to regular filename="..." format
+                        filenameMatch = contentDisposition.match(/filename=([^;,\s]+)/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1].trim();
+                            // Remove quotes if present
+                            filename = filename.replace(/^["']|["']$/g, '');
+                        }
+                    }
+                    // Clean up: remove any extra parameters, encoding info, or spaces
+                    filename = filename.split(';')[0].split('filename_=')[0].trim();
+                    // Remove any parentheses and numbers like "(2)" at the end
+                    filename = filename.replace(/\s*\(\d+\)\s*$/, '');
+                    // Ensure it ends with .xlsx
+                    if (!filename.endsWith('.xlsx')) {
+                        const baseName = filename.split('.')[0];
+                        filename = baseName + '.xlsx';
+                    }
+                }
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                // Delay revoking URL to ensure download starts
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+            } else {
+                // Try to parse error response as JSON, but handle non-JSON responses
+                let errorMessage = 'Unknown error';
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const result = await response.json();
+                        errorMessage = result.message || result.error || 'Unknown error';
+                    } else {
+                        const errorText = await response.text();
+                        errorMessage = errorText || `Server returned status ${response.status}`;
+                    }
+                } catch (e) {
+                    errorMessage = `Server returned status ${response.status}`;
+                }
+                alert('Error: ' + errorMessage);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error generating Excel file.');
+        }
+    }
+
+    async function loadAllData() {
+        try {
+            // When filters are cleared, fetch all data via Filter action and use client-side pagination
+            // This approach is smooth - no page reload, no flicker
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const response = await fetch('@Url.Action("Filter", "User")', {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json', 
+                    'RequestVerificationToken': token 
+                },
+                body: JSON.stringify({})
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response error:', response.status, errorText);
+                alert('Error: Server returned status ' + response.status);
+                return;
+            }
+            
+            const result = await response.json();
+            if (result.success) {
+                // Store all data and use client-side pagination (smooth, no flicker)
+                currentFilteredData = result.data;
+                isFiltered = true; // Keep as filtered to use client-side pagination
+                currentPage = 1;
+                
+                // Get paginated data first
+                const paginatedData = getPaginatedData();
+                
+                // Update everything in a single batch using requestAnimationFrame to minimize flicker
+                requestAnimationFrame(() => {
+                    updatePagination();
+                    updateTable(paginatedData); // updateTable already calls applyColumnVisibility at the end
+                    updateFilterTags();
+                    updateFilterCount();
+                });
+            } else {
+                alert('Error: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error loading data: ' + error.message);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
