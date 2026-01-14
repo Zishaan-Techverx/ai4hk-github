@@ -1,18 +1,17 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities
 {
-    public class Permission
+    public class Permission : AuditBaseEntity
     {
         public int Id { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public string Category { get; set; }
-        public long? DeletedByUserId { get; set; }
-        public DateTimeOffset? DeletedDate { get; set; }
     }
 
-    public class RolePermission
+    public class RolePermission : AuditBaseEntity
     {
         public int Id { get; set; }
         public long RoleId { get; set; }

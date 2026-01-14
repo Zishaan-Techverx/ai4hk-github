@@ -9,10 +9,12 @@ namespace TpaSodManagement.Services.Implementations
     public class CustomerService : ICustomerService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CustomerService(ApplicationDbContext context)
+        public CustomerService(ApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ServiceResponse<List<Customer>>> GetAllAsync()
@@ -199,6 +201,9 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Customer>();
             try
             {
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                customer.CreatedDate = DateTimeOffset.UtcNow;
+                customer.CreatedByUserId = currentUserId;
                 _context.Add(customer);
                 await _context.SaveChangesAsync();
                 response.Data = customer;
@@ -224,6 +229,9 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                customer.UpdatedDate = DateTimeOffset.UtcNow;
+                customer.UpdatedByUserId = currentUserId;
                 _context.Update(customer);
                 await _context.SaveChangesAsync();
                 response.Data = customer;
@@ -257,8 +265,9 @@ namespace TpaSodManagement.Services.Implementations
                 }
 
                 // Soft delete: Set DeletedDate and DeletedByUserId
+                var currentUserId = deletedByUserId ?? await _currentUserService.GetCurrentUserIdAsync();
                 customer.DeletedDate = DateTimeOffset.UtcNow;
-                customer.DeletedByUserId = deletedByUserId;
+                customer.DeletedByUserId = currentUserId;
                 
                 await _context.SaveChangesAsync();
                 response.Data = true;

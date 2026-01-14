@@ -8,11 +8,13 @@ namespace TpaSodManagement.Services.Implementations
     public class OrganizationService : IOrganizationService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
         // Remove IWebHostEnvironment dependency since we're not using file system
-        public OrganizationService(ApplicationDbContext context)
+        public OrganizationService(ApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<List<Organization>> GetAllOrganizationsAsync()
@@ -43,6 +45,9 @@ namespace TpaSodManagement.Services.Implementations
                 organization.LogoBytes = await ConvertFileToBytesAsync(logoFile);
             }
 
+            var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+            organization.CreatedDate = DateTimeOffset.UtcNow;
+            organization.CreatedByUserId = currentUserId;
             _context.Organizations.Add(organization);
             await _context.SaveChangesAsync();
             return organization;
@@ -70,6 +75,9 @@ namespace TpaSodManagement.Services.Implementations
                 orgDb.LogoBytes = await ConvertFileToBytesAsync(logoFile);
             }
 
+            var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+            orgDb.UpdatedDate = DateTimeOffset.UtcNow;
+            orgDb.UpdatedByUserId = currentUserId;
             _context.Organizations.Update(orgDb);
             await _context.SaveChangesAsync();
             return orgDb;
@@ -83,8 +91,9 @@ namespace TpaSodManagement.Services.Implementations
                 return false;
 
             // Soft delete: Set DeletedDate and DeletedByUserId
+            var currentUserId = deletedByUserId ?? await _currentUserService.GetCurrentUserIdAsync();
             organization.DeletedDate = DateTimeOffset.UtcNow;
-            organization.DeletedByUserId = deletedByUserId;
+            organization.DeletedByUserId = currentUserId;
             
             await _context.SaveChangesAsync();
             return true;

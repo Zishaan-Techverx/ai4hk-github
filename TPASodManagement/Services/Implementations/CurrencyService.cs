@@ -8,10 +8,12 @@ namespace TpaSodManagement.Services.Implementations
     public class CurrencyService : ICurrencyService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public CurrencyService(ApplicationDbContext context)
+        public CurrencyService(ApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ServiceResponse<List<Currency>>> GetAllAsync()
@@ -127,7 +129,9 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                currency.CreatedDate = System.DateTimeOffset.UtcNow;
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                currency.CreatedDate = DateTimeOffset.UtcNow;
+                currency.CreatedByUserId = currentUserId;
                 _context.Add(currency);
                 await _context.SaveChangesAsync();
                 response.Data = currency;
@@ -165,6 +169,9 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                currency.UpdatedDate = DateTimeOffset.UtcNow;
+                currency.UpdatedByUserId = currentUserId;
                 _context.Update(currency);
                 await _context.SaveChangesAsync();
                 response.Data = currency;
@@ -199,8 +206,9 @@ namespace TpaSodManagement.Services.Implementations
                 }
 
                 // Soft delete: Set DeletedDate and DeletedByUserId
+                var currentUserId = deletedByUserId ?? await _currentUserService.GetCurrentUserIdAsync();
                 currency.DeletedDate = DateTimeOffset.UtcNow;
-                currency.DeletedByUserId = deletedByUserId;
+                currency.DeletedByUserId = currentUserId;
                 
                 await _context.SaveChangesAsync();
                 response.Data = true;

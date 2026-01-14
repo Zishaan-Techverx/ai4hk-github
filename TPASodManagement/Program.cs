@@ -49,6 +49,12 @@ builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<TpaSodManagement.Utilities.IExportToExcel, TpaSodManagement.Utilities.ExportToExcel>();
 
+// Add HttpContextAccessor for CurrentUserService
+builder.Services.AddHttpContextAccessor();
+
+// Register CurrentUserService
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("CanViewAdmin", policy =>

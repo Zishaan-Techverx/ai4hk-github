@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Seeding
+public partial class Seeding : AuditBaseEntity
 {
     public long SeedingId { get; set; }
 
@@ -33,12 +34,6 @@ public partial class Seeding
     public string? SoilMoisture { get; set; }
 
     public string? Notes { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual AreaType AreaType { get; set; } = null!;
 

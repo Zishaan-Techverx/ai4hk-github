@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class WasteReason
+public partial class WasteReason : AuditBaseEntity
 {
     public int WasteReasonId { get; set; }
 
@@ -16,12 +17,6 @@ public partial class WasteReason
     public string? Description { get; set; }
 
     public bool IsActive { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual ICollection<Waste> Wastes { get; set; } = new List<Waste>();
 }

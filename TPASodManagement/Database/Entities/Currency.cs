@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Currency
+public partial class Currency : AuditBaseEntity
 {
     public int CurrencyId { get; set; }
 
@@ -16,12 +17,6 @@ public partial class Currency
     public byte DecimalPlaces { get; set; }
 
     public bool IsActive { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 

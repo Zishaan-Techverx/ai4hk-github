@@ -12,11 +12,13 @@ namespace TpaSodManagement.Services.Implementations
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly ICurrentUserService _currentUserService;
 
-        public ProductService(ApplicationDbContext context, UserManager<TpaSodManagementUser> userManager)
+        public ProductService(ApplicationDbContext context, UserManager<TpaSodManagementUser> userManager, ICurrentUserService currentUserService)
         {
             _context = context;
             _userManager = userManager;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ServiceResponse<List<Product>>> GetAllAsync()
@@ -190,6 +192,9 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Product>();
             try
             {
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                product.CreatedDate = DateTimeOffset.UtcNow;
+                product.CreatedByUserId = currentUserId;
                 _context.Add(product);
                 await _context.SaveChangesAsync();
                 response.Data = product;
@@ -215,6 +220,9 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                product.UpdatedDate = DateTimeOffset.UtcNow;
+                product.UpdatedByUserId = currentUserId;
                 _context.Update(product);
                 await _context.SaveChangesAsync();
                 response.Data = product;
@@ -248,8 +256,9 @@ namespace TpaSodManagement.Services.Implementations
                 }
 
                 // Soft delete: Set DeletedDate and DeletedByUserId
+                var currentUserId = deletedByUserId ?? await _currentUserService.GetCurrentUserIdAsync();
                 product.DeletedDate = DateTimeOffset.UtcNow;
-                product.DeletedByUserId = deletedByUserId;
+                product.DeletedByUserId = currentUserId;
                 
                 await _context.SaveChangesAsync();
                 response.Data = true;

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Sale
+public partial class Sale : AuditBaseEntity
 {
     public long SaleId { get; set; }
 
@@ -42,16 +43,6 @@ public partial class Sale
 
     public string? Notes { get; set; }
 
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public DateTimeOffset UpdatedDate { get; set; }
-
-    public long UpdatedByUserId { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
-
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
     public virtual Currency Currency { get; set; } = null!;
@@ -66,7 +57,7 @@ public partial class Sale
 
     public virtual Status Status { get; set; } = null!;
 
-    public virtual TpaSodManagementUser UpdatedByUser { get; set; } = null!;
+    public virtual TpaSodManagementUser? UpdatedByUser { get; set; }
 
     public virtual TpaSodManagementUser User { get; set; } = null!;
 }

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Certificate
+public partial class Certificate : AuditBaseEntity
 {
     public long CertificateId { get; set; }
 
@@ -41,12 +42,6 @@ public partial class Certificate
     public long? RelatedWasteId { get; set; }
 
     public string? Notes { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual CertificateType CertificateType { get; set; } = null!;
 

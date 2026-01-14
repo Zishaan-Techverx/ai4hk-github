@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Address
+public partial class Address : AuditBaseEntity
 {
     public long AddressId { get; set; }
 
@@ -35,14 +36,6 @@ public partial class Address
     public DateTimeOffset? VerificationDate { get; set; }
 
     public bool IsActive { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public DateTimeOffset UpdatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual AddressType AddressType { get; set; } = null!;
 

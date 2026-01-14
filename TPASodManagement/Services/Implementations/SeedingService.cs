@@ -12,11 +12,13 @@ namespace TpaSodManagement.Services.Implementations
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly ICurrentUserService _currentUserService;
 
-        public SeedingService(ApplicationDbContext context, UserManager<TpaSodManagementUser> userManager)
+        public SeedingService(ApplicationDbContext context, UserManager<TpaSodManagementUser> userManager, ICurrentUserService currentUserService)
         {
             _context = context;
             _userManager = userManager;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ServiceResponse<List<Seeding>>> GetAllAsync()
@@ -217,6 +219,9 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Seeding>();
             try
             {
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                seeding.CreatedDate = DateTimeOffset.UtcNow;
+                seeding.CreatedByUserId = currentUserId;
                 _context.Seedings.Add(seeding);
                 await _context.SaveChangesAsync();
                 response.Data = seeding;
@@ -242,6 +247,9 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                seeding.UpdatedDate = DateTimeOffset.UtcNow;
+                seeding.UpdatedByUserId = currentUserId;
                 _context.Seedings.Update(seeding);
                 await _context.SaveChangesAsync();
                 response.Data = seeding;
@@ -275,8 +283,9 @@ namespace TpaSodManagement.Services.Implementations
                 }
 
                 // Soft delete: Set DeletedDate and DeletedByUserId
+                var currentUserId = deletedByUserId ?? await _currentUserService.GetCurrentUserIdAsync();
                 seeding.DeletedDate = DateTimeOffset.UtcNow;
-                seeding.DeletedByUserId = deletedByUserId;
+                seeding.DeletedByUserId = currentUserId;
                 
                 await _context.SaveChangesAsync();
                 response.Data = true;

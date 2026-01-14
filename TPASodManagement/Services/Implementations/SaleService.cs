@@ -12,11 +12,13 @@ namespace TpaSodManagement.Services.Implementations
     {
         private readonly ApplicationDbContext _context;
         private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly ICurrentUserService _currentUserService;
 
-        public SaleService(ApplicationDbContext context, UserManager<TpaSodManagementUser> userManager)
+        public SaleService(ApplicationDbContext context, UserManager<TpaSodManagementUser> userManager, ICurrentUserService currentUserService)
         {
             _context = context;
             _userManager = userManager;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ServiceResponse<List<Sale>>> GetAllAsync()
@@ -297,6 +299,9 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Sale>();
             try
             {
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                sale.CreatedDate = DateTimeOffset.UtcNow;
+                sale.CreatedByUserId = currentUserId;
                 _context.Sales.Add(sale);
                 await _context.SaveChangesAsync();
                 response.Data = sale;
@@ -322,6 +327,9 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                sale.UpdatedDate = DateTimeOffset.UtcNow;
+                sale.UpdatedByUserId = currentUserId;
                 _context.Sales.Update(sale);
                 await _context.SaveChangesAsync();
                 response.Data = sale;
@@ -350,8 +358,9 @@ namespace TpaSodManagement.Services.Implementations
                 }
 
                 // Soft delete: Set DeletedDate and DeletedByUserId
+                var currentUserId = deletedByUserId ?? await _currentUserService.GetCurrentUserIdAsync();
                 sale.DeletedDate = DateTimeOffset.UtcNow;
-                sale.DeletedByUserId = deletedByUserId;
+                sale.DeletedByUserId = currentUserId;
                 
                 await _context.SaveChangesAsync();
                 response.Data = true;

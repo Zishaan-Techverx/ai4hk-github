@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class CertificateType
+public partial class CertificateType : AuditBaseEntity
 {
     public int CertificateTypeId { get; set; }
 
@@ -20,12 +21,6 @@ public partial class CertificateType
     public string? Description { get; set; }
 
     public bool IsActive { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
