@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.User;
@@ -22,6 +23,7 @@ namespace TpaSodManagement.Controllers
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UserController> _logger;
         private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly TpaSodManagement.Utilities.IExportToExcel _exportToExcel;
 
         public UserController(
             IUserService userService,
@@ -30,7 +32,8 @@ namespace TpaSodManagement.Controllers
             IRegistrationService registrationService,
             ApplicationDbContext context,
             ILogger<UserController> logger,
-            UserManager<TpaSodManagementUser> userManager)
+            UserManager<TpaSodManagementUser> userManager,
+            TpaSodManagement.Utilities.IExportToExcel exportToExcel)
         {
             _userService = userService;
             _adminService = adminService;
@@ -39,6 +42,7 @@ namespace TpaSodManagement.Controllers
             _context = context;
             _logger = logger;
             _userManager = userManager;
+            _exportToExcel = exportToExcel;
         }
 
         public async Task<IActionResult> Index()
@@ -72,6 +76,22 @@ namespace TpaSodManagement.Controllers
 
                     viewModel.Add(MapToItemViewModel(user, person, address));
                 }
+
+                // Set ViewBag properties for filter partial
+                ViewBag.FilterColumns = new Dictionary<string, string>
+                {
+                    { "UserName", "User Name" },
+                    { "Email", "Email" },
+                    { "FirstName", "First Name" },
+                    { "LastName", "Last Name" },
+                    { "PhoneNumber", "Phone Number" },
+                    { "City", "City" },
+                    { "StateName", "State" },
+                    { "PostalCode", "Postal Code" },
+                    { "IsActive", "Is Active" }
+                };
+                ViewBag.ModuleName = "Users";
+                ViewBag.BooleanColumns = new HashSet<string> { "IsActive" };
 
                 return View(viewModel);
             }
@@ -492,6 +512,166 @@ namespace TpaSodManagement.Controllers
                 OrganizationId = model.OrganizationId,
                 UserName = model.UserName
             };
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Filter([FromBody] Dictionary<string, string> filters)
+        {
+            try
+            {
+                // Get current logged-in user
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                // Check if current user is SuperAdmin
+                var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
+                bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+                
+                // If SuperAdmin, show all users (pass null to get all organizations)
+                // Otherwise, filter by current user's organization
+                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
+
+                var result = await _userService.GetFilteredAsync(filters ?? new Dictionary<string, string>(), organizationFilter);
+                if (!result.Success)
+                {
+                    return Json(new { success = false, message = result.Message });
+                }
+
+                var viewModel = new List<UserItemViewModel>();
+                foreach (var user in result.Data ?? new List<TpaSodManagementUser>())
+                {
+                    var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
+                    var address = await _registrationService.GetUserAddressAsync(user.Id.ToString());
+                    viewModel.Add(MapToItemViewModel(user, person, address));
+                }
+
+                return Json(new { success = true, data = viewModel });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error filtering users");
+                return Json(new { success = false, message = $"Error filtering data: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> Print([FromBody] JsonElement requestData)
+        {
+            try
+            {
+                // Extract filters and hiddenColumns from request
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    // Extract filters
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                    {
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    }
+                    else
+                    {
+                        // Backward compatibility: if filters are sent directly (old format)
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                        {
+                            filters = directFilters;
+                        }
+                    }
+
+                    // Extract hiddenColumns
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                    {
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    }
+                }
+
+                // Get current logged-in user
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                {
+                    return Json(new { success = false, message = "User not found." });
+                }
+
+                // Check if current user is SuperAdmin
+                var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
+                bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+                
+                // If SuperAdmin, show all users (pass null to get all organizations)
+                // Otherwise, filter by current user's organization
+                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
+
+                var result = await _userService.GetFilteredAsync(filters, organizationFilter);
+                if (!result.Success)
+                {
+                    return Json(new { success = false, message = result.Message });
+                }
+
+                var users = result.Data ?? new List<TpaSodManagementUser>();
+                var vm = new List<UserItemViewModel>();
+                foreach (var user in users)
+                {
+                    var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
+                    var address = await _registrationService.GetUserAddressAsync(user.Id.ToString());
+                    vm.Add(MapToItemViewModel(user, person, address));
+                }
+
+                var allColumns = new List<(string Header, string PropertyName)>
+                {
+                    ("User Name", "UserName"),
+                    ("Email", "Email"),
+                    ("First Name", "FirstName"),
+                    ("Last Name", "LastName"),
+                    ("Phone Number", "PhoneNumber"),
+                    ("Address", "AddressLine1"),
+                    ("City", "City"),
+                    ("State", "StateName"),
+                    ("Postal Code", "PostalCode"),
+                    ("Is Active", "IsActive")
+                };
+
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
+
+                var stream = _exportToExcel.GenerateExcel(
+                    moduleName: "Users",
+                    worksheetName: "Users",
+                    columnHeaders: columnHeaders,
+                    data: vm,
+                    rowMapper: item =>
+                    {
+                        var allValues = new List<object>
+                        {
+                            item.UserName ?? "",
+                            item.Email ?? "",
+                            item.FirstName ?? "",
+                            item.LastName ?? "",
+                            item.PhoneNumber ?? "",
+                            item.AddressLine1 ?? "",
+                            item.City ?? "",
+                            item.StateName ?? "",
+                            item.PostalCode ?? "",
+                            item.IsActive ? "Active" : "Inactive"
+                        };
+                        return columnIndices.Select(idx => allValues[idx]).ToList();
+                    }
+                );
+
+                var fileName = $"Users_{DateTime.Now:yyyyMMdd_HHmmss}.xlsx";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating Excel for users");
+                return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
+            }
         }
 
         private async Task PopulateDropdowns(UserEditViewModel vm)

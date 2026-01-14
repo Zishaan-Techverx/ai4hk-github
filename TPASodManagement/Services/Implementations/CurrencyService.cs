@@ -182,16 +182,13 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<bool>> DeleteAsync(int id)
+        public async Task<ServiceResponse<bool>> DeleteAsync(int id, long? deletedByUserId)
         {
             var response = new ServiceResponse<bool>();
             try
             {
                 var currency = await _context.Currencies
-                    .Include(c => c.Products)
-                    .Include(c => c.Sales)
-                    .Include(c => c.Wastes)
-                    .FirstOrDefaultAsync(c => c.CurrencyId == id);
+                    .FirstOrDefaultAsync(c => c.CurrencyId == id && c.DeletedDate == null);
 
                 if (currency == null)
                 {
@@ -201,25 +198,10 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                // Check if currency is used in any products
-                if (currency.Products != null && currency.Products.Any())
-                {
-                    response.Success = false;
-                    response.Message = "Cannot delete currency as it is being used in products";
-                    response.Data = false;
-                    return response;
-                }
-
-                // Check if currency is used in any sales
-                if (currency.Sales != null && currency.Sales.Any())
-                {
-                    response.Success = false;
-                    response.Message = "Cannot delete currency as it is being used in sales";
-                    response.Data = false;
-                    return response;
-                }
-
-                _context.Currencies.Remove(currency);
+                // Soft delete: Set DeletedDate and DeletedByUserId
+                currency.DeletedDate = DateTimeOffset.UtcNow;
+                currency.DeletedByUserId = deletedByUserId;
+                
                 await _context.SaveChangesAsync();
                 response.Data = true;
             }

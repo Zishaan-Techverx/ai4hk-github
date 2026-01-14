@@ -10,6 +10,8 @@ using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Farm;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
+using Microsoft.AspNetCore.Identity;
+using TpaSodManagement.Areas.Identity.Data;
 
 namespace TpaSodManagement.Controllers
 {
@@ -18,11 +20,13 @@ namespace TpaSodManagement.Controllers
     {
         private readonly IFarmService _farmService;
         private readonly IExportToExcel _exportToExcel;
+        private readonly UserManager<TpaSodManagementUser> _userManager;
 
-        public FarmController(IFarmService farmService, IExportToExcel exportToExcel)
+        public FarmController(IFarmService farmService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager)
         {
             _farmService = farmService;
             _exportToExcel = exportToExcel;
+            _userManager = userManager;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -155,7 +159,10 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(long id)
         {
-            var result = await _farmService.DeleteAsync(id);
+            var currentUser = await _userManager.GetUserAsync(User);
+            long? deletedByUserId = currentUser?.Id;
+            
+            var result = await _farmService.DeleteAsync(id, deletedByUserId);
             if (!result.Success)
             {
                 return Json(new { success = false, message = result.Message });

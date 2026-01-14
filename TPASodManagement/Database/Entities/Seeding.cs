@@ -36,6 +36,10 @@ public partial class Seeding
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual AreaType AreaType { get; set; } = null!;
 
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();

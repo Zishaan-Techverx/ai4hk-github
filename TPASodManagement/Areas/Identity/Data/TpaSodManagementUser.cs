@@ -18,5 +18,9 @@ public class TpaSodManagementUser : IdentityUser<long>
     public long? PersonId { get; set; }
     public long? WebsiteId { get; set; }
     public long? FarmId { get; set; }
+
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
 }
 

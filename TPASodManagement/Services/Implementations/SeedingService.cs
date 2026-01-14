@@ -259,12 +259,13 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<bool>> DeleteAsync(long id)
+        public async Task<ServiceResponse<bool>> DeleteAsync(long id, long? deletedByUserId)
         {
             var response = new ServiceResponse<bool>();
             try
             {
-                var seeding = await _context.Seedings.FindAsync(id);
+                var seeding = await _context.Seedings
+                    .FirstOrDefaultAsync(s => s.SeedingId == id && s.DeletedDate == null);
                 if (seeding == null)
                 {
                     response.Success = false;
@@ -273,7 +274,10 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                _context.Seedings.Remove(seeding);
+                // Soft delete: Set DeletedDate and DeletedByUserId
+                seeding.DeletedDate = DateTimeOffset.UtcNow;
+                seeding.DeletedByUserId = deletedByUserId;
+                
                 await _context.SaveChangesAsync();
                 response.Data = true;
             }

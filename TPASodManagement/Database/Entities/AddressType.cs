@@ -17,5 +17,9 @@ public partial class AddressType
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 }

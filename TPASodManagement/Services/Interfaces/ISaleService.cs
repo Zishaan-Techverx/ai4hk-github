@@ -12,7 +12,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<Sale>> GetByIdAsync(long id);
         Task<ServiceResponse<Sale>> CreateAsync(Sale sale);
         Task<ServiceResponse<Sale>> UpdateAsync(Sale sale);
-        Task<ServiceResponse<bool>> DeleteAsync(long id);
+        Task<ServiceResponse<bool>> DeleteAsync(long id, long? deletedByUserId);
         Task<ServiceResponse<Dictionary<string, IEnumerable<SelectListItem>>>> GetDropdownDataAsync(long? selectedIds = null);
     }
 }

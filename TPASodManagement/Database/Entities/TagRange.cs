@@ -23,6 +23,10 @@ public partial class TagRange
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual ICollection<SaleLineItem> SaleLineItems { get; set; } = new List<SaleLineItem>();
 
     public virtual ICollection<Seeding> Seedings { get; set; } = new List<Seeding>();

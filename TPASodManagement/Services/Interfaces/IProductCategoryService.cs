@@ -11,7 +11,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<ProductCategory>> GetByIdAsync(int id);
         Task<ServiceResponse<ProductCategory>> CreateAsync(ProductCategory productCategory);
         Task<ServiceResponse<ProductCategory>> UpdateAsync(ProductCategory productCategory);
-        Task<ServiceResponse<bool>> DeleteAsync(int id);
+        Task<ServiceResponse<bool>> DeleteAsync(int id, long? deletedByUserId);
         Task<ServiceResponse<bool>> ExistsAsync(int id);
     }
 }

@@ -201,7 +201,10 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Delete(long id)
         {
-            var result = await _saleService.DeleteAsync(id);
+            var currentUser = await _userManager.GetUserAsync(User);
+            long? deletedByUserId = currentUser?.Id;
+            
+            var result = await _saleService.DeleteAsync(id, deletedByUserId);
             if (!result.Success)
             {
                 return Json(new { success = false, message = result.Message });

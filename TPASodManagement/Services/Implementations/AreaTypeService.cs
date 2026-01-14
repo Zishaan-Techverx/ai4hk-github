@@ -190,18 +190,13 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<bool>> DeleteAsync(int id)
+        public async Task<ServiceResponse<bool>> DeleteAsync(int id, long? deletedByUserId)
         {
             var response = new ServiceResponse<bool>();
             try
             {
                 var areaType = await _context.AreaTypes
-                    .Include(a => a.Farms)
-                    .Include(a => a.Fields)
-                    .Include(a => a.SaleLineItems)
-                    .Include(a => a.Seedings)
-                    .Include(a => a.Wastes)
-                    .FirstOrDefaultAsync(a => a.AreaTypeId == id);
+                    .FirstOrDefaultAsync(a => a.AreaTypeId == id && a.DeletedDate == null);
 
                 if (areaType == null)
                 {
@@ -211,52 +206,10 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                // Check if area type is used in any farms
-                if (areaType.Farms != null && areaType.Farms.Any())
-                {
-                    response.Success = false;
-                    response.Message = "Cannot delete area type as it is being used in farms";
-                    response.Data = false;
-                    return response;
-                }
-
-                // Check if area type is used in any fields
-                if (areaType.Fields != null && areaType.Fields.Any())
-                {
-                    response.Success = false;
-                    response.Message = "Cannot delete area type as it is being used in fields";
-                    response.Data = false;
-                    return response;
-                }
-
-                // Check if area type is used in any sale line items
-                if (areaType.SaleLineItems != null && areaType.SaleLineItems.Any())
-                {
-                    response.Success = false;
-                    response.Message = "Cannot delete area type as it is being used in sale line items";
-                    response.Data = false;
-                    return response;
-                }
-
-                // Check if area type is used in any seedings
-                if (areaType.Seedings != null && areaType.Seedings.Any())
-                {
-                    response.Success = false;
-                    response.Message = "Cannot delete area type as it is being used in seedings";
-                    response.Data = false;
-                    return response;
-                }
-
-                // Check if area type is used in any wastes
-                if (areaType.Wastes != null && areaType.Wastes.Any())
-                {
-                    response.Success = false;
-                    response.Message = "Cannot delete area type as it is being used in wastes";
-                    response.Data = false;
-                    return response;
-                }
-
-                _context.AreaTypes.Remove(areaType);
+                // Soft delete: Set DeletedDate and DeletedByUserId
+                areaType.DeletedDate = DateTimeOffset.UtcNow;
+                areaType.DeletedByUserId = deletedByUserId;
+                
                 await _context.SaveChangesAsync();
                 response.Data = true;
             }

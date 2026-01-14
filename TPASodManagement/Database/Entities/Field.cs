@@ -37,6 +37,10 @@ public partial class Field
 
     public string CreatedByUserId { get; set; } = null!; 
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual AreaType AreaType { get; set; } = null!;
 
     public virtual Farm Farm { get; set; } = null!;

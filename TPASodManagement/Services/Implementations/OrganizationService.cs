@@ -75,13 +75,17 @@ namespace TpaSodManagement.Services.Implementations
             return orgDb;
         }
 
-        public async Task<bool> DeleteOrganizationAsync(long id)
+        public async Task<bool> DeleteOrganizationAsync(long id, long? deletedByUserId)
         {
-            var organization = await _context.Organizations.FindAsync(id);
+            var organization = await _context.Organizations
+                .FirstOrDefaultAsync(o => o.OrganizationId == id && o.DeletedDate == null);
             if (organization == null)
                 return false;
 
-            _context.Organizations.Remove(organization);
+            // Soft delete: Set DeletedDate and DeletedByUserId
+            organization.DeletedDate = DateTimeOffset.UtcNow;
+            organization.DeletedByUserId = deletedByUserId;
+            
             await _context.SaveChangesAsync();
             return true;
         }

@@ -23,6 +23,10 @@ public partial class SaleType
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual CertificateType? CertificateType { get; set; }
 
     public virtual ICollection<Sale> Sales { get; set; } = new List<Sale>();

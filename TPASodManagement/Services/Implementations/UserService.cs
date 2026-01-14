@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.Services;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Database;
 
@@ -414,6 +415,189 @@ namespace TpaSodManagement.Services.Implementations
             </div>
         </body>
         </html>";
+        }
+
+        public async Task<ServiceResponse<List<TpaSodManagementUser>>> GetFilteredAsync(Dictionary<string, string> filters, long? organizationId = null)
+        {
+            var response = new ServiceResponse<List<TpaSodManagementUser>>();
+            try
+            {
+                // Get all users with includes
+                var allUsers = await _userManager.Users
+                    .Include(u => u.Organization)
+                    .ToListAsync();
+
+                // Filter by organization if provided
+                if (organizationId.HasValue)
+                {
+                    allUsers = allUsers
+                        .Where(u => u.OrganizationId == organizationId.Value)
+                        .ToList();
+                }
+
+                // Filter out users with SuperAdmin role
+                var filteredUsers = new List<TpaSodManagementUser>();
+                foreach (var user in allUsers)
+                {
+                    var roles = await _userManager.GetRolesAsync(user);
+                    if (!roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase))
+                    {
+                        filteredUsers.Add(user);
+                    }
+                }
+
+                // Apply additional filters
+                if (filters != null && filters.Count > 0)
+                {
+                    // Filter by UserName
+                    if (filters.ContainsKey("UserName") && !string.IsNullOrWhiteSpace(filters["UserName"]))
+                    {
+                        var filterValue = filters["UserName"].Trim();
+                        filteredUsers = filteredUsers
+                            .Where(u => u.UserName != null && u.UserName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                    }
+
+                    // Filter by Email
+                    if (filters.ContainsKey("Email") && !string.IsNullOrWhiteSpace(filters["Email"]))
+                    {
+                        var filterValue = filters["Email"].Trim();
+                        filteredUsers = filteredUsers
+                            .Where(u => u.Email != null && u.Email.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                    }
+
+                    // Filter by PhoneNumber
+                    if (filters.ContainsKey("PhoneNumber") && !string.IsNullOrWhiteSpace(filters["PhoneNumber"]))
+                    {
+                        var filterValue = filters["PhoneNumber"].Trim();
+                        filteredUsers = filteredUsers
+                            .Where(u => u.PhoneNumber != null && u.PhoneNumber.Contains(filterValue))
+                            .ToList();
+                    }
+
+                    // Filter by IsActive
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out bool isActive))
+                        {
+                            filteredUsers = filteredUsers.Where(u => u.IsActive == isActive).ToList();
+                        }
+                        else if (filters["IsActive"].ToLower() == "true" || filters["IsActive"].ToLower() == "yes" || filters["IsActive"].ToLower() == "1")
+                        {
+                            filteredUsers = filteredUsers.Where(u => u.IsActive == true).ToList();
+                        }
+                        else if (filters["IsActive"].ToLower() == "false" || filters["IsActive"].ToLower() == "no" || filters["IsActive"].ToLower() == "0")
+                        {
+                            filteredUsers = filteredUsers.Where(u => u.IsActive == false).ToList();
+                        }
+                    }
+
+                    // Filter by OrganizationName
+                    if (filters.ContainsKey("OrganizationName") && !string.IsNullOrWhiteSpace(filters["OrganizationName"]))
+                    {
+                        var filterValue = filters["OrganizationName"].Trim();
+                        filteredUsers = filteredUsers
+                            .Where(u => u.Organization != null && u.Organization.OrganizationName != null && 
+                                       u.Organization.OrganizationName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+                            .ToList();
+                    }
+
+                    // Filter by FirstName (from Person)
+                    if (filters.ContainsKey("FirstName") && !string.IsNullOrWhiteSpace(filters["FirstName"]))
+                    {
+                        var filterValue = filters["FirstName"].Trim();
+                        var userIdsWithFirstName = new List<long>();
+                        foreach (var user in filteredUsers)
+                        {
+                            var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
+                            if (person != null && person.FirstName != null && 
+                                person.FirstName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+                            {
+                                userIdsWithFirstName.Add(user.Id);
+                            }
+                        }
+                        filteredUsers = filteredUsers.Where(u => userIdsWithFirstName.Contains(u.Id)).ToList();
+                    }
+
+                    // Filter by LastName (from Person)
+                    if (filters.ContainsKey("LastName") && !string.IsNullOrWhiteSpace(filters["LastName"]))
+                    {
+                        var filterValue = filters["LastName"].Trim();
+                        var userIdsWithLastName = new List<long>();
+                        foreach (var user in filteredUsers)
+                        {
+                            var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
+                            if (person != null && person.LastName != null && 
+                                person.LastName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+                            {
+                                userIdsWithLastName.Add(user.Id);
+                            }
+                        }
+                        filteredUsers = filteredUsers.Where(u => userIdsWithLastName.Contains(u.Id)).ToList();
+                    }
+
+                    // Filter by City (from Address)
+                    if (filters.ContainsKey("City") && !string.IsNullOrWhiteSpace(filters["City"]))
+                    {
+                        var filterValue = filters["City"].Trim();
+                        var userIdsWithCity = new List<long>();
+                        foreach (var user in filteredUsers)
+                        {
+                            var address = await _registrationService.GetUserAddressAsync(user.Id.ToString());
+                            if (address != null && address.City != null && 
+                                address.City.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+                            {
+                                userIdsWithCity.Add(user.Id);
+                            }
+                        }
+                        filteredUsers = filteredUsers.Where(u => userIdsWithCity.Contains(u.Id)).ToList();
+                    }
+
+                    // Filter by StateName (from Address)
+                    if (filters.ContainsKey("StateName") && !string.IsNullOrWhiteSpace(filters["StateName"]))
+                    {
+                        var filterValue = filters["StateName"].Trim();
+                        var userIdsWithState = new List<long>();
+                        foreach (var user in filteredUsers)
+                        {
+                            var address = await _registrationService.GetUserAddressAsync(user.Id.ToString());
+                            if (address != null && address.StateProvince != null && address.StateProvince.StateName != null && 
+                                address.StateProvince.StateName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+                            {
+                                userIdsWithState.Add(user.Id);
+                            }
+                        }
+                        filteredUsers = filteredUsers.Where(u => userIdsWithState.Contains(u.Id)).ToList();
+                    }
+
+                    // Filter by PostalCode (from Address)
+                    if (filters.ContainsKey("PostalCode") && !string.IsNullOrWhiteSpace(filters["PostalCode"]))
+                    {
+                        var filterValue = filters["PostalCode"].Trim();
+                        var userIdsWithPostalCode = new List<long>();
+                        foreach (var user in filteredUsers)
+                        {
+                            var address = await _registrationService.GetUserAddressAsync(user.Id.ToString());
+                            if (address != null && address.PostalCode != null && 
+                                address.PostalCode.Contains(filterValue))
+                            {
+                                userIdsWithPostalCode.Add(user.Id);
+                            }
+                        }
+                        filteredUsers = filteredUsers.Where(u => userIdsWithPostalCode.Contains(u.Id)).ToList();
+                    }
+                }
+
+                response.Data = filteredUsers;
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error filtering users: {ex.Message}";
+                _logger.LogError(ex, "Error filtering users");
+            }
+            return response;
         }
     }
 }

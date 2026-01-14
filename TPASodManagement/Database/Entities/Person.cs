@@ -26,6 +26,10 @@ public partial class Person
 
     public DateTimeOffset UpdatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual ICollection<Customer> Customers { get; set; } = new List<Customer>();
 
     public virtual ICollection<Testimonial> Testimonials { get; set; } = new List<Testimonial>();

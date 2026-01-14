@@ -21,6 +21,10 @@ public partial class AreaType
 
     public DateTimeOffset CreatedDate { get; set; }
 
+    public long? DeletedByUserId { get; set; }
+
+    public DateTimeOffset? DeletedDate { get; set; }
+
     public virtual ICollection<Farm> Farms { get; set; } = new List<Farm>();
 
     public virtual ICollection<Field> Fields { get; set; } = new List<Field>();
