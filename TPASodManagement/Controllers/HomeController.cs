@@ -57,41 +57,164 @@ public class HomeController : Controller
     [HttpPost]
     public async Task<IActionResult> Login(string Input_Email, string Input_Password, bool Input_RememberMe = false)
     {
-        var result = await _signInManager.PasswordSignInAsync(Input_Email, Input_Password, Input_RememberMe, lockoutOnFailure: false);
-
-        if (result.Succeeded)
+        // Try to find user by email first
+        var user = await _userManager.FindByEmailAsync(Input_Email);
+        
+        // If not found by email, try by username
+        if (user == null)
         {
-            TempData["ShowWelcomePopup"] = true;
+            user = await _userManager.FindByNameAsync(Input_Email);
+        }
+
+        if (user == null)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "Invalid email/username or password!" });
+            }
+            TempData["ErrorMessage"] = "Invalid email/username or password!";
             return RedirectToAction("Index");
         }
 
-        if (!result.Succeeded)
+        // Try password sign in
+        if (string.IsNullOrEmpty(user.UserName))
         {
-            var user = await _userManager.FindByEmailAsync(Input_Email);
-
-            if (user != null && !string.IsNullOrEmpty(user.UserName))
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
-                result = await _signInManager.PasswordSignInAsync(user.UserName, Input_Password, Input_RememberMe, lockoutOnFailure: false);
+                return Json(new { success = false, message = "Invalid email/username or password!" });
             }
+            TempData["ErrorMessage"] = "Invalid email/username or password!";
+            return RedirectToAction("Index");
+        }
+
+        var result = await _signInManager.PasswordSignInAsync(user.UserName, Input_Password, Input_RememberMe, lockoutOnFailure: false);
+
+        // Check if 2FA is required (this happens when password is correct but 2FA is enabled)
+        if (result.RequiresTwoFactor)
+        {
+            // Store user info in session for 2FA verification
+            HttpContext.Session.SetString("2FA_UserId", user.Id.ToString());
+            HttpContext.Session.SetString("2FA_RememberMe", Input_RememberMe.ToString());
+            
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, requires2FA = true, message = "Please enter your 2FA code." });
+            }
+            
+            // For non-AJAX requests, redirect to 2FA page
+            return RedirectToAction("Verify2FA");
         }
 
         if (result.Succeeded)
         {
+            // No 2FA, proceed with normal login
             TempData["ShowWelcomePopup"] = true;
+            
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = true, requires2FA = false, redirectUrl = Url.Action("Index") });
+            }
+            
             return RedirectToAction("Index");
         }
 
         if (result.IsNotAllowed)
         {
-            TempData["ErrorMessage"] = "Login failed: Your account is not allowed to sign in (e.g., email not confirmed).";
+            var errorMsg = "Login failed: Your account is not allowed to sign in (e.g., email not confirmed).";
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = errorMsg });
+            }
+            TempData["ErrorMessage"] = errorMsg;
         }
         else if (result.IsLockedOut)
         {
-            TempData["ErrorMessage"] = "Login failed: This account is locked out.";
+            var errorMsg = "Login failed: This account is locked out.";
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = errorMsg });
+            }
+            TempData["ErrorMessage"] = errorMsg;
         }
         else 
         {
-            TempData["ErrorMessage"] = "Invalid email/username or password!";
+            var errorMsg = "Invalid email/username or password!";
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = errorMsg });
+            }
+            TempData["ErrorMessage"] = errorMsg;
+        }
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return Json(new { success = false, message = TempData["ErrorMessage"]?.ToString() ?? "Login failed." });
+        }
+
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> Verify2FA(string code)
+    {
+        var userId = HttpContext.Session.GetString("2FA_UserId");
+        var rememberMeStr = HttpContext.Session.GetString("2FA_RememberMe");
+        bool rememberMe = bool.TryParse(rememberMeStr, out var rm) && rm;
+
+        if (string.IsNullOrEmpty(userId))
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "Session expired. Please login again." });
+            }
+            return RedirectToAction("Index");
+        }
+
+        var user = await _userManager.FindByIdAsync(userId);
+        if (user == null)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "User not found." });
+            }
+            return RedirectToAction("Index");
+        }
+
+        // Strip spaces and hyphens
+        var verificationCode = code?.Replace(" ", string.Empty).Replace("-", string.Empty) ?? string.Empty;
+
+        if (string.IsNullOrEmpty(verificationCode))
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "Please enter a verification code." });
+            }
+            return Json(new { success = false, message = "Please enter a verification code." });
+        }
+
+        var isValid = await _userManager.VerifyTwoFactorTokenAsync(
+            user, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+
+        if (!isValid)
+        {
+            if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+            {
+                return Json(new { success = false, message = "Invalid verification code." });
+            }
+            return Json(new { success = false, message = "Invalid verification code." });
+        }
+
+        // Clear session
+        HttpContext.Session.Remove("2FA_UserId");
+        HttpContext.Session.Remove("2FA_RememberMe");
+
+        // Sign in the user
+        await _signInManager.SignInAsync(user, rememberMe);
+        TempData["ShowWelcomePopup"] = true;
+
+        if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+        {
+            return Json(new { success = true, redirectUrl = Url.Action("Index") });
         }
 
         return RedirectToAction("Index");
