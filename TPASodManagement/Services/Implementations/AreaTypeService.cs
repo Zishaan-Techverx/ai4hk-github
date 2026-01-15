@@ -157,8 +157,11 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<AreaType>();
             try
             {
-                var exists = await _context.AreaTypes.AnyAsync(a => a.AreaTypeId == areaType.AreaTypeId);
-                if (!exists)
+                // Fetch existing entity from database to preserve CreatedByUserId and CreatedDate
+                var existingAreaType = await _context.AreaTypes
+                    .FirstOrDefaultAsync(a => a.AreaTypeId == areaType.AreaTypeId);
+                
+                if (existingAreaType == null)
                 {
                     response.Success = false;
                     response.Message = "Area type not found";
@@ -177,12 +180,23 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                // Update only the properties that should be updated
+                // Preserve CreatedByUserId and CreatedDate
+                existingAreaType.AreaTypeName = areaType.AreaTypeName;
+                existingAreaType.UnitAbbreviation = areaType.UnitAbbreviation;
+                existingAreaType.UnitSystem = areaType.UnitSystem;
+                existingAreaType.ConversionToSquareMeters = areaType.ConversionToSquareMeters;
+                existingAreaType.IsActive = areaType.IsActive;
+                
+                // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
-                areaType.UpdatedDate = DateTimeOffset.UtcNow;
-                areaType.UpdatedByUserId = currentUserId;
-                _context.Update(areaType);
+                existingAreaType.UpdatedDate = DateTimeOffset.UtcNow;
+                existingAreaType.UpdatedByUserId = currentUserId;
+                
+                // CreatedByUserId and CreatedDate are preserved from existingAreaType
+                
                 await _context.SaveChangesAsync();
-                response.Data = areaType;
+                response.Data = existingAreaType;
             }
             catch (DbUpdateConcurrencyException)
             {

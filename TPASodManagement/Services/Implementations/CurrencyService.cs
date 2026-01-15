@@ -149,8 +149,11 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Currency>();
             try
             {
-                var exists = await _context.Currencies.AnyAsync(c => c.CurrencyId == currency.CurrencyId);
-                if (!exists)
+                // Fetch existing entity from database to preserve CreatedByUserId and CreatedDate
+                var existingCurrency = await _context.Currencies
+                    .FirstOrDefaultAsync(c => c.CurrencyId == currency.CurrencyId);
+                
+                if (existingCurrency == null)
                 {
                     response.Success = false;
                     response.Message = "Currency not found";
@@ -169,12 +172,22 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                // Update only the properties that should be updated
+                // Preserve CreatedByUserId and CreatedDate
+                existingCurrency.CurrencyCode = currency.CurrencyCode;
+                existingCurrency.CurrencyName = currency.CurrencyName;
+                existingCurrency.CurrencySymbol = currency.CurrencySymbol;
+                existingCurrency.IsActive = currency.IsActive;
+                
+                // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
-                currency.UpdatedDate = DateTimeOffset.UtcNow;
-                currency.UpdatedByUserId = currentUserId;
-                _context.Update(currency);
+                existingCurrency.UpdatedDate = DateTimeOffset.UtcNow;
+                existingCurrency.UpdatedByUserId = currentUserId;
+                
+                // CreatedByUserId and CreatedDate are preserved from existingCurrency
+                
                 await _context.SaveChangesAsync();
-                response.Data = currency;
+                response.Data = existingCurrency;
             }
             catch (DbUpdateConcurrencyException)
             {

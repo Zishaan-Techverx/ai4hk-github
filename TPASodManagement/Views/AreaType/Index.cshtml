@@ -697,7 +697,19 @@
                 document.querySelectorAll('.filter-toggle').forEach(toggle => {
                     toggle.checked = false;
                 });
+                document.querySelectorAll('.filter-date-from').forEach(input => {
+                    input.value = '';
+                });
+                document.querySelectorAll('.filter-date-to').forEach(input => {
+                    input.value = '';
+                });
                 document.querySelectorAll('.clear-column-filter').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                document.querySelectorAll('.clear-date-from-filter').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                document.querySelectorAll('.clear-date-to-filter').forEach(btn => {
                     btn.style.display = 'none';
                 });
                 activeFilters = {};
@@ -705,7 +717,9 @@
                 currentPage = 1;
                 updateFilterTags();
                 updateFilterCount();
-                await loadAllData();
+                
+                // Reload page to show server-side pagination
+                window.location.reload();
             });
         }
 
@@ -969,27 +983,91 @@
         if (Object.keys(activeFilters).length === 0) {
             return;
         }
+        
+        // Track which date columns we've already processed
+        const processedDateColumns = new Set();
+        
         Object.keys(activeFilters).forEach(column => {
-            const columnName = document.querySelector(`thead th[data-column="${column}"]`)?.textContent.trim() || column;
-            const filterValue = activeFilters[column] === 'true' ? 'Yes' : (activeFilters[column] === 'false' ? 'No' : activeFilters[column]);
-            const badge = document.createElement('span');
-            badge.className = 'badge bg-secondary me-1 mb-1';
-            badge.style.cursor = 'pointer';
-            badge.innerHTML = `${columnName}: ${escapeHtml(filterValue)} <i class="fa-solid fa-times ms-1"></i>`;
-            badge.addEventListener('click', function(e) {
-                e.stopPropagation();
-                delete activeFilters[column];
-                const filterInput = document.querySelector(`.filter-input[data-column="${column}"]`);
-                const filterToggle = document.querySelector(`.filter-toggle[data-column="${column}"]`);
-                const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);
-                if (filterInput) filterInput.value = '';
-                if (filterToggle) filterToggle.checked = false;
-                if (clearBtn) clearBtn.style.display = 'none';
-                updateFilterTags();
-                updateFilterCount();
-                applyFilters();
-            });
-            tagsContainer.appendChild(badge);
+            // Skip date range suffix columns (_From, _To) as we'll handle them together
+            if (column.endsWith('_From') || column.endsWith('_To')) {
+                const baseColumn = column.replace('_From', '').replace('_To', '');
+                if (processedDateColumns.has(baseColumn)) {
+                    return;
+                }
+                processedDateColumns.add(baseColumn);
+                
+                const fromValue = activeFilters[`${baseColumn}_From`];
+                const toValue = activeFilters[`${baseColumn}_To`];
+                const columnName = document.querySelector(`thead th[data-column="${baseColumn}"]`)?.textContent.trim() || baseColumn;
+                
+                let filterValue = '';
+                if (fromValue && toValue) {
+                    filterValue = `${fromValue} to ${toValue}`;
+                } else if (fromValue) {
+                    filterValue = `From ${fromValue}`;
+                } else if (toValue) {
+                    filterValue = `To ${toValue}`;
+                }
+                
+                if (filterValue) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-secondary me-1 mb-1';
+                    badge.style.cursor = 'pointer';
+                    badge.innerHTML = `${columnName}: ${escapeHtml(filterValue)} <i class="fa-solid fa-times ms-1"></i>`;
+                    badge.addEventListener('click', async function(e) {
+                        e.stopPropagation();
+                        delete activeFilters[`${baseColumn}_From`];
+                        delete activeFilters[`${baseColumn}_To`];
+                        const filterDateFrom = document.querySelector(`.filter-date-from[data-column="${baseColumn}"]`);
+                        const filterDateTo = document.querySelector(`.filter-date-to[data-column="${baseColumn}"]`);
+                        const clearFromBtn = document.querySelector(`.clear-date-from-filter[data-column="${baseColumn}"]`);
+                        const clearToBtn = document.querySelector(`.clear-date-to-filter[data-column="${baseColumn}"]`);
+                        if (filterDateFrom) filterDateFrom.value = '';
+                        if (filterDateTo) filterDateTo.value = '';
+                        if (clearFromBtn) clearFromBtn.style.display = 'none';
+                        if (clearToBtn) clearToBtn.style.display = 'none';
+                        updateFilterTags();
+                        updateFilterCount();
+                        // If no filters left, reload page
+                        if (Object.keys(activeFilters).length === 0) {
+                            isFiltered = false;
+                            currentPage = 1;
+                            window.location.reload();
+                        } else {
+                            await applyFilters();
+                        }
+                    });
+                    tagsContainer.appendChild(badge);
+                }
+            } else {
+                const columnName = document.querySelector(`thead th[data-column="${column}"]`)?.textContent.trim() || column;
+                const filterValue = activeFilters[column] === 'true' ? 'Yes' : (activeFilters[column] === 'false' ? 'No' : activeFilters[column]);
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-secondary me-1 mb-1';
+                badge.style.cursor = 'pointer';
+                badge.innerHTML = `${columnName}: ${escapeHtml(filterValue)} <i class="fa-solid fa-times ms-1"></i>`;
+                badge.addEventListener('click', async function(e) {
+                    e.stopPropagation();
+                    delete activeFilters[column];
+                    const filterInput = document.querySelector(`.filter-input[data-column="${column}"]`);
+                    const filterToggle = document.querySelector(`.filter-toggle[data-column="${column}"]`);
+                    const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);
+                    if (filterInput) filterInput.value = '';
+                    if (filterToggle) filterToggle.checked = false;
+                    if (clearBtn) clearBtn.style.display = 'none';
+                    updateFilterTags();
+                    updateFilterCount();
+                    // If no filters left, reload page
+                    if (Object.keys(activeFilters).length === 0) {
+                        isFiltered = false;
+                        currentPage = 1;
+                        window.location.reload();
+                    } else {
+                        await applyFilters();
+                    }
+                });
+                tagsContainer.appendChild(badge);
+            }
         });
     }
 

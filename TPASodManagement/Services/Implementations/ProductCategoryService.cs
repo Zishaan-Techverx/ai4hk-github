@@ -147,10 +147,11 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<ProductCategory>();
             try
             {
-                var exists = await _context.ProductCategories
-                    .AnyAsync(pc => pc.ProductCategoryId == productCategory.ProductCategoryId);
+                // Fetch existing entity from database to preserve CreatedByUserId and CreatedDate
+                var existingProductCategory = await _context.ProductCategories
+                    .FirstOrDefaultAsync(pc => pc.ProductCategoryId == productCategory.ProductCategoryId);
                 
-                if (!exists)
+                if (existingProductCategory == null)
                 {
                     response.Success = false;
                     response.Message = "Product category not found";
@@ -169,12 +170,22 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                // Update only the properties that should be updated
+                // Preserve CreatedByUserId and CreatedDate
+                existingProductCategory.CategoryName = productCategory.CategoryName;
+                existingProductCategory.CategoryCode = productCategory.CategoryCode;
+                existingProductCategory.Description = productCategory.Description;
+                existingProductCategory.IsActive = productCategory.IsActive;
+                
+                // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
-                productCategory.UpdatedDate = DateTimeOffset.UtcNow;
-                productCategory.UpdatedByUserId = currentUserId;
-                _context.Update(productCategory);
+                existingProductCategory.UpdatedDate = DateTimeOffset.UtcNow;
+                existingProductCategory.UpdatedByUserId = currentUserId;
+                
+                // CreatedByUserId and CreatedDate are preserved from existingProductCategory
+                
                 await _context.SaveChangesAsync();
-                response.Data = productCategory;
+                response.Data = existingProductCategory;
             }
             catch (DbUpdateConcurrencyException)
             {

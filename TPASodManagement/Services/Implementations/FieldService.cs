@@ -175,20 +175,37 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Field>();
             try
             {
-                var exists = await _context.Fields.AnyAsync(f => f.FieldId == field.FieldId);
-                if (!exists)
+                // Fetch existing entity from database to preserve CreatedByUserId and CreatedDate
+                var existingField = await _context.Fields
+                    .FirstOrDefaultAsync(f => f.FieldId == field.FieldId);
+                
+                if (existingField == null)
                 {
                     response.Success = false;
                     response.Message = "Field not found";
                     return response;
                 }
 
+                // Update only the properties that should be updated
+                // Preserve CreatedByUserId and CreatedDate
+                existingField.FieldName = field.FieldName;
+                existingField.FieldCode = field.FieldCode;
+                existingField.FarmId = field.FarmId;
+                existingField.AreaAmount = field.AreaAmount;
+                existingField.AreaTypeId = field.AreaTypeId;
+                existingField.SoilType = field.SoilType;
+                existingField.IrrigationAvailable = field.IrrigationAvailable;
+                existingField.IsActive = field.IsActive;
+                
+                // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
-                field.UpdatedDate = DateTimeOffset.UtcNow;
-                field.UpdatedByUserId = currentUserId;
-                _context.Fields.Update(field);
+                existingField.UpdatedDate = DateTimeOffset.UtcNow;
+                existingField.UpdatedByUserId = currentUserId;
+                
+                // CreatedByUserId and CreatedDate are preserved from existingField
+                
                 await _context.SaveChangesAsync();
-                response.Data = field;
+                response.Data = existingField;
             }
             catch (DbUpdateConcurrencyException)
             {
