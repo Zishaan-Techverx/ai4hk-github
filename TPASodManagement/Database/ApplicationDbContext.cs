@@ -386,6 +386,12 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
             entity.Property(e => e.DeletedDate);
         });
 
+        builder.Entity<RolePermission>(entity =>
+        {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
         base.OnModelCreating(builder);
         builder.ApplyConfiguration(new IdentityTestUserEntityConfiguration());
 
@@ -429,9 +435,13 @@ public class IdentityTestUserEntityConfiguration : IEntityTypeConfiguration<TpaS
         builder.Property(u => u.WebsiteId);
         builder.Property(u => u.FarmId);
         
-        // Soft delete properties
-        builder.Property(u => u.DeletedByUserId);
+        // Audit properties (same as AuditBaseEntity)
+        builder.Property(u => u.CreatedDate);
+        builder.Property(u => u.CreatedByUserId);
+        builder.Property(u => u.UpdatedDate);
+        builder.Property(u => u.UpdatedByUserId);
         builder.Property(u => u.DeletedDate);
+        builder.Property(u => u.DeletedByUserId);
         // Note: Soft delete query filter is applied globally in OnModelCreating
         
         builder.Property(u => u.EmailConfirmed).HasDefaultValue(false);

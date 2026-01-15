@@ -19,8 +19,12 @@ public class TpaSodManagementUser : IdentityUser<long>
     public long? WebsiteId { get; set; }
     public long? FarmId { get; set; }
 
-    public long? DeletedByUserId { get; set; }
-
+    // Audit properties (same as AuditBaseEntity - cannot inherit due to IdentityUser<long> inheritance)
+    public DateTimeOffset CreatedDate { get; set; }
+    public long? CreatedByUserId { get; set; }
+    public DateTimeOffset? UpdatedDate { get; set; }
+    public long? UpdatedByUserId { get; set; }
     public DateTimeOffset? DeletedDate { get; set; }
+    public long? DeletedByUserId { get; set; }
 }
 

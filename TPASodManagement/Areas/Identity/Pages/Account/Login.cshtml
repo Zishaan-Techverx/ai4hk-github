@@ -95,4 +95,203 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        // Handle login form submission with AJAX for 2FA
+        document.addEventListener('DOMContentLoaded', function() {
+            var loginForm = document.getElementById('account');
+            if (loginForm) {
+                // Remove any existing error messages
+                var existingErrors = loginForm.querySelectorAll('.alert-danger');
+                existingErrors.forEach(function(err) { err.remove(); });
+                
+                loginForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    // Remove any existing error messages
+                    var existingErrors = loginForm.querySelectorAll('.alert-danger');
+                    existingErrors.forEach(function(err) { err.remove(); });
+                    
+                    var formData = new FormData(loginForm);
+                    var submitBtn = document.getElementById('login-submit');
+                    var originalText = submitBtn.textContent;
+                    submitBtn.disabled = true;
+                    submitBtn.textContent = 'Logging in...';
+
+                    console.log('Sending login request...');
+                    fetch('/Home/Login', {
+                        method: 'POST',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        },
+                        body: formData
+                    })
+                    .then(response => {
+                        console.log('Response received:', response.status);
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
+                    .then(data => {
+                        console.log('Response data:', data);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalText;
+
+                        if (data.success) {
+                            if (data.requires2FA) {
+                                console.log('2FA required, showing popup...');
+                                // Show 2FA popup
+                                show2FAPopup();
+                            } else {
+                                console.log('Login successful, redirecting...');
+                                // Normal login success, redirect
+                                window.location.href = data.redirectUrl || '/';
+                            }
+                        } else {
+                            console.log('Login failed:', data.message);
+                            // Show error message
+                            var errorDiv = document.createElement('div');
+                            errorDiv.className = 'alert alert-danger alert-dismissible fade show mt-3';
+                            errorDiv.innerHTML = '<strong>Error:</strong> ' + (data.message || 'Login failed.') + 
+                                '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+                            loginForm.insertBefore(errorDiv, loginForm.firstChild);
+                            
+                            // Remove error after 5 seconds
+                            setTimeout(function() {
+                                errorDiv.remove();
+                            }, 5000);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        submitBtn.disabled = false;
+                        submitBtn.textContent = originalText;
+                        alert('An error occurred during login. Please try again.');
+                    });
+                    
+                    return false;
+                });
+            } else {
+                console.error('Login form not found!');
+            }
+        });
+
+        // Make functions globally accessible
+        window.show2FAPopup = function() {
+            // Create modal HTML
+            var modalHtml = `
+                <div class="modal fade" id="twoFactorModal" tabindex="-1" aria-labelledby="twoFactorModalLabel" aria-hidden="true" data-bs-backdrop="static" data-bs-keyboard="false">
+                    <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title" id="twoFactorModalLabel">Two-Factor Authentication</h5>
+                            </div>
+                            <div class="modal-body">
+                                <p>Please enter the verification code from your authenticator app.</p>
+                                <form id="verify2faForm">
+                                    <div class="form-floating mb-3">
+                                        <input type="text" class="form-control" id="twoFactorCode" autocomplete="off" maxlength="6" required />
+                                        <label for="twoFactorCode">Verification Code</label>
+                                    </div>
+                                    <div id="twoFactorError" class="alert alert-danger" style="display: none;"></div>
+                                </form>
+                            </div>
+                            <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" onclick="close2FAPopup()">Cancel</button>
+                                <button type="button" class="btn auth-btn-primary" id="verify2faBtn" onclick="verify2FACode()">Verify</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Remove existing modal if any
+            var existingModal = document.getElementById('twoFactorModal');
+            if (existingModal) {
+                existingModal.remove();
+            }
+            
+            // Add modal to body
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            
+            // Show modal
+            var modal = new bootstrap.Modal(document.getElementById('twoFactorModal'));
+            modal.show();
+            
+            // Focus on input
+            setTimeout(function() {
+                document.getElementById('twoFactorCode').focus();
+            }, 500);
+            
+            // Allow Enter key to submit
+            document.getElementById('twoFactorCode').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    verify2FACode();
+                }
+            });
+        }
+
+        window.verify2FACode = function() {
+            var code = document.getElementById('twoFactorCode').value;
+            var errorDiv = document.getElementById('twoFactorError');
+            var verifyBtn = document.getElementById('verify2faBtn');
+            
+            if (!code || code.trim() === '') {
+                errorDiv.textContent = 'Please enter a verification code.';
+                errorDiv.style.display = 'block';
+                return;
+            }
+            
+            verifyBtn.disabled = true;
+            verifyBtn.textContent = 'Verifying...';
+            errorDiv.style.display = 'none';
+            
+            var formData = new FormData();
+            formData.append('code', code);
+            
+            fetch('/Home/Verify2FA', {
+                method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Close modal
+                    close2FAPopup();
+                    // Redirect to home
+                    window.location.href = data.redirectUrl || '/';
+                } else {
+                    errorDiv.textContent = data.message || 'Invalid verification code.';
+                    errorDiv.style.display = 'block';
+                    verifyBtn.disabled = false;
+                    verifyBtn.textContent = 'Verify';
+                    // Clear input
+                    document.getElementById('twoFactorCode').value = '';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                errorDiv.textContent = 'An error occurred. Please try again.';
+                errorDiv.style.display = 'block';
+                verifyBtn.disabled = false;
+                verifyBtn.textContent = 'Verify';
+            });
+        }
+
+        window.close2FAPopup = function() {
+            var modalElement = document.getElementById('twoFactorModal');
+            if (modalElement) {
+                var modal = bootstrap.Modal.getInstance(modalElement);
+                if (modal) {
+                    modal.hide();
+                }
+                modalElement.remove();
+            }
+        }
+    </script>
 }

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Testimonial
+public partial class Testimonial : AuditBaseEntity
 {
     public long TestimonialId { get; set; }
 
@@ -55,10 +56,6 @@ public partial class Testimonial
     public string? Location { get; set; }
 
     public string? ApproverName { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual TpaSodManagementUser? ApprovedByUser { get; set; }
 

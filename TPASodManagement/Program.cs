@@ -26,7 +26,8 @@ builder.Services.AddDefaultIdentity<TpaSodManagementUser>(options =>
     options.Password.RequireLowercase = false;
 })
 .AddRoles<IdentityRole<long>>()
-.AddEntityFrameworkStores<ApplicationDbContext>();
+.AddEntityFrameworkStores<ApplicationDbContext>()
+.AddTokenProvider<Microsoft.AspNetCore.Identity.AuthenticatorTokenProvider<TpaSodManagementUser>>(TokenOptions.DefaultAuthenticatorProvider);
 
 builder.Services.AddScoped<IUserClaimsPrincipalFactory<TpaSodManagementUser>, AppClaimsPrincipalFactory>();
 
@@ -48,6 +49,12 @@ builder.Services.AddScoped<IRegistrationService, RegistrationService>();
 builder.Services.AddScoped<IHomeService, HomeService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<TpaSodManagement.Utilities.IExportToExcel, TpaSodManagement.Utilities.ExportToExcel>();
+
+// Add HttpContextAccessor for CurrentUserService
+builder.Services.AddHttpContextAccessor();
+
+// Register CurrentUserService
+builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 
 builder.Services.AddAuthorization(options =>
 {
@@ -124,6 +131,14 @@ builder.Services.AddAuthorization(options =>
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 
+// Add Session for 2FA
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
+
 // AutoMapper registration
 builder.Services.AddAutoMapper(typeof(Program));
 
@@ -145,6 +160,7 @@ else
 app.UseHttpsRedirection();
 app.UseRouting();
 
+app.UseSession();
 app.UseAuthentication();
 app.UseAuthorization();
 

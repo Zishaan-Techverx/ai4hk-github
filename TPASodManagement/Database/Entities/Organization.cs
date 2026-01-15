@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations.Schema;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Organization
+public partial class Organization : AuditBaseEntity
 {
     public long OrganizationId { get; set; }
 
@@ -25,15 +26,7 @@ public partial class Organization
 
     public bool IsActive { get; set; }
 
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public DateTimeOffset UpdatedDate { get; set; }
-
     public byte[]? LogoBytes { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     [NotMapped]
     public IFormFile? LogoFile { get; set; }

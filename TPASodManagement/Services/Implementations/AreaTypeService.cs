@@ -8,10 +8,12 @@ namespace TpaSodManagement.Services.Implementations
     public class AreaTypeService : IAreaTypeService
     {
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public AreaTypeService(ApplicationDbContext context)
+        public AreaTypeService(ApplicationDbContext context, ICurrentUserService currentUserService)
         {
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<ServiceResponse<List<AreaType>>> GetAllAsync()
@@ -135,7 +137,9 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                areaType.CreatedDate = System.DateTimeOffset.UtcNow;
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                areaType.CreatedDate = DateTimeOffset.UtcNow;
+                areaType.CreatedByUserId = currentUserId;
                 _context.Add(areaType);
                 await _context.SaveChangesAsync();
                 response.Data = areaType;
@@ -173,6 +177,9 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
+                var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                areaType.UpdatedDate = DateTimeOffset.UtcNow;
+                areaType.UpdatedByUserId = currentUserId;
                 _context.Update(areaType);
                 await _context.SaveChangesAsync();
                 response.Data = areaType;
@@ -207,8 +214,9 @@ namespace TpaSodManagement.Services.Implementations
                 }
 
                 // Soft delete: Set DeletedDate and DeletedByUserId
+                var currentUserId = deletedByUserId ?? await _currentUserService.GetCurrentUserIdAsync();
                 areaType.DeletedDate = DateTimeOffset.UtcNow;
-                areaType.DeletedByUserId = deletedByUserId;
+                areaType.DeletedByUserId = currentUserId;
                 
                 await _context.SaveChangesAsync();
                 response.Data = true;

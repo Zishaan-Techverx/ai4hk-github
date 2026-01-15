@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class SaleLineItem
+public partial class SaleLineItem : AuditBaseEntity
 {
     public long SaleLineItemId { get; set; }
 
@@ -38,10 +39,6 @@ public partial class SaleLineItem
     public string? RoyaltyInvoiceNumber { get; set; }
 
     public string? Notes { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual AreaType? AreaType { get; set; }
 

@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Country
+public partial class Country : AuditBaseEntity
 {
     public int CountryId { get; set; }
 
@@ -16,12 +17,6 @@ public partial class Country
     public string? PhonePrefix { get; set; }
 
     public bool IsActive { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual ICollection<StateProvince> StateProvinces { get; set; } = new List<StateProvince>();
 }

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Product
+public partial class Product : AuditBaseEntity
 {
     public long ProductId { get; set; }
 
@@ -28,17 +29,9 @@ public partial class Product
 
     public bool IsActive { get; set; }
 
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long CreatedByUserId { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
-
     public virtual CertificateType? CertificateType { get; set; }
 
-    public virtual TpaSodManagementUser CreatedByUser { get; set; } = null!;
+    public virtual TpaSodManagementUser? CreatedByUser { get; set; }
 
     public virtual Currency? Currency { get; set; }
 

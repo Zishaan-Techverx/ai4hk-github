@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class AreaType
+public partial class AreaType : AuditBaseEntity
 {
     public int AreaTypeId { get; set; }
 
@@ -18,12 +19,6 @@ public partial class AreaType
     public string? Description { get; set; }
 
     public bool IsActive { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual ICollection<Farm> Farms { get; set; } = new List<Farm>();
 

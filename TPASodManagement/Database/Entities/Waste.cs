@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Waste
+public partial class Waste : AuditBaseEntity
 {
     public long WasteId { get; set; }
 
@@ -37,12 +38,6 @@ public partial class Waste
     public int? CurrencyId { get; set; }
 
     public string? Notes { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual AreaType AreaType { get; set; } = null!;
 

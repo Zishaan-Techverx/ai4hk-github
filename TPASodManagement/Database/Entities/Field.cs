@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities;
 
-public partial class Field
+public partial class Field : AuditBaseEntity
 {
     public long FieldId { get; set; }
 
@@ -32,14 +33,6 @@ public partial class Field
     public string? Notes { get; set; }
 
     public bool IsActive { get; set; }
-
-    public DateTimeOffset CreatedDate { get; set; }
-
-    public string CreatedByUserId { get; set; } = null!; 
-
-    public long? DeletedByUserId { get; set; }
-
-    public DateTimeOffset? DeletedDate { get; set; }
 
     public virtual AreaType AreaType { get; set; } = null!;
 
