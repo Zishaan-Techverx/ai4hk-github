@@ -80,8 +80,8 @@ else
                 </div> *@
 
 
-                @* <!-- Quick stats or dashboard content -->
-                <div class="row">
+                <!-- Quick stats or dashboard content -->
+                @* <div class="row">
                     <div class="col-md-3 mb-4">
                         <div class="card bg-primary text-white">
                             <div class="card-body">
@@ -149,10 +149,10 @@ else
                             </div>
                         </div>
                     </div>
-                </div> *@
+                </div>  *@
 
-                @* <!-- Recent activity or other dashboard widgets -->
-                <div class="row mt-4">
+                <!-- Recent activity or other dashboard widgets -->
+                @* <div class="row mt-4">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
@@ -192,12 +192,11 @@ else
             </div>
         </div>
     </div>
-    <!-- Script to show the welcome toast -->
     @* <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const welcomeToast = document.getElementById('welcomeToast');
-            if (welcomeToast) {
-                const toast = new bootstrap.Toast(welcomeToast);
+        document.addeventlistener('domcontentloaded', function() {
+            const welcometoast = document.getelementbyid('welcometoast');
+            if (welcometoast) {
+                const toast = new bootstrap.toast(welcometoast);
                 toast.show();
             }
         });

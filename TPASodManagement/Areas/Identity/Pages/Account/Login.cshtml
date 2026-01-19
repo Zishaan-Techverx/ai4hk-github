@@ -188,14 +188,17 @@
                                 <h5 class="modal-title" id="twoFactorModalLabel">Two-Factor Authentication</h5>
                             </div>
                             <div class="modal-body">
-                                <p>Please enter the verification code from your authenticator app.</p>
+                                <p id="twoFactorInstruction">Please enter the verification code from your authenticator app.</p>
                                 <form id="verify2faForm">
                                     <div class="form-floating mb-3">
-                                        <input type="text" class="form-control" id="twoFactorCode" autocomplete="off" maxlength="6" required />
-                                        <label for="twoFactorCode">Verification Code</label>
+                                        <input type="text" class="form-control" id="twoFactorCode" autocomplete="off" maxlength="50" required />
+                                        <label for="twoFactorCode" id="twoFactorLabel">Verification Code</label>
                                     </div>
                                     <div id="twoFactorError" class="alert alert-danger" style="display: none;"></div>
                                 </form>
+                                <div class="text-center mt-2">
+                                    <button type="button" class="btn btn-link p-0" id="toggleRecoveryCodeBtn" onclick="toggleRecoveryCodeMode()">Use Recovery Code</button>
+                                </div>
                             </div>
                             <div class="modal-footer">
                                 <button type="button" class="btn btn-secondary" onclick="close2FAPopup()">Cancel</button>
@@ -215,6 +218,9 @@
             // Add modal to body
             document.body.insertAdjacentHTML('beforeend', modalHtml);
             
+            // Initialize recovery code mode flag
+            window.isRecoveryCodeMode = false;
+            
             // Show modal
             var modal = new bootstrap.Modal(document.getElementById('twoFactorModal'));
             modal.show();
@@ -232,14 +238,51 @@
                 }
             });
         }
+        
+        window.toggleRecoveryCodeMode = function() {
+            var isRecoveryMode = window.isRecoveryCodeMode || false;
+            window.isRecoveryCodeMode = !isRecoveryMode;
+            
+            var codeInput = document.getElementById('twoFactorCode');
+            var codeLabel = document.getElementById('twoFactorLabel');
+            var instruction = document.getElementById('twoFactorInstruction');
+            var toggleBtn = document.getElementById('toggleRecoveryCodeBtn');
+            
+            if (window.isRecoveryCodeMode) {
+                // Switch to recovery code mode
+                codeInput.maxLength = 50; // Recovery codes can be up to 24+ characters with formatting
+                codeInput.value = '';
+                codeLabel.textContent = 'Recovery Code';
+                instruction.textContent = 'Please enter your recovery code.';
+                toggleBtn.textContent = 'Use Verification Code';
+            } else {
+                // Switch to verification code mode
+                codeInput.maxLength = 6; // 2FA codes are 6 digits
+                codeInput.value = '';
+                codeLabel.textContent = 'Verification Code';
+                instruction.textContent = 'Please enter the verification code from your authenticator app.';
+                toggleBtn.textContent = 'Use Recovery Code';
+            }
+            
+            // Clear any error messages
+            var errorDiv = document.getElementById('twoFactorError');
+            if (errorDiv) {
+                errorDiv.style.display = 'none';
+            }
+            
+            // Focus on input
+            codeInput.focus();
+        }
 
         window.verify2FACode = function() {
             var code = document.getElementById('twoFactorCode').value;
             var errorDiv = document.getElementById('twoFactorError');
             var verifyBtn = document.getElementById('verify2faBtn');
+            var isRecoveryMode = window.isRecoveryCodeMode || false;
             
             if (!code || code.trim() === '') {
-                errorDiv.textContent = 'Please enter a verification code.';
+                var codeType = isRecoveryMode ? 'recovery code' : 'verification code';
+                errorDiv.textContent = 'Please enter a ' + codeType + '.';
                 errorDiv.style.display = 'block';
                 return;
             }
@@ -250,6 +293,7 @@
             
             var formData = new FormData();
             formData.append('code', code);
+            formData.append('isRecoveryCode', isRecoveryMode);
             
             fetch('/Home/Verify2FA', {
                 method: 'POST',
@@ -266,7 +310,7 @@
                     // Redirect to home
                     window.location.href = data.redirectUrl || '/';
                 } else {
-                    errorDiv.textContent = data.message || 'Invalid verification code.';
+                    errorDiv.textContent = data.message || (isRecoveryMode ? 'Invalid recovery code.' : 'Invalid verification code.');
                     errorDiv.style.display = 'block';
                     verifyBtn.disabled = false;
                     verifyBtn.textContent = 'Verify';

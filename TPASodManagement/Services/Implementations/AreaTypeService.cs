@@ -180,8 +180,6 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                // Update only the properties that should be updated
-                // Preserve CreatedByUserId and CreatedDate
                 existingAreaType.AreaTypeName = areaType.AreaTypeName;
                 existingAreaType.UnitAbbreviation = areaType.UnitAbbreviation;
                 existingAreaType.UnitSystem = areaType.UnitSystem;
