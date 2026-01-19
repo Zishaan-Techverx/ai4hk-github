@@ -16,19 +16,22 @@ public class HomeController : Controller
     private readonly SignInManager<TpaSodManagementUser> _signInManager;
     private readonly IHomeService _homeService;
     private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
     public HomeController(
         ILogger<HomeController> logger,
         UserManager<TpaSodManagementUser> userManager,
         SignInManager<TpaSodManagementUser> signInManager,
         IHomeService homeService,
-        ApplicationDbContext context)
+        ApplicationDbContext context,
+        INotificationService notificationService)
     {
         _logger = logger;
         _userManager = userManager; 
         _signInManager = signInManager;
         _homeService = homeService;
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<IActionResult> Index()
@@ -48,6 +51,20 @@ public class HomeController : Controller
             if (TempData.ContainsKey("ShowWelcomePopup"))
             {
                 ViewData["ShowWelcomePopup"] = TempData["ShowWelcomePopup"];
+            }
+
+            // Load notifications for SuperAdmin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser != null)
+            {
+                var roles = await _userManager.GetRolesAsync(currentUser);
+                bool isSuperAdmin = roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+                
+                if (isSuperAdmin)
+                {
+                    var notifications = await _notificationService.GetAllNotificationsAsync();
+                    ViewBag.Notifications = notifications;
+                }
             }
         }
 

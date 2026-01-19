@@ -1,0 +1,140 @@
+@model TpaSodManagement.Database.Entities.Notification
+
+@{
+    bool isDetailsView = ViewBag.IsDetailsView ?? true;
+    ViewData["Title"] = "Notification Details";
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Notification Details</h5>
+                </div>
+
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <strong>Success!</strong> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Title</label>
+                            <input type="text" class="form-control" value="@Model.Title" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label class="form-label fw-bold">Message</label>
+                            <textarea class="form-control" rows="5" readonly>@Model.Message</textarea>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Priority</label>
+                            <input type="text" class="form-control" value="@Model.Priority" readonly />
+                        </div>
+
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Is Active</label>
+                            <input type="text" class="form-control" value="@(Model.IsActive ? "Yes" : "No")" readonly />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Recipients Count</label>
+                            <input type="text" class="form-control" value="@Model.NotificationUsers.Count" readonly />
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Created Date</label>
+                            <input type="text" class="form-control" value="@Model.CreatedDate.ToString("yyyy-MM-dd HH:mm")" readonly />
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Updated Date</label>
+                            <input type="text" class="form-control" value="@(Model.UpdatedDate?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")" readonly />
+                        </div>
+                    </div>
+
+                    @if (Model.NotificationUsers != null && Model.NotificationUsers.Any())
+                    {
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-bold">Recipients</label>
+                                <div class="table-responsive">
+                                    <table class="table table-bordered table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>User Name</th>
+                                                <th>Email</th>
+                                                <th>Is Read</th>
+                                                <th>Read Date</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach (var notificationUser in Model.NotificationUsers)
+                                            {
+                                                <tr>
+                                                    <td>@(notificationUser.User?.UserName ?? "N/A")</td>
+                                                    <td>@(notificationUser.User?.Email ?? "N/A")</td>
+                                                    <td>@(notificationUser.IsRead ? "Yes" : "No")</td>
+                                                    <td>@(notificationUser.ReadDate?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")</td>
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <div class="d-flex justify-content-between mt-3">
+                        <a asp-controller="Home" asp-action="Index" class="btn btn-secondary">Back</a>
+                        <button type="button" class="btn btn-warning edit-notification" 
+                                data-id="@Model.NotificationId" 
+                                data-title="@Model.Title" 
+                                data-message="@Model.Message" 
+                                data-priority="@Model.Priority" 
+                            Edit
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function() {
+            // Edit button handler for details page
+            $('.edit-notification').on('click', function() {
+                // Redirect to home page and trigger edit
+                window.location.href = '@Url.Action("Index", "Home")';
+            });
+        });
+    </script>
+}
+

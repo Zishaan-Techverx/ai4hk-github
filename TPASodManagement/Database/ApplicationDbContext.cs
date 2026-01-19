@@ -44,6 +44,8 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
     public virtual DbSet<Website> Websites { get; set; }
     public DbSet<Permission> Permissions { get; set; }
     public DbSet<RolePermission> RolePermissions { get; set; }
+    public virtual DbSet<Notification> Notifications { get; set; }
+    public virtual DbSet<NotificationUser> NotificationUsers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -388,6 +390,40 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
 
         builder.Entity<RolePermission>(entity =>
         {
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        // Notification entity configuration
+        builder.Entity<Notification>(entity =>
+        {
+            entity.ToTable("Notification");
+            entity.HasKey(e => e.NotificationId);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.Message).IsRequired();
+            entity.Property(e => e.Priority).IsRequired().HasMaxLength(50);
+            
+            entity.HasMany(e => e.NotificationUsers)
+                .WithOne(nu => nu.Notification)
+                .HasForeignKey(nu => nu.NotificationId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        // NotificationUser entity configuration
+        builder.Entity<NotificationUser>(entity =>
+        {
+            entity.ToTable("NotificationUser");
+            entity.HasKey(e => e.NotificationUserId);
+            entity.HasIndex(e => new { e.NotificationId, e.UserId }).IsUnique();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
             entity.Property(e => e.DeletedByUserId);
             entity.Property(e => e.DeletedDate);
         });
