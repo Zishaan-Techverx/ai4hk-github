@@ -239,20 +239,42 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Seeding>();
             try
             {
-                var exists = await _context.Seedings.AnyAsync(s => s.SeedingId == seeding.SeedingId);
-                if (!exists)
+                // Fetch existing entity from database to preserve CreatedByUserId and CreatedDate
+                var existingSeeding = await _context.Seedings
+                    .FirstOrDefaultAsync(s => s.SeedingId == seeding.SeedingId);
+                
+                if (existingSeeding == null)
                 {
                     response.Success = false;
                     response.Message = "Seeding not found";
                     return response;
                 }
 
+                // Update only the properties that should be updated
+                // Preserve CreatedByUserId and CreatedDate
+                existingSeeding.UserId = seeding.UserId;
+                existingSeeding.FarmId = seeding.FarmId;
+                existingSeeding.FieldId = seeding.FieldId;
+                existingSeeding.TagRangeId = seeding.TagRangeId;
+                existingSeeding.AreaAmount = seeding.AreaAmount;
+                existingSeeding.AreaTypeId = seeding.AreaTypeId;
+                existingSeeding.SeedingDate = seeding.SeedingDate;
+                existingSeeding.SeedingMethod = seeding.SeedingMethod;
+                existingSeeding.SeedRatePerUnit = seeding.SeedRatePerUnit;
+                existingSeeding.WeatherConditions = seeding.WeatherConditions;
+                existingSeeding.SoilTemperature = seeding.SoilTemperature;
+                existingSeeding.SoilMoisture = seeding.SoilMoisture;
+                existingSeeding.Notes = seeding.Notes;
+                
+                // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
-                seeding.UpdatedDate = DateTimeOffset.UtcNow;
-                seeding.UpdatedByUserId = currentUserId;
-                _context.Seedings.Update(seeding);
+                existingSeeding.UpdatedDate = DateTimeOffset.UtcNow;
+                existingSeeding.UpdatedByUserId = currentUserId;
+                
+                // CreatedByUserId and CreatedDate are preserved from existingSeeding
+                
                 await _context.SaveChangesAsync();
-                response.Data = seeding;
+                response.Data = existingSeeding;
             }
             catch (DbUpdateConcurrencyException)
             {
@@ -328,7 +350,7 @@ namespace TpaSodManagement.Services.Implementations
                     .ToListAsync();
 
                 // Fetch all Person records for these users in one query (efficient batch loading)
-                var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId.Value).ToList();
+                var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId!.Value).ToList();
                 var people = await _context.People
                     .Where(p => userIds.Contains(p.PersonId))
                     .ToDictionaryAsync(p => p.PersonId);

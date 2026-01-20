@@ -319,20 +319,46 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Sale>();
             try
             {
-                var exists = await _context.Sales.AnyAsync(s => s.SaleId == sale.SaleId);
-                if (!exists)
+                // Fetch existing entity from database to preserve CreatedByUserId and CreatedDate
+                var existingSale = await _context.Sales
+                    .FirstOrDefaultAsync(s => s.SaleId == sale.SaleId);
+                
+                if (existingSale == null)
                 {
                     response.Success = false;
                     response.Message = "Sale not found";
                     return response;
                 }
 
+                // Update only the properties that should be updated
+                // Preserve CreatedByUserId and CreatedDate
+                existingSale.UserId = sale.UserId;
+                existingSale.FarmId = sale.FarmId;
+                existingSale.CustomerId = sale.CustomerId;
+                existingSale.SaleTypeId = sale.SaleTypeId;
+                existingSale.SaleNumber = sale.SaleNumber;
+                existingSale.InvoiceNumber = sale.InvoiceNumber;
+                existingSale.PurchaseOrderNumber = sale.PurchaseOrderNumber;
+                existingSale.SaleDate = sale.SaleDate;
+                existingSale.DueDate = sale.DueDate;
+                existingSale.SubtotalAmount = sale.SubtotalAmount;
+                existingSale.TaxAmount = sale.TaxAmount;
+                existingSale.DiscountAmount = sale.DiscountAmount;
+                existingSale.TotalAmount = sale.TotalAmount;
+                existingSale.CurrencyId = sale.CurrencyId;
+                existingSale.PaymentTermsDays = sale.PaymentTermsDays;
+                existingSale.StatusId = sale.StatusId;
+                existingSale.Notes = sale.Notes;
+                
+                // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
-                sale.UpdatedDate = DateTimeOffset.UtcNow;
-                sale.UpdatedByUserId = currentUserId;
-                _context.Sales.Update(sale);
+                existingSale.UpdatedDate = DateTimeOffset.UtcNow;
+                existingSale.UpdatedByUserId = currentUserId;
+                
+                // CreatedByUserId and CreatedDate are preserved from existingSale
+                
                 await _context.SaveChangesAsync();
-                response.Data = sale;
+                response.Data = existingSale;
             }
             catch (Exception ex)
             {
@@ -385,7 +411,7 @@ namespace TpaSodManagement.Services.Implementations
                     .ToListAsync();
 
                 // Fetch all Person records for these users in one query (efficient batch loading)
-                var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId.Value).ToList();
+                var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId!.Value).ToList();
                 var people = await _context.People
                     .Where(p => userIds.Contains(p.PersonId))
                     .ToDictionaryAsync(p => p.PersonId);

@@ -80,8 +80,8 @@ else
                 </div> *@
 
 
-                @* <!-- Quick stats or dashboard content -->
-                <div class="row">
+                <!-- Quick stats or dashboard content -->
+                @* <div class="row">
                     <div class="col-md-3 mb-4">
                         <div class="card bg-primary text-white">
                             <div class="card-body">
@@ -149,10 +149,10 @@ else
                             </div>
                         </div>
                     </div>
-                </div> *@
+                </div>  *@
 
-                @* <!-- Recent activity or other dashboard widgets -->
-                <div class="row mt-4">
+                <!-- Recent activity or other dashboard widgets -->
+                @* <div class="row mt-4">
                     <div class="col-12">
                         <div class="card">
                             <div class="card-header">
@@ -189,15 +189,700 @@ else
                         </div
                     </div>
                 </div> *@
+
+                <!-- Notifications Section - Only for SuperAdmin -->
+                @if (User.IsInRole("SuperAdmin"))
+                {
+                    var notifications = ViewBag.Notifications as List<TpaSodManagement.Database.Entities.Notification>;
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="card-title mb-0">Notifications Management</h5>
+                                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendNotificationModal">
+                                        <i class="bi bi-plus-circle"></i> Send Notification
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    @if (TempData["ErrorMessage"] != null)
+                                    {
+                                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                                            <strong>Error!</strong> @TempData["ErrorMessage"]
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    }
+
+                                    @if (TempData["SuccessMessage"] != null)
+                                    {
+                                        <div class="alert alert-success alert-dismissible fade show" role="alert">
+                                            <strong>Success!</strong> @TempData["SuccessMessage"]
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                        </div>
+                                    }
+
+                                    <div class="table-responsive">
+                                        <table class="table table-striped table-hover" id="notificationsTable">
+                                            <thead>
+                                                <tr>
+                                                    <th>Title</th>
+                                                    <th>Message</th>
+                                                    <th>Priority</th>
+                                                    <th>Recipients</th>
+                                                    <th>Created Date</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                @if (notifications != null && notifications.Any())
+                                                {
+                                                    @foreach (var notification in notifications)
+                                                    {
+                                                        <tr>
+                                                            <td>@notification.Title</td>
+                                                            <td>@(notification.Message.Length > 50 ? notification.Message.Substring(0, 50) + "..." : notification.Message)</td>
+                                                            <td>
+                                                                <span class="badge bg-@(notification.Priority == "Critical" ? "danger" : notification.Priority == "High" ? "warning" : notification.Priority == "Medium" ? "info" : "secondary")">
+                                                                    @notification.Priority
+                                                                </span>
+                                                            </td>
+                                                            <td>@notification.NotificationUsers.Count</td>
+                                                            <td>@notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                                            <td>
+                                                                <div class="btn-group btn-group-sm">
+                                                                    <a class="btn btn-info" asp-controller="Notification" asp-action="Details" asp-route-id="@notification.NotificationId">
+                                                                        View
+                                                                    </a>
+                                                                    <button class="btn btn-warning edit-notification" data-id="@notification.NotificationId" data-title="@notification.Title" data-message="@notification.Message" data-priority="@notification.Priority">
+                                                                        <i class="bi bi-pencil"></i> Edit
+                                                                    </button>
+                                                                    <button class="btn btn-danger delete-notification" data-id="@notification.NotificationId">
+                                                                        <i class="bi bi-trash"></i> Delete
+                                                                    </button>
+                                                                </div>
+                                                            </td>
+                                                        </tr>
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    <tr>
+                                                        <td colspan="7" class="text-center">No notifications found.</td>
+                                                    </tr>
+                                                }
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Send Notification Modal -->
+                    <div class="modal fade" id="sendNotificationModal" tabindex="-1" aria-labelledby="sendNotificationModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="sendNotificationModalLabel">Send Notification</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <form id="sendNotificationForm">
+                                    @Html.AntiForgeryToken()
+                                    <div class="modal-body">
+                                        <div class="mb-3">
+                                            <label for="notificationTitle" class="form-label">Title <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" id="notificationTitle" required maxlength="500">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="notificationMessage" class="form-label">Message <span class="text-danger">*</span></label>
+                                            <textarea class="form-control" id="notificationMessage" rows="4" required></textarea>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="notificationPriority" class="form-label">Priority <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="notificationPriority" required>
+                                                <option value="">Select Priority</option>
+                                                <option value="Critical">Critical</option>
+                                                <option value="High">High</option>
+                                                <option value="Medium">Medium</option>
+                                                <option value="Low">Low</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="notificationExpiryDate" class="form-label">Expiry Date (Optional)</label>
+                                            <input type="datetime-local" class="form-control" id="notificationExpiryDate">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Organization</label>
+                                            <div class="dropdown">
+                                                <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="organizationDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                                    <span id="organizationDropdownText">Select Organizations</span>
+                                                </button>
+                                                <ul class="dropdown-menu w-100" id="organizationDropdownMenu" aria-labelledby="organizationDropdownBtn" style="max-height: 300px; overflow-y: auto;">
+                                                    <li>
+                                                        <div class="dropdown-item" id="selectAllOrgs" style="display: flex; align-items: center;">
+                                                            <input type="checkbox" id="selectAllOrgsCheckbox" class="form-check-input me-2" style="cursor: pointer;">
+                                                            <label class="form-check-label" for="selectAllOrgsCheckbox" style="cursor: pointer; width: 100%; margin: 0;">Select All</label>
+                                                        </div>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <div id="organizationOptions"></div>
+                                                </ul>
+                                            </div>
+                                            <div id="selectedOrganizationsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Users <span class="text-danger">*</span></label>
+                                            <div class="dropdown">
+                                                <button class="btn btn-outline-secondary dropdown-toggle w-100 text-start" type="button" id="userDropdownBtn" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false">
+                                                    <span id="userDropdownText">Select Users</span>
+                                                </button>
+                                                <ul class="dropdown-menu w-100" id="userDropdownMenu" aria-labelledby="userDropdownBtn" style="max-height: 300px; overflow-y: auto;">
+                                                    <li>
+                                                        <div class="dropdown-item" id="selectAllUsers" style="display: flex; align-items: center;">
+                                                            <input type="checkbox" id="selectAllUsersCheckbox" class="form-check-input me-2" style="cursor: pointer;">
+                                                            <label class="form-check-label" for="selectAllUsersCheckbox" style="cursor: pointer; width: 100%; margin: 0;">Select All</label>
+                                                        </div>
+                                                    </li>
+                                                    <li><hr class="dropdown-divider"></li>
+                                                    <div id="userOptions"></div>
+                                                </ul>
+                                            </div>
+                                            <div id="selectedUsersBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-primary">Send Notification</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    @section Scripts {
+                        <script>
+                            var selectedOrganizations = [];
+                            var selectedUsers = [];
+                            var allOrganizations = [];
+                            var allUsers = [];
+                            
+                            $(document).ready(function() {
+                                // Load organizations when Send Notification button is clicked
+                                $('[data-bs-target="#sendNotificationModal"]').on('click', function() {
+                                    console.log('Send Notification button clicked');
+                                    // Small delay to ensure modal is ready
+                                    setTimeout(function() {
+                                        loadOrganizations();
+                                    }, 100);
+                                });
+                                
+                                // Select All Organizations checkbox handler
+                                $(document).on('change', '#selectAllOrgsCheckbox', function(e) {
+                                    e.stopPropagation();
+                                    var isChecked = $(this).prop('checked');
+                                    
+                                    if (isChecked) {
+                                        // Select all
+                                        selectedOrganizations = allOrganizations.map(org => org.organizationId);
+                                        $('.org-checkbox').prop('checked', true);
+                                    } else {
+                                        // Deselect all
+                                        selectedOrganizations = [];
+                                        $('.org-checkbox').prop('checked', false);
+                                    }
+                                    updateOrganizationBadges();
+                                    loadUsersBySelectedOrganizations();
+                                });
+                                
+                                // Select All Organizations container click handler - only if clicking on label or container (not checkbox itself)
+                                $(document).on('click', '#selectAllOrgs', function(e) {
+                                    // Only handle if clicking on the container or label, not the checkbox
+                                    if ($(e.target).is('#selectAllOrgsCheckbox')) {
+                                        return; // Let the change event handle it
+                                    }
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    var checkbox = $('#selectAllOrgsCheckbox');
+                                    checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+                                });
+                                
+                                // Organization checkbox handler
+                                $(document).on('change', '.org-checkbox', function() {
+                                    var orgId = $(this).data('org-id');
+                                    if ($(this).prop('checked')) {
+                                        if (!selectedOrganizations.includes(orgId)) {
+                                            selectedOrganizations.push(orgId);
+                                        }
+                                    } else {
+                                        selectedOrganizations = selectedOrganizations.filter(id => id !== orgId);
+                                        $('#selectAllOrgsCheckbox').prop('checked', false);
+                                    }
+                                    updateOrganizationBadges();
+                                    loadUsersBySelectedOrganizations();
+                                });
+                                
+                                // Select All Users checkbox handler
+                                $(document).on('change', '#selectAllUsersCheckbox', function(e) {
+                                    e.stopPropagation();
+                                    var isChecked = $(this).prop('checked');
+                                    
+                                    if (isChecked) {
+                                        // Select all
+                                        selectedUsers = allUsers.map(user => user.id);
+                                        $('.user-checkbox').prop('checked', true);
+                                    } else {
+                                        // Deselect all
+                                        selectedUsers = [];
+                                        $('.user-checkbox').prop('checked', false);
+                                    }
+                                    updateUserBadges();
+                                });
+                                
+                                // Select All Users container click handler - only if clicking on label or container (not checkbox itself)
+                                $(document).on('click', '#selectAllUsers', function(e) {
+                                    // Only handle if clicking on the container or label, not the checkbox
+                                    if ($(e.target).is('#selectAllUsersCheckbox')) {
+                                        return; // Let the change event handle it
+                                    }
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    var checkbox = $('#selectAllUsersCheckbox');
+                                    checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+                                });
+                                
+                                // User checkbox handler
+                                $(document).on('change', '.user-checkbox', function() {
+                                    var userId = $(this).data('user-id');
+                                    if ($(this).prop('checked')) {
+                                        if (!selectedUsers.includes(userId)) {
+                                            selectedUsers.push(userId);
+                                        }
+                                    } else {
+                                        selectedUsers = selectedUsers.filter(id => id !== userId);
+                                        $('#selectAllUsersCheckbox').prop('checked', false);
+                                    }
+                                    updateUserBadges();
+                                });
+                                
+                                // Edit notification handler
+                                $(document).on('click', '.edit-notification', function() {
+                                    var notificationId = $(this).data('id');
+                                    var title = $(this).data('title');
+                                    var message = $(this).data('message');
+                                    var priority = $(this).data('priority');
+                                    var expiry = $(this).data('expiry');
+                                    
+                                    // Populate form fields
+                                    $('#notificationTitle').val(title);
+                                    $('#notificationMessage').val(message);
+                                    $('#notificationPriority').val(priority);
+                                    if (expiry) {
+                                        $('#notificationExpiryDate').val(expiry);
+                                    } else {
+                                        $('#notificationExpiryDate').val('');
+                                    }
+                                    
+                                    // Store notification ID for update
+                                    $('#sendNotificationForm').data('notification-id', notificationId);
+                                    $('#sendNotificationForm').data('is-edit', true);
+                                    
+                                    // Change modal title and button text
+                                    $('#sendNotificationModalLabel').text('Edit Notification');
+                                    $('#sendNotificationForm button[type="submit"]').text('Update Notification');
+                                    
+                                    // Load notification details to get selected users
+                                    $.get('/Notification/GetNotification', { id: notificationId }, function(response) {
+                                        if (response.success) {
+                                            // Load organizations first
+                                            loadOrganizations();
+                                            
+                                            // After organizations load, select the users
+                                            setTimeout(function() {
+                                                // Get user IDs from response
+                                                var userIds = response.notification.userIds || [];
+                                                
+                                                // Load users for all organizations to show them
+                                                loadAllUsersForEdit(userIds);
+                                            }, 500);
+                                        }
+                                    });
+                                    
+                                    // Open modal
+                                    $('#sendNotificationModal').modal('show');
+                                });
+                                
+                                // Form submit handler
+                                $('#sendNotificationForm').on('submit', function(e) {
+                                    e.preventDefault();
+                                    var isEdit = $(this).data('is-edit');
+                                    if (isEdit) {
+                                        updateNotification();
+                                    } else {
+                                        sendNotification();
+                                    }
+                                });
+                                
+                                // Delete notification handler
+                                $(document).on('click', '.delete-notification', function() {
+                                    if (confirm('Are you sure you want to delete this notification?')) {
+                                        var notificationId = $(this).data('id');
+                                        deleteNotification(notificationId);
+                                    }
+                                });
+                                
+                                // Load organizations when modal is opened
+                                $('#sendNotificationModal').on('shown.bs.modal', function() {
+                                    console.log('Modal opened, loading organizations...');
+                                    loadOrganizations();
+                                });
+                                
+                                // Also load on modal show (before animation completes)
+                                $('#sendNotificationModal').on('show.bs.modal', function() {
+                                    console.log('Modal showing, preparing to load organizations...');
+                                });
+                                
+                                // Reset form when modal is closed
+                                $('#sendNotificationModal').on('hidden.bs.modal', function() {
+                                    $('#sendNotificationForm')[0].reset();
+                                    $('#sendNotificationForm').removeData('notification-id');
+                                    $('#sendNotificationForm').removeData('is-edit');
+                                    selectedOrganizations = [];
+                                    selectedUsers = [];
+                                    allUsers = [];
+                                    updateOrganizationBadges();
+                                    updateUserBadges();
+                                    $('#organizationOptions').empty();
+                                    $('#userOptions').empty();
+                                    $('#selectAllOrgsCheckbox').prop('checked', false);
+                                    $('#selectAllUsersCheckbox').prop('checked', false);
+                                    $('#sendNotificationModalLabel').text('Send Notification');
+                                    $('#sendNotificationForm button[type="submit"]').text('Send Notification');
+                                });
+                            });
+                            
+                            function loadOrganizations() {
+                                $.get('/Notification/GetOrganizations', function(data) {
+                                    if (data && data.length > 0) {
+                                        allOrganizations = data;
+                                        var optionsContainer = $('#organizationOptions');
+                                        optionsContainer.empty();
+                                        
+                                        $.each(data, function(index, org) {
+                                            var listItem = $('<li></li>');
+                                            var checkboxId = 'org-' + org.organizationId;
+                                            var item = $('<a class="dropdown-item" href="#"></a>');
+                                            item.append($('<input>', {
+                                                type: 'checkbox',
+                                                class: 'form-check-input me-2 org-checkbox',
+                                                id: checkboxId,
+                                                'data-org-id': org.organizationId
+                                            }));
+                                            item.append($('<label>', {
+                                                class: 'form-check-label',
+                                                'for': checkboxId,
+                                                text: org.organizationName,
+                                                style: 'cursor: pointer; width: 100%;'
+                                            }));
+                                            listItem.append(item);
+                                            optionsContainer.append(listItem);
+                                        });
+                                    } else {
+                                        console.log('No organizations found');
+                                        $('#organizationOptions').html('<li><span class="dropdown-item-text">No organizations available</span></li>');
+                                    }
+                                }).fail(function(xhr, status, error) {
+                                    console.error('Error loading organizations:', error);
+                                    $('#organizationOptions').html('<li><span class="dropdown-item-text text-danger">Error loading organizations</span></li>');
+                                });
+                            }
+                            
+                            function loadUsersBySelectedOrganizations() {
+                                if (selectedOrganizations.length === 0) {
+                                    $('#userOptions').empty();
+                                    allUsers = [];
+                                    selectedUsers = [];
+                                    updateUserBadges();
+                                    $('#selectAllUsersCheckbox').prop('checked', false);
+                                    return;
+                                }
+                                
+                                $('#userOptions').html('<li><span class="dropdown-item-text">Loading...</span></li>');
+                                
+                                // Load users for each selected organization
+                                var allUsersList = [];
+                                var loadedCount = 0;
+                                
+                                selectedOrganizations.forEach(function(orgId) {
+                                    $.get('/Notification/GetUsersByOrganization', { organizationId: orgId }, function(data) {
+                                        allUsersList = allUsersList.concat(data);
+                                        loadedCount++;
+                                        
+                                        if (loadedCount === selectedOrganizations.length) {
+                                            // Remove duplicates
+                                            var uniqueUsers = [];
+                                            var userIdSet = new Set();
+                                            allUsersList.forEach(function(user) {
+                                                if (!userIdSet.has(user.id)) {
+                                                    userIdSet.add(user.id);
+                                                    uniqueUsers.push(user);
+                                                }
+                                            });
+                                            
+                                            allUsers = uniqueUsers;
+                                            renderUsers(uniqueUsers);
+                                        }
+                                    });
+                                });
+                            }
+                            
+                            function renderUsers(users) {
+                                var optionsContainer = $('#userOptions');
+                                optionsContainer.empty();
+                                
+                                $.each(users, function(index, user) {
+                                    var listItem = $('<li></li>');
+                                    var checkboxId = 'user-' + user.id;
+                                    var item = $('<a class="dropdown-item" href="#"></a>');
+                                    item.append($('<input>', {
+                                        type: 'checkbox',
+                                        class: 'form-check-input me-2 user-checkbox',
+                                        id: checkboxId,
+                                        'data-user-id': user.id,
+                                        checked: selectedUsers.includes(user.id)
+                                    }));
+                                    item.append($('<label>', {
+                                        class: 'form-check-label',
+                                        'for': checkboxId,
+                                        text: user.userName + ' (' + user.email + ')',
+                                        style: 'cursor: pointer; width: 100%;'
+                                    }));
+                                    listItem.append(item);
+                                    optionsContainer.append(listItem);
+                                });
+                                
+                                // Update select all checkbox
+                                if (users.length > 0 && selectedUsers.length === users.length) {
+                                    $('#selectAllUsersCheckbox').prop('checked', true);
+                                } else {
+                                    $('#selectAllUsersCheckbox').prop('checked', false);
+                                }
+                            }
+                            
+                            function updateOrganizationBadges() {
+                                var badgesContainer = $('#selectedOrganizationsBadges');
+                                badgesContainer.empty();
+                                
+                                if (selectedOrganizations.length === 0) {
+                                    $('#organizationDropdownText').text('Select Organizations');
+                                    return;
+                                }
+                                
+                                var selectedOrgNames = selectedOrganizations.map(function(orgId) {
+                                    var org = allOrganizations.find(o => o.organizationId === orgId);
+                                    return org ? org.organizationName : '';
+                                }).filter(name => name !== '');
+                                
+                                $('#organizationDropdownText').text(selectedOrgNames.length + ' organization(s) selected');
+                                
+                                selectedOrgNames.forEach(function(orgName) {
+                                    var orgId = allOrganizations.find(o => o.organizationName === orgName).organizationId;
+                                    var badge = $('<span>', {
+                                        class: 'badge bg-primary me-1 mb-1',
+                                        text: orgName + ' ×',
+                                        style: 'cursor: pointer;'
+                                    });
+                                    badge.on('click', function() {
+                                        selectedOrganizations = selectedOrganizations.filter(id => id !== orgId);
+                                        $('.org-checkbox[data-org-id="' + orgId + '"]').prop('checked', false);
+                                        $('#selectAllOrgsCheckbox').prop('checked', false);
+                                        updateOrganizationBadges();
+                                        loadUsersBySelectedOrganizations();
+                                    });
+                                    badgesContainer.append(badge);
+                                });
+                            }
+                            
+                            function updateUserBadges() {
+                                var badgesContainer = $('#selectedUsersBadges');
+                                badgesContainer.empty();
+                                
+                                if (selectedUsers.length === 0) {
+                                    $('#userDropdownText').text('Select Users');
+                                    return;
+                                }
+                                
+                                var selectedUserNames = selectedUsers.map(function(userId) {
+                                    var user = allUsers.find(u => u.id === userId);
+                                    return user ? user.userName + ' (' + user.email + ')' : '';
+                                }).filter(name => name !== '');
+                                
+                                $('#userDropdownText').text(selectedUsers.length + ' user(s) selected');
+                                
+                                selectedUserNames.forEach(function(userName) {
+                                    var userId = allUsers.find(u => (u.userName + ' (' + u.email + ')') === userName).id;
+                                    var badge = $('<span>', {
+                                        class: 'badge bg-primary me-1 mb-1',
+                                        text: userName + ' ×',
+                                        style: 'cursor: pointer;'
+                                    });
+                                    badge.on('click', function() {
+                                        selectedUsers = selectedUsers.filter(id => id !== userId);
+                                        $('.user-checkbox[data-user-id="' + userId + '"]').prop('checked', false);
+                                        $('#selectAllUsersCheckbox').prop('checked', false);
+                                        updateUserBadges();
+                                    });
+                                    badgesContainer.append(badge);
+                                });
+                            }
+                            
+                            function loadAllUsersForEdit(userIds) {
+                                $.get('/Notification/GetUsersByOrganization', function(data) {
+                                    allUsers = data;
+                                    selectedUsers = userIds || [];
+                                    renderUsers(data);
+                                    updateUserBadges();
+                                });
+                            }
+                            
+                            function sendNotification() {
+                                var title = $('#notificationTitle').val();
+                                var message = $('#notificationMessage').val();
+                                var priority = $('#notificationPriority').val();
+                                var expiryDate = $('#notificationExpiryDate').val();
+                                
+                                if (!title || !message || !priority) {
+                                    alert('Please fill in all required fields.');
+                                    return;
+                                }
+                                
+                                if (selectedUsers.length === 0) {
+                                    alert('Please select at least one user.');
+                                    return;
+                                }
+                                
+                                var formData = {
+                                    title: title,
+                                    message: message,
+                                    priority: priority,
+                                    expiryDate: expiryDate || null,
+                                    userIds: selectedUsers.map(id => parseInt(id))
+                                };
+                                
+                                $.ajax({
+                                    url: '/Notification/Create',
+                                    type: 'POST',
+                                    contentType: 'application/json',
+                                    data: JSON.stringify(formData),
+                                    headers: {
+                                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                    },
+                                    success: function(response) {
+                                        if (response.success) {
+                                            alert(response.message);
+                                            location.reload();
+                                        } else {
+                                            alert(response.message);
+                                        }
+                                    },
+                                    error: function() {
+                                        alert('An error occurred while sending the notification.');
+                                    }
+                                });
+                            }
+                            
+                            function updateNotification() {
+                                var notificationId = $('#sendNotificationForm').data('notification-id');
+                                var title = $('#notificationTitle').val();
+                                var message = $('#notificationMessage').val();
+                                var priority = $('#notificationPriority').val();
+                                var expiryDate = $('#notificationExpiryDate').val();
+                                
+                                if (!notificationId) {
+                                    alert('Notification ID is missing. Please try again.');
+                                    return;
+                                }
+                                
+                                if (!title || !message || !priority) {
+                                    alert('Please fill in all required fields.');
+                                    return;
+                                }
+                                
+                                if (selectedUsers.length === 0) {
+                                    alert('Please select at least one user.');
+                                    return;
+                                }
+                                
+                                var formData = {
+                                    notificationId: parseInt(notificationId),
+                                    title: title.trim(),
+                                    message: message.trim(),
+                                    priority: priority.trim(),
+                                    expiryDate: expiryDate ? expiryDate : null,
+                                    userIds: selectedUsers.map(id => parseInt(id))
+                                };
+                                
+                                console.log('Updating notification:', formData);
+                                
+                                $.ajax({
+                                    url: '/Notification/Update',
+                                    type: 'POST',
+                                    contentType: 'application/json',
+                                    data: JSON.stringify(formData),
+                                    headers: {
+                                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                    },
+                                    success: function(response) {
+                                        console.log('Update response:', response);
+                                        if (response.success) {
+                                            alert(response.message);
+                                            $('#sendNotificationModal').modal('hide');
+                                            location.reload();
+                                        } else {
+                                            alert(response.message || 'Failed to update notification.');
+                                        }
+                                    },
+                                    error: function(xhr, status, error) {
+                                        console.error('Update error:', error, xhr.responseText);
+                                        var errorMessage = 'An error occurred while updating the notification.';
+                                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                                            errorMessage = xhr.responseJSON.message;
+                                        }
+                                        alert(errorMessage);
+                                    }
+                                });
+                            }
+                            
+                            function deleteNotification(notificationId) {
+                                $.ajax({
+                                    url: '/Notification/Delete',
+                                    type: 'POST',
+                                    data: { id: notificationId },
+                                    headers: {
+                                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                                    },
+                                    success: function(response) {
+                                        if (response.success) {
+                                            alert(response.message);
+                                            location.reload();
+                                        } else {
+                                            alert(response.message);
+                                        }
+                                    },
+                                    error: function() {
+                                        alert('An error occurred while deleting the notification.');
+                                    }
+                                });
+                            }
+                        </script>
+                    }
+                }
             </div>
         </div>
     </div>
-    <!-- Script to show the welcome toast -->
     @* <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const welcomeToast = document.getElementById('welcomeToast');
-            if (welcomeToast) {
-                const toast = new bootstrap.Toast(welcomeToast);
+        document.addeventlistener('domcontentloaded', function() {
+            const welcometoast = document.getelementbyid('welcometoast');
+            if (welcometoast) {
+                const toast = new bootstrap.toast(welcometoast);
                 toast.show();
             }
         });

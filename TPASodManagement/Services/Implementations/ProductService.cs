@@ -212,20 +212,38 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Product>();
             try
             {
-                var exists = await _context.Products.AnyAsync(p => p.ProductId == product.ProductId);
-                if (!exists)
+                // Fetch existing entity from database to preserve CreatedByUserId and CreatedDate
+                var existingProduct = await _context.Products
+                    .FirstOrDefaultAsync(p => p.ProductId == product.ProductId);
+                
+                if (existingProduct == null)
                 {
                     response.Success = false;
                     response.Message = "Product not found";
                     return response;
                 }
 
+                // Update only the properties that should be updated
+                // Preserve CreatedByUserId and CreatedDate
+                existingProduct.ProductCode = product.ProductCode;
+                existingProduct.ProductName = product.ProductName;
+                existingProduct.Description = product.Description;
+                existingProduct.UnitOfMeasure = product.UnitOfMeasure;
+                existingProduct.StandardPrice = product.StandardPrice;
+                existingProduct.ProductCategoryId = product.ProductCategoryId;
+                existingProduct.CurrencyId = product.CurrencyId;
+                existingProduct.CertificateTypeId = product.CertificateTypeId;
+                existingProduct.IsActive = product.IsActive;
+                
+                // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
-                product.UpdatedDate = DateTimeOffset.UtcNow;
-                product.UpdatedByUserId = currentUserId;
-                _context.Update(product);
+                existingProduct.UpdatedDate = DateTimeOffset.UtcNow;
+                existingProduct.UpdatedByUserId = currentUserId;
+                
+                // CreatedByUserId and CreatedDate are preserved from existingProduct
+                
                 await _context.SaveChangesAsync();
-                response.Data = product;
+                response.Data = existingProduct;
             }
             catch (DbUpdateConcurrencyException)
             {

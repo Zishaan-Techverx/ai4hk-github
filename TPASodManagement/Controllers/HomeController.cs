@@ -4,6 +4,8 @@ using System.Diagnostics;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace TpaSodManagement.Controllers;
 
@@ -13,17 +15,23 @@ public class HomeController : Controller
     private readonly UserManager<TpaSodManagementUser> _userManager;
     private readonly SignInManager<TpaSodManagementUser> _signInManager;
     private readonly IHomeService _homeService;
+    private readonly ApplicationDbContext _context;
+    private readonly INotificationService _notificationService;
 
     public HomeController(
         ILogger<HomeController> logger,
         UserManager<TpaSodManagementUser> userManager,
         SignInManager<TpaSodManagementUser> signInManager,
-        IHomeService homeService)
+        IHomeService homeService,
+        ApplicationDbContext context,
+        INotificationService notificationService)
     {
         _logger = logger;
         _userManager = userManager; 
         _signInManager = signInManager;
         _homeService = homeService;
+        _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<IActionResult> Index()
@@ -43,6 +51,20 @@ public class HomeController : Controller
             if (TempData.ContainsKey("ShowWelcomePopup"))
             {
                 ViewData["ShowWelcomePopup"] = TempData["ShowWelcomePopup"];
+            }
+
+            // Load notifications for SuperAdmin
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser != null)
+            {
+                var roles = await _userManager.GetRolesAsync(currentUser);
+                bool isSuperAdmin = roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+                
+                if (isSuperAdmin)
+                {
+                    var notifications = await _notificationService.GetAllNotificationsAsync();
+                    ViewBag.Notifications = notifications;
+                }
             }
         }
 
@@ -95,6 +117,10 @@ public class HomeController : Controller
             // Store user info in session for 2FA verification
             HttpContext.Session.SetString("2FA_UserId", user.Id.ToString());
             HttpContext.Session.SetString("2FA_RememberMe", Input_RememberMe.ToString());
+            
+            // Note: PasswordSignInAsync with RequiresTwoFactor result automatically sets up
+            // the two-factor authentication context needed for recovery codes
+            // We don't need to sign in/out here - the 2FA context is already established
             
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
@@ -155,7 +181,7 @@ public class HomeController : Controller
     }
 
     [HttpPost]
-    public async Task<IActionResult> Verify2FA(string code)
+    public async Task<IActionResult> Verify2FA(string code, bool isRecoveryCode = false)
     {
         var userId = HttpContext.Session.GetString("2FA_UserId");
         var rememberMeStr = HttpContext.Session.GetString("2FA_RememberMe");
@@ -180,10 +206,7 @@ public class HomeController : Controller
             return RedirectToAction("Index");
         }
 
-        // Strip spaces and hyphens
-        var verificationCode = code?.Replace(" ", string.Empty).Replace("-", string.Empty) ?? string.Empty;
-
-        if (string.IsNullOrEmpty(verificationCode))
+        if (string.IsNullOrEmpty(code))
         {
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
@@ -192,16 +215,138 @@ public class HomeController : Controller
             return Json(new { success = false, message = "Please enter a verification code." });
         }
 
-        var isValid = await _userManager.VerifyTwoFactorTokenAsync(
-            user, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+        bool isValid = false;
 
-        if (!isValid)
+        if (isRecoveryCode)
         {
+            // Check if user has recovery codes
+            var recoveryCodesCount = await _userManager.CountRecoveryCodesAsync(user);
+            if (recoveryCodesCount == 0)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "No recovery codes available. Please generate new recovery codes." });
+                }
+                return Json(new { success = false, message = "No recovery codes available. Please generate new recovery codes." });
+            }
+
+            var trimmedCode = code.Trim();
+            
+            // Try different normalization approaches
+            // Approach 1: Remove spaces and dashes, convert to uppercase (most common)
+            var normalizedCode1 = trimmedCode
+                .Replace(" ", string.Empty)
+                .Replace("-", string.Empty)
+                .ToUpperInvariant();
+            
+            // Approach 2: Remove spaces and dashes, keep original case
+            var normalizedCode2 = trimmedCode
+                .Replace(" ", string.Empty)
+                .Replace("-", string.Empty);
+            
+            // Approach 3: Keep original format (with spaces/dashes)
+            var normalizedCode3 = trimmedCode;
+            
+            // Try Approach 1 first (uppercase, no formatting)
+            var recoveryCodeResult = await _userManager.RedeemTwoFactorRecoveryCodeAsync(user, normalizedCode1);
+            isValid = recoveryCodeResult.Succeeded;
+            
+            // Try Approach 2 if Approach 1 failed
+            if (!isValid)
+            {
+                recoveryCodeResult = await _userManager.RedeemTwoFactorRecoveryCodeAsync(user, normalizedCode2);
+                isValid = recoveryCodeResult.Succeeded;
+            }
+            
+            // Try Approach 3 if Approach 2 failed
+            if (!isValid)
+            {
+                recoveryCodeResult = await _userManager.RedeemTwoFactorRecoveryCodeAsync(user, normalizedCode3);
+                isValid = recoveryCodeResult.Succeeded;
+            }
+            
+            // Debug: Check actual stored recovery codes in database
+            if (!isValid)
+            {
+                try
+                {
+                    // Check AspNetUserTokens table for recovery codes
+                    var recoveryToken = await _context.UserTokens
+                        .FirstOrDefaultAsync(t => t.UserId == user.Id && 
+                                                  t.LoginProvider == "[AspNetUserStore]" && 
+                                                  t.Name == "RecoveryCodes");
+                    
+                    if (recoveryToken != null)
+                    {
+                        _logger.LogWarning("Recovery code verification failed for user {UserId}. " +
+                            "Input: '{Input}', Normalized1: '{Norm1}', Normalized2: '{Norm2}', Normalized3: '{Norm3}', " +
+                            "Remaining codes: {Count}, Stored token exists: {HasToken}",
+                            user.Id, code, normalizedCode1, normalizedCode2, normalizedCode3, recoveryCodesCount, recoveryToken != null);
+                    }
+                    else
+                    {
+                        _logger.LogWarning("Recovery code verification failed for user {UserId}. " +
+                            "No recovery codes token found in database for user. " +
+                            "Input: '{Input}', Normalized1: '{Norm1}', Normalized2: '{Norm2}', Normalized3: '{Norm3}', " +
+                            "Remaining codes: {Count}",
+                            user.Id, code, normalizedCode1, normalizedCode2, normalizedCode3, recoveryCodesCount);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error checking recovery codes in database for user {UserId}", user.Id);
+                }
+            }
+            
+            if (!isValid)
+            {
+                var errorMessage = "Invalid recovery code. ";
+                if (recoveryCodesCount > 0)
+                {
+                    errorMessage += $"You have {recoveryCodesCount} recovery code(s) remaining. Make sure you're using a valid, unused recovery code from your list.";
+                }
+                else
+                {
+                    errorMessage += "Please generate new recovery codes.";
+                }
+                
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = errorMessage });
+                }
+                return Json(new { success = false, message = errorMessage });
+            }
+            
+            // Recovery code was successfully redeemed, now sign in the user
+            // Clear session
+            HttpContext.Session.Remove("2FA_UserId");
+            HttpContext.Session.Remove("2FA_RememberMe");
+            
+            // Sign in the user
+            await _signInManager.SignInAsync(user, rememberMe);
+            TempData["ShowWelcomePopup"] = true;
+            
             if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
             {
+                return Json(new { success = true, redirectUrl = Url.Action("Index") });
+            }
+            return RedirectToAction("Index");
+        }
+        else
+        {
+            // Verify 2FA token - strip spaces and hyphens for 2FA codes
+            var verificationCode = code.Replace(" ", string.Empty).Replace("-", string.Empty);
+            isValid = await _userManager.VerifyTwoFactorTokenAsync(
+                user, _userManager.Options.Tokens.AuthenticatorTokenProvider, verificationCode);
+
+            if (!isValid)
+            {
+                if (Request.Headers["X-Requested-With"] == "XMLHttpRequest")
+                {
+                    return Json(new { success = false, message = "Invalid verification code." });
+                }
                 return Json(new { success = false, message = "Invalid verification code." });
             }
-            return Json(new { success = false, message = "Invalid verification code." });
         }
 
         // Clear session

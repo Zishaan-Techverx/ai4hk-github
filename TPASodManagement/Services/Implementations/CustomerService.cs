@@ -221,20 +221,38 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Customer>();
             try
             {
-                var exists = await _context.Customers.AnyAsync(c => c.CustomerId == customer.CustomerId);
-                if (!exists)
+                // Fetch existing entity from database to preserve CreatedByUserId and CreatedDate
+                var existingCustomer = await _context.Customers
+                    .FirstOrDefaultAsync(c => c.CustomerId == customer.CustomerId);
+                
+                if (existingCustomer == null)
                 {
                     response.Success = false;
                     response.Message = "Customer not found";
                     return response;
                 }
 
+                // Update only the properties that should be updated
+                // Preserve CreatedByUserId and CreatedDate
+                existingCustomer.CustomerType = customer.CustomerType;
+                existingCustomer.CustomerCode = customer.CustomerCode;
+                existingCustomer.OrganizationId = customer.OrganizationId;
+                existingCustomer.PersonId = customer.PersonId;
+                existingCustomer.CreditLimit = customer.CreditLimit;
+                existingCustomer.PaymentTermsDays = customer.PaymentTermsDays;
+                existingCustomer.TaxExempt = customer.TaxExempt;
+                existingCustomer.Notes = customer.Notes;
+                existingCustomer.IsActive = customer.IsActive;
+                
+                // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
-                customer.UpdatedDate = DateTimeOffset.UtcNow;
-                customer.UpdatedByUserId = currentUserId;
-                _context.Update(customer);
+                existingCustomer.UpdatedDate = DateTimeOffset.UtcNow;
+                existingCustomer.UpdatedByUserId = currentUserId;
+                
+                // CreatedByUserId and CreatedDate are preserved from existingCustomer
+                
                 await _context.SaveChangesAsync();
-                response.Data = customer;
+                response.Data = existingCustomer;
             }
             catch (DbUpdateConcurrencyException)
             {

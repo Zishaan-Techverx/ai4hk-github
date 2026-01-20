@@ -807,6 +807,19 @@
                 }
             });
 
+            // If no filters are active, clear everything and reload
+            if (Object.keys(activeFilters).length === 0) {
+                // Clear filter tags and count
+                updateFilterTags();
+                updateFilterCount();
+                // Close modal if open
+                const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                if (modal) modal.hide();
+                // Reload page to show all data with server-side pagination
+                window.location.reload();
+                return; // Exit early - no filters to apply
+            }
+
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
             const response = await fetch('@Url.Action("Filter", "Seeding")', {
                 method: 'POST',
