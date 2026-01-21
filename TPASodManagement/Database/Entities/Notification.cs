@@ -14,8 +14,12 @@ public partial class Notification : AuditBaseEntity
     
     public string Priority { get; set; } = null!; // Critical, High, Medium, Low
     
+    public DateTimeOffset? ExpiryDate { get; set; }
+    
     public bool IsActive { get; set; } = true;
     
     public virtual ICollection<NotificationUser> NotificationUsers { get; set; } = new List<NotificationUser>();
+    
+    public virtual ICollection<NotificationResponse> NotificationResponses { get; set; } = new List<NotificationResponse>();
 }
 

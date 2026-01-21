@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TpaSodManagement.Database;
 
@@ -11,9 +12,11 @@ using TpaSodManagement.Database;
 namespace TpaSodManagement.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260121121739_AddExpiryDateToNotification")]
+    partial class AddExpiryDateToNotification
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -977,52 +980,6 @@ namespace TpaSodManagement.Database.Migrations
                     b.HasKey("NotificationId");
 
                     b.ToTable("Notification", (string)null);
-                });
-
-            modelBuilder.Entity("TpaSodManagement.Database.Entities.NotificationResponse", b =>
-                {
-                    b.Property<long>("NotificationResponseId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("NotificationResponseId"));
-
-                    b.Property<long?>("CreatedByUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset>("CreatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<long?>("DeletedByUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("DeletedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<long>("NotificationId")
-                        .HasColumnType("bigint");
-
-                    b.Property<string>("Reply")
-                        .IsRequired()
-                        .HasMaxLength(2000)
-                        .HasColumnType("nvarchar(2000)");
-
-                    b.Property<long?>("UpdatedByUserId")
-                        .HasColumnType("bigint");
-
-                    b.Property<DateTimeOffset?>("UpdatedDate")
-                        .HasColumnType("datetimeoffset");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("bigint");
-
-                    b.HasKey("NotificationResponseId");
-
-                    b.HasIndex("NotificationId");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("NotificationResponse", (string)null);
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.NotificationUser", b =>
@@ -2449,25 +2406,6 @@ namespace TpaSodManagement.Database.Migrations
                     b.Navigation("Farm");
                 });
 
-            modelBuilder.Entity("TpaSodManagement.Database.Entities.NotificationResponse", b =>
-                {
-                    b.HasOne("TpaSodManagement.Database.Entities.Notification", "Notification")
-                        .WithMany("NotificationResponses")
-                        .HasForeignKey("NotificationId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TpaSodManagement.Areas.Identity.Data.TpaSodManagementUser", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Notification");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("TpaSodManagement.Database.Entities.NotificationUser", b =>
                 {
                     b.HasOne("TpaSodManagement.Database.Entities.Notification", "Notification")
@@ -2900,8 +2838,6 @@ namespace TpaSodManagement.Database.Migrations
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Notification", b =>
                 {
-                    b.Navigation("NotificationResponses");
-
                     b.Navigation("NotificationUsers");
                 });
 

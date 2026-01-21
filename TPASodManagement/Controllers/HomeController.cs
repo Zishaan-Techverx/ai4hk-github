@@ -17,6 +17,7 @@ public class HomeController : Controller
     private readonly IHomeService _homeService;
     private readonly ApplicationDbContext _context;
     private readonly INotificationService _notificationService;
+    private readonly INotificationResponseService _notificationResponseService;
 
     public HomeController(
         ILogger<HomeController> logger,
@@ -24,7 +25,8 @@ public class HomeController : Controller
         SignInManager<TpaSodManagementUser> signInManager,
         IHomeService homeService,
         ApplicationDbContext context,
-        INotificationService notificationService)
+        INotificationService notificationService,
+        INotificationResponseService notificationResponseService)
     {
         _logger = logger;
         _userManager = userManager; 
@@ -32,6 +34,7 @@ public class HomeController : Controller
         _homeService = homeService;
         _context = context;
         _notificationService = notificationService;
+        _notificationResponseService = notificationResponseService;
     }
 
     public async Task<IActionResult> Index()
@@ -53,7 +56,7 @@ public class HomeController : Controller
                 ViewData["ShowWelcomePopup"] = TempData["ShowWelcomePopup"];
             }
 
-            // Load notifications for SuperAdmin
+            // Load notifications
             var currentUser = await _userManager.GetUserAsync(User);
             if (currentUser != null)
             {
@@ -62,8 +65,36 @@ public class HomeController : Controller
                 
                 if (isSuperAdmin)
                 {
+                    // Load all notifications for SuperAdmin (management view)
                     var notifications = await _notificationService.GetAllNotificationsAsync();
                     ViewBag.Notifications = notifications;
+                }
+                else
+                {
+                    // Load user-specific notifications with read status for regular users
+                    var userNotificationUsers = await _context.NotificationUsers
+                        .Where(nu => nu.UserId == currentUser.Id && nu.DeletedDate == null)
+                        .Include(nu => nu.Notification)
+                        .Where(nu => nu.Notification.DeletedDate == null && nu.Notification.IsActive)
+                        .OrderByDescending(nu => nu.Notification.CreatedDate)
+                        .ToListAsync();
+                    
+                    ViewBag.UserNotificationUsers = userNotificationUsers;
+                    
+                    // Count unread notifications
+                    var unreadCount = userNotificationUsers.Count(nu => !nu.IsRead);
+                    ViewBag.UnreadNotificationCount = unreadCount;
+                    
+                    // Check which notifications the user has already replied to
+                    var notificationIds = userNotificationUsers.Select(nu => nu.NotificationId).ToList();
+                    var userReplies = await _context.NotificationResponses
+                        .Where(nr => nr.UserId == currentUser.Id 
+                            && notificationIds.Contains(nr.NotificationId) 
+                            && nr.DeletedDate == null)
+                        .Select(nr => nr.NotificationId)
+                        .ToListAsync();
+                    
+                    ViewBag.UserRepliedNotificationIds = userReplies;
                 }
             }
         }
@@ -363,6 +394,49 @@ public class HomeController : Controller
         }
 
         return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> MarkNotificationAsRead(long notificationId)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, message = "User not found" });
+        }
+
+        var result = await _notificationService.MarkAsReadAsync(notificationId, currentUser.Id);
+        if (result)
+        {
+            return Json(new { success = true, message = "Notification marked as read" });
+        }
+
+        return Json(new { success = false, message = "Failed to mark notification as read" });
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> SendNotificationReply(long notificationId, string reply)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, message = "User not found" });
+        }
+
+        if (string.IsNullOrWhiteSpace(reply))
+        {
+            return Json(new { success = false, message = "Reply cannot be empty." });
+        }
+
+        var response = await _notificationResponseService.CreateResponseAsync(notificationId, currentUser.Id, reply);
+        
+        if (response.Success)
+        {
+            return Json(new { success = true, message = response.Message });
+        }
+
+        return Json(new { success = false, message = response.Message });
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

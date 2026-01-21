@@ -46,6 +46,7 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
     public DbSet<RolePermission> RolePermissions { get; set; }
     public virtual DbSet<Notification> Notifications { get; set; }
     public virtual DbSet<NotificationUser> NotificationUsers { get; set; }
+    public virtual DbSet<NotificationResponse> NotificationResponses { get; set; }
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -418,6 +419,28 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
             entity.ToTable("NotificationUser");
             entity.HasKey(e => e.NotificationUserId);
             entity.HasIndex(e => new { e.NotificationId, e.UserId }).IsUnique();
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        // NotificationResponse entity configuration
+        builder.Entity<NotificationResponse>(entity =>
+        {
+            entity.ToTable("NotificationResponse");
+            entity.HasKey(e => e.NotificationResponseId);
+            
+            entity.Property(e => e.Reply).IsRequired().HasMaxLength(2000);
+            
+            entity.HasOne(e => e.Notification)
+                .WithMany(n => n.NotificationResponses)
+                .HasForeignKey(e => e.NotificationId)
+                .OnDelete(DeleteBehavior.Cascade);
             
             entity.HasOne(e => e.User)
                 .WithMany()
