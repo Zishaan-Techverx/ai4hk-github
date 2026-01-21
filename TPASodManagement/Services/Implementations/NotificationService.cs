@@ -99,6 +99,7 @@ public class NotificationService : INotificationService
             existingNotification.Title = notification.Title;
             existingNotification.Message = notification.Message;
             existingNotification.Priority = notification.Priority;
+            existingNotification.ExpiryDate = notification.ExpiryDate;
             existingNotification.IsActive = notification.IsActive;
 
             var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
@@ -173,6 +174,22 @@ public class NotificationService : INotificationService
                         }
                     }
                 }
+            }
+
+            // Mark all active users as unread when notification is updated
+            // This ensures users see the updated notification content
+            // Query from context to include newly added users
+            var activeNotificationUsers = await _context.NotificationUsers
+                .Where(nu => nu.NotificationId == existingNotification.NotificationId 
+                    && nu.DeletedDate == null)
+                .ToListAsync();
+
+            foreach (var notificationUser in activeNotificationUsers)
+            {
+                notificationUser.IsRead = false;
+                notificationUser.ReadDate = null;
+                notificationUser.UpdatedDate = DateTimeOffset.UtcNow;
+                notificationUser.UpdatedByUserId = currentUserId;
             }
 
             await _context.SaveChangesAsync();

@@ -52,6 +52,11 @@
                             <input type="text" class="form-control" value="@Model.Priority" readonly />
                         </div>
 
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Expiry Date</label>
+                            <input type="text" class="form-control" value="@(Model.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")" readonly />
+                        </div>
+
                     </div>
 
                     <div class="row">
@@ -91,16 +96,39 @@
                                                 <th>Email</th>
                                                 <th>Is Read</th>
                                                 <th>Read Date</th>
+                                                <th>Reply</th>
                                             </tr>
                                         </thead>
                                         <tbody>
+                                            @{
+                                                var replies = ViewBag.Replies as List<TpaSodManagement.Database.Entities.NotificationResponse> ?? new List<TpaSodManagement.Database.Entities.NotificationResponse>();
+                                            }
                                             @foreach (var notificationUser in Model.NotificationUsers)
                                             {
+                                                var userReplies = replies.Where(r => r.UserId == notificationUser.UserId).ToList();
                                                 <tr>
                                                     <td>@(notificationUser.User?.UserName ?? "N/A")</td>
                                                     <td>@(notificationUser.User?.Email ?? "N/A")</td>
                                                     <td>@(notificationUser.IsRead ? "Yes" : "No")</td>
                                                     <td>@(notificationUser.ReadDate?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")</td>
+                                                    <td>
+                                                        @if (userReplies.Any())
+                                                        {
+                                                            <div>
+                                                                @foreach (var reply in userReplies)
+                                                                {
+                                                                    <div class="mb-2 p-2 bg-light rounded">
+                                                                        <div class="small text-muted">@reply.CreatedDate.ToString("yyyy-MM-dd HH:mm")</div>
+                                                                        <div>@reply.Reply</div>
+                                                                    </div>
+                                                                }
+                                                            </div>
+                                                        }
+                                                        else
+                                                        {
+                                                            <span class="text-muted">No reply</span>
+                                                        }
+                                                    </td>
                                                 </tr>
                                             }
                                         </tbody>
@@ -116,8 +144,9 @@
                                 data-id="@Model.NotificationId" 
                                 data-title="@Model.Title" 
                                 data-message="@Model.Message" 
-                                data-priority="@Model.Priority" 
-                            Edit
+                                data-priority="@Model.Priority"
+                                data-expiry="@(Model.ExpiryDate?.ToString("yyyy-MM-ddTHH:mm") ?? "")">
+                            <i class="bi bi-pencil"></i> Edit
                         </button>
                     </div>
                 </div>
@@ -131,8 +160,10 @@
         $(document).ready(function() {
             // Edit button handler for details page
             $('.edit-notification').on('click', function() {
-                // Redirect to home page and trigger edit
-                window.location.href = '@Url.Action("Index", "Home")';
+                var notificationId = $(this).data('id');
+                
+                // Redirect to home page with query parameter to trigger edit modal
+                window.location.href = '@Url.Action("Index", "Home")?editNotificationId=' + notificationId;
             });
         });
     </script>

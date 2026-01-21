@@ -190,6 +190,147 @@ else
                     </div>
                 </div> *@
 
+                <!-- Notifications Section - For Regular Users -->
+                @if (!User.IsInRole("SuperAdmin"))
+                {
+                    @Html.AntiForgeryToken()
+                    var userNotificationUsers = ViewBag.UserNotificationUsers as List<TpaSodManagement.Database.Entities.NotificationUser>;
+                    var unreadCount = ViewBag.UnreadNotificationCount as int? ?? 0;
+                    
+                    if (userNotificationUsers != null && userNotificationUsers.Any())
+                    {
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <div class="card">
+                                    <div class="card-header d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-0">
+                                            <i class="bi bi-bell-fill me-2"></i>Notifications
+                                            @if (unreadCount > 0)
+                                            {
+                                                <span class="badge bg-danger ms-2">@unreadCount New</span>
+                                            }
+                                        </h5>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="list-group">
+                                            @foreach (var notificationUser in userNotificationUsers)
+                                            {
+                                                var notification = notificationUser.Notification;
+                                                var isRead = notificationUser.IsRead;
+                                                var readDate = notificationUser.ReadDate;
+                                                
+                                                <div class="list-group-item @(isRead ? "" : "list-group-item-primary") notification-item" 
+                                                     data-notification-id="@notification.NotificationId" 
+                                                     style="@(isRead ? "" : "border-left: 4px solid #0d6efd;")">
+                                                    <div class="d-flex w-100 justify-content-between align-items-start">
+                                                        <div class="flex-grow-1">
+                                                            <h6 class="mb-1">
+                                                                @if (!isRead)
+                                                                {
+                                                                    <span class="badge bg-primary me-2">New</span>
+                                                                }
+                                                                @notification.Title
+                                                                <span class="badge bg-@(notification.Priority == "Critical" ? "danger" : notification.Priority == "High" ? "warning" : notification.Priority == "Medium" ? "info" : "secondary") ms-2">
+                                                                    @notification.Priority
+                                                                </span>
+                                                            </h6>
+                                                            <p class="mb-1">@(notification.Message.Length > 100 ? notification.Message.Substring(0, 100) + "..." : notification.Message)</p>
+                                                            <small class="text-muted">
+                                                                <i class="bi bi-clock"></i> @notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")
+                                                                @if (isRead && readDate.HasValue)
+                                                                {
+                                                                    <span class="ms-2">| Read: @readDate.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                                                                }
+                                                            </small>
+                                                        </div>
+                                                        <div class="ms-3">
+                                                            <button class="btn btn-sm btn-info view-notification-btn" 
+                                                                    data-notification-id="@notification.NotificationId"
+                                                                    data-title="@notification.Title"
+                                                                    data-message="@notification.Message"
+                                                                    data-priority="@notification.Priority"
+                                                                    data-created-date="@notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")"
+                                                                    data-expiry-date="@(notification.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")"
+                                                                    data-is-read="@isRead.ToString().ToLower()">
+                                                                <i class="bi bi-eye"></i> View
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+
+                    <!-- Notification Details Modal -->
+                    <div class="modal fade" id="notificationDetailsModal" tabindex="-1" aria-labelledby="notificationDetailsModalLabel" aria-hidden="true">
+                        <div class="modal-dialog modal-lg" style="max-width: 50%;">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="notificationDetailsModalLabel">Notification Details</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label fw-bold">Title</label>
+                                            <p id="notificationModalTitle" class="form-control-plaintext"></p>
+                                        </div>
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label fw-bold">Priority</label>
+                                            <p id="notificationModalPriority" class="form-control-plaintext"></p>
+                                        </div>
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label fw-bold">Message</label>
+                                            <div class="border rounded p-3" style="max-height: 300px; overflow-y: auto; background-color: #f8f9fa;">
+                                                <p id="notificationModalMessage" class="mb-0" style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;"></p>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Created Date</label>
+                                            <p id="notificationModalCreatedDate" class="form-control-plaintext"></p>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label fw-bold">Expiry Date</label>
+                                            <p id="notificationModalExpiryDate" class="form-control-plaintext"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-primary" id="replyNotificationBtn">Reply</button>
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Reply Notification Modal -->
+                    <div class="modal fade" id="replyNotificationModal" tabindex="-1" aria-labelledby="replyNotificationModalLabel" aria-hidden="true">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="replyNotificationModalLabel">Reply to Notification</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label for="notificationReply" class="form-label">Reply <span class="text-danger">*</span></label>
+                                        <textarea class="form-control" id="notificationReply" rows="4" required maxlength="2000" placeholder="Enter your reply..."></textarea>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                    <button type="button" class="btn btn-primary" id="sendReplyBtn">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+
+
                 <!-- Notifications Section - Only for SuperAdmin -->
                 @if (User.IsInRole("SuperAdmin"))
                 {
@@ -229,6 +370,7 @@ else
                                                     <th>Priority</th>
                                                     <th>Recipients</th>
                                                     <th>Created Date</th>
+                                                    <th>Expiry Date</th>
                                                     <th>Actions</th>
                                                 </tr>
                                             </thead>
@@ -247,6 +389,7 @@ else
                                                             </td>
                                                             <td>@notification.NotificationUsers.Count</td>
                                                             <td>@notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
+                                                            <td>@(notification.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")</td>
                                                             <td>
                                                                 <div class="btn-group btn-group-sm">
                                                                     <a class="btn btn-info" asp-controller="Notification" asp-action="Details" asp-route-id="@notification.NotificationId">
@@ -357,523 +500,6 @@ else
                             </div>
                         </div>
                     </div>
-
-                    @section Scripts {
-                        <script>
-                            var selectedOrganizations = [];
-                            var selectedUsers = [];
-                            var allOrganizations = [];
-                            var allUsers = [];
-                            
-                            $(document).ready(function() {
-                                // Load organizations when Send Notification button is clicked
-                                $('[data-bs-target="#sendNotificationModal"]').on('click', function() {
-                                    console.log('Send Notification button clicked');
-                                    // Small delay to ensure modal is ready
-                                    setTimeout(function() {
-                                        loadOrganizations();
-                                    }, 100);
-                                });
-                                
-                                // Select All Organizations checkbox handler
-                                $(document).on('change', '#selectAllOrgsCheckbox', function(e) {
-                                    e.stopPropagation();
-                                    var isChecked = $(this).prop('checked');
-                                    
-                                    if (isChecked) {
-                                        // Select all
-                                        selectedOrganizations = allOrganizations.map(org => org.organizationId);
-                                        $('.org-checkbox').prop('checked', true);
-                                    } else {
-                                        // Deselect all
-                                        selectedOrganizations = [];
-                                        $('.org-checkbox').prop('checked', false);
-                                    }
-                                    updateOrganizationBadges();
-                                    loadUsersBySelectedOrganizations();
-                                });
-                                
-                                // Select All Organizations container click handler - only if clicking on label or container (not checkbox itself)
-                                $(document).on('click', '#selectAllOrgs', function(e) {
-                                    // Only handle if clicking on the container or label, not the checkbox
-                                    if ($(e.target).is('#selectAllOrgsCheckbox')) {
-                                        return; // Let the change event handle it
-                                    }
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    var checkbox = $('#selectAllOrgsCheckbox');
-                                    checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
-                                });
-                                
-                                // Organization checkbox handler
-                                $(document).on('change', '.org-checkbox', function() {
-                                    var orgId = $(this).data('org-id');
-                                    if ($(this).prop('checked')) {
-                                        if (!selectedOrganizations.includes(orgId)) {
-                                            selectedOrganizations.push(orgId);
-                                        }
-                                    } else {
-                                        selectedOrganizations = selectedOrganizations.filter(id => id !== orgId);
-                                        $('#selectAllOrgsCheckbox').prop('checked', false);
-                                    }
-                                    updateOrganizationBadges();
-                                    loadUsersBySelectedOrganizations();
-                                });
-                                
-                                // Select All Users checkbox handler
-                                $(document).on('change', '#selectAllUsersCheckbox', function(e) {
-                                    e.stopPropagation();
-                                    var isChecked = $(this).prop('checked');
-                                    
-                                    if (isChecked) {
-                                        // Select all
-                                        selectedUsers = allUsers.map(user => user.id);
-                                        $('.user-checkbox').prop('checked', true);
-                                    } else {
-                                        // Deselect all
-                                        selectedUsers = [];
-                                        $('.user-checkbox').prop('checked', false);
-                                    }
-                                    updateUserBadges();
-                                });
-                                
-                                // Select All Users container click handler - only if clicking on label or container (not checkbox itself)
-                                $(document).on('click', '#selectAllUsers', function(e) {
-                                    // Only handle if clicking on the container or label, not the checkbox
-                                    if ($(e.target).is('#selectAllUsersCheckbox')) {
-                                        return; // Let the change event handle it
-                                    }
-                                    e.preventDefault();
-                                    e.stopPropagation();
-                                    var checkbox = $('#selectAllUsersCheckbox');
-                                    checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
-                                });
-                                
-                                // User checkbox handler
-                                $(document).on('change', '.user-checkbox', function() {
-                                    var userId = $(this).data('user-id');
-                                    if ($(this).prop('checked')) {
-                                        if (!selectedUsers.includes(userId)) {
-                                            selectedUsers.push(userId);
-                                        }
-                                    } else {
-                                        selectedUsers = selectedUsers.filter(id => id !== userId);
-                                        $('#selectAllUsersCheckbox').prop('checked', false);
-                                    }
-                                    updateUserBadges();
-                                });
-                                
-                                // Edit notification handler
-                                $(document).on('click', '.edit-notification', function() {
-                                    var notificationId = $(this).data('id');
-                                    var title = $(this).data('title');
-                                    var message = $(this).data('message');
-                                    var priority = $(this).data('priority');
-                                    var expiry = $(this).data('expiry');
-                                    
-                                    // Populate form fields
-                                    $('#notificationTitle').val(title);
-                                    $('#notificationMessage').val(message);
-                                    $('#notificationPriority').val(priority);
-                                    if (expiry) {
-                                        $('#notificationExpiryDate').val(expiry);
-                                    } else {
-                                        $('#notificationExpiryDate').val('');
-                                    }
-                                    
-                                    // Store notification ID for update
-                                    $('#sendNotificationForm').data('notification-id', notificationId);
-                                    $('#sendNotificationForm').data('is-edit', true);
-                                    
-                                    // Change modal title and button text
-                                    $('#sendNotificationModalLabel').text('Edit Notification');
-                                    $('#sendNotificationForm button[type="submit"]').text('Update Notification');
-                                    
-                                    // Load notification details to get selected users
-                                    $.get('/Notification/GetNotification', { id: notificationId }, function(response) {
-                                        if (response.success) {
-                                            // Load organizations first
-                                            loadOrganizations();
-                                            
-                                            // After organizations load, select the users
-                                            setTimeout(function() {
-                                                // Get user IDs from response
-                                                var userIds = response.notification.userIds || [];
-                                                
-                                                // Load users for all organizations to show them
-                                                loadAllUsersForEdit(userIds);
-                                            }, 500);
-                                        }
-                                    });
-                                    
-                                    // Open modal
-                                    $('#sendNotificationModal').modal('show');
-                                });
-                                
-                                // Form submit handler
-                                $('#sendNotificationForm').on('submit', function(e) {
-                                    e.preventDefault();
-                                    var isEdit = $(this).data('is-edit');
-                                    if (isEdit) {
-                                        updateNotification();
-                                    } else {
-                                        sendNotification();
-                                    }
-                                });
-                                
-                                // Delete notification handler
-                                $(document).on('click', '.delete-notification', function() {
-                                    if (confirm('Are you sure you want to delete this notification?')) {
-                                        var notificationId = $(this).data('id');
-                                        deleteNotification(notificationId);
-                                    }
-                                });
-                                
-                                // Load organizations when modal is opened
-                                $('#sendNotificationModal').on('shown.bs.modal', function() {
-                                    console.log('Modal opened, loading organizations...');
-                                    loadOrganizations();
-                                });
-                                
-                                // Also load on modal show (before animation completes)
-                                $('#sendNotificationModal').on('show.bs.modal', function() {
-                                    console.log('Modal showing, preparing to load organizations...');
-                                });
-                                
-                                // Reset form when modal is closed
-                                $('#sendNotificationModal').on('hidden.bs.modal', function() {
-                                    $('#sendNotificationForm')[0].reset();
-                                    $('#sendNotificationForm').removeData('notification-id');
-                                    $('#sendNotificationForm').removeData('is-edit');
-                                    selectedOrganizations = [];
-                                    selectedUsers = [];
-                                    allUsers = [];
-                                    updateOrganizationBadges();
-                                    updateUserBadges();
-                                    $('#organizationOptions').empty();
-                                    $('#userOptions').empty();
-                                    $('#selectAllOrgsCheckbox').prop('checked', false);
-                                    $('#selectAllUsersCheckbox').prop('checked', false);
-                                    $('#sendNotificationModalLabel').text('Send Notification');
-                                    $('#sendNotificationForm button[type="submit"]').text('Send Notification');
-                                });
-                            });
-                            
-                            function loadOrganizations() {
-                                $.get('/Notification/GetOrganizations', function(data) {
-                                    if (data && data.length > 0) {
-                                        allOrganizations = data;
-                                        var optionsContainer = $('#organizationOptions');
-                                        optionsContainer.empty();
-                                        
-                                        $.each(data, function(index, org) {
-                                            var listItem = $('<li></li>');
-                                            var checkboxId = 'org-' + org.organizationId;
-                                            var item = $('<a class="dropdown-item" href="#"></a>');
-                                            item.append($('<input>', {
-                                                type: 'checkbox',
-                                                class: 'form-check-input me-2 org-checkbox',
-                                                id: checkboxId,
-                                                'data-org-id': org.organizationId
-                                            }));
-                                            item.append($('<label>', {
-                                                class: 'form-check-label',
-                                                'for': checkboxId,
-                                                text: org.organizationName,
-                                                style: 'cursor: pointer; width: 100%;'
-                                            }));
-                                            listItem.append(item);
-                                            optionsContainer.append(listItem);
-                                        });
-                                    } else {
-                                        console.log('No organizations found');
-                                        $('#organizationOptions').html('<li><span class="dropdown-item-text">No organizations available</span></li>');
-                                    }
-                                }).fail(function(xhr, status, error) {
-                                    console.error('Error loading organizations:', error);
-                                    $('#organizationOptions').html('<li><span class="dropdown-item-text text-danger">Error loading organizations</span></li>');
-                                });
-                            }
-                            
-                            function loadUsersBySelectedOrganizations() {
-                                if (selectedOrganizations.length === 0) {
-                                    $('#userOptions').empty();
-                                    allUsers = [];
-                                    selectedUsers = [];
-                                    updateUserBadges();
-                                    $('#selectAllUsersCheckbox').prop('checked', false);
-                                    return;
-                                }
-                                
-                                $('#userOptions').html('<li><span class="dropdown-item-text">Loading...</span></li>');
-                                
-                                // Load users for each selected organization
-                                var allUsersList = [];
-                                var loadedCount = 0;
-                                
-                                selectedOrganizations.forEach(function(orgId) {
-                                    $.get('/Notification/GetUsersByOrganization', { organizationId: orgId }, function(data) {
-                                        allUsersList = allUsersList.concat(data);
-                                        loadedCount++;
-                                        
-                                        if (loadedCount === selectedOrganizations.length) {
-                                            // Remove duplicates
-                                            var uniqueUsers = [];
-                                            var userIdSet = new Set();
-                                            allUsersList.forEach(function(user) {
-                                                if (!userIdSet.has(user.id)) {
-                                                    userIdSet.add(user.id);
-                                                    uniqueUsers.push(user);
-                                                }
-                                            });
-                                            
-                                            allUsers = uniqueUsers;
-                                            renderUsers(uniqueUsers);
-                                        }
-                                    });
-                                });
-                            }
-                            
-                            function renderUsers(users) {
-                                var optionsContainer = $('#userOptions');
-                                optionsContainer.empty();
-                                
-                                $.each(users, function(index, user) {
-                                    var listItem = $('<li></li>');
-                                    var checkboxId = 'user-' + user.id;
-                                    var item = $('<a class="dropdown-item" href="#"></a>');
-                                    item.append($('<input>', {
-                                        type: 'checkbox',
-                                        class: 'form-check-input me-2 user-checkbox',
-                                        id: checkboxId,
-                                        'data-user-id': user.id,
-                                        checked: selectedUsers.includes(user.id)
-                                    }));
-                                    item.append($('<label>', {
-                                        class: 'form-check-label',
-                                        'for': checkboxId,
-                                        text: user.userName + ' (' + user.email + ')',
-                                        style: 'cursor: pointer; width: 100%;'
-                                    }));
-                                    listItem.append(item);
-                                    optionsContainer.append(listItem);
-                                });
-                                
-                                // Update select all checkbox
-                                if (users.length > 0 && selectedUsers.length === users.length) {
-                                    $('#selectAllUsersCheckbox').prop('checked', true);
-                                } else {
-                                    $('#selectAllUsersCheckbox').prop('checked', false);
-                                }
-                            }
-                            
-                            function updateOrganizationBadges() {
-                                var badgesContainer = $('#selectedOrganizationsBadges');
-                                badgesContainer.empty();
-                                
-                                if (selectedOrganizations.length === 0) {
-                                    $('#organizationDropdownText').text('Select Organizations');
-                                    return;
-                                }
-                                
-                                var selectedOrgNames = selectedOrganizations.map(function(orgId) {
-                                    var org = allOrganizations.find(o => o.organizationId === orgId);
-                                    return org ? org.organizationName : '';
-                                }).filter(name => name !== '');
-                                
-                                $('#organizationDropdownText').text(selectedOrgNames.length + ' organization(s) selected');
-                                
-                                selectedOrgNames.forEach(function(orgName) {
-                                    var orgId = allOrganizations.find(o => o.organizationName === orgName).organizationId;
-                                    var badge = $('<span>', {
-                                        class: 'badge bg-primary me-1 mb-1',
-                                        text: orgName + ' ×',
-                                        style: 'cursor: pointer;'
-                                    });
-                                    badge.on('click', function() {
-                                        selectedOrganizations = selectedOrganizations.filter(id => id !== orgId);
-                                        $('.org-checkbox[data-org-id="' + orgId + '"]').prop('checked', false);
-                                        $('#selectAllOrgsCheckbox').prop('checked', false);
-                                        updateOrganizationBadges();
-                                        loadUsersBySelectedOrganizations();
-                                    });
-                                    badgesContainer.append(badge);
-                                });
-                            }
-                            
-                            function updateUserBadges() {
-                                var badgesContainer = $('#selectedUsersBadges');
-                                badgesContainer.empty();
-                                
-                                if (selectedUsers.length === 0) {
-                                    $('#userDropdownText').text('Select Users');
-                                    return;
-                                }
-                                
-                                var selectedUserNames = selectedUsers.map(function(userId) {
-                                    var user = allUsers.find(u => u.id === userId);
-                                    return user ? user.userName + ' (' + user.email + ')' : '';
-                                }).filter(name => name !== '');
-                                
-                                $('#userDropdownText').text(selectedUsers.length + ' user(s) selected');
-                                
-                                selectedUserNames.forEach(function(userName) {
-                                    var userId = allUsers.find(u => (u.userName + ' (' + u.email + ')') === userName).id;
-                                    var badge = $('<span>', {
-                                        class: 'badge bg-primary me-1 mb-1',
-                                        text: userName + ' ×',
-                                        style: 'cursor: pointer;'
-                                    });
-                                    badge.on('click', function() {
-                                        selectedUsers = selectedUsers.filter(id => id !== userId);
-                                        $('.user-checkbox[data-user-id="' + userId + '"]').prop('checked', false);
-                                        $('#selectAllUsersCheckbox').prop('checked', false);
-                                        updateUserBadges();
-                                    });
-                                    badgesContainer.append(badge);
-                                });
-                            }
-                            
-                            function loadAllUsersForEdit(userIds) {
-                                $.get('/Notification/GetUsersByOrganization', function(data) {
-                                    allUsers = data;
-                                    selectedUsers = userIds || [];
-                                    renderUsers(data);
-                                    updateUserBadges();
-                                });
-                            }
-                            
-                            function sendNotification() {
-                                var title = $('#notificationTitle').val();
-                                var message = $('#notificationMessage').val();
-                                var priority = $('#notificationPriority').val();
-                                var expiryDate = $('#notificationExpiryDate').val();
-                                
-                                if (!title || !message || !priority) {
-                                    alert('Please fill in all required fields.');
-                                    return;
-                                }
-                                
-                                if (selectedUsers.length === 0) {
-                                    alert('Please select at least one user.');
-                                    return;
-                                }
-                                
-                                var formData = {
-                                    title: title,
-                                    message: message,
-                                    priority: priority,
-                                    expiryDate: expiryDate || null,
-                                    userIds: selectedUsers.map(id => parseInt(id))
-                                };
-                                
-                                $.ajax({
-                                    url: '/Notification/Create',
-                                    type: 'POST',
-                                    contentType: 'application/json',
-                                    data: JSON.stringify(formData),
-                                    headers: {
-                                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                    },
-                                    success: function(response) {
-                                        if (response.success) {
-                                            alert(response.message);
-                                            location.reload();
-                                        } else {
-                                            alert(response.message);
-                                        }
-                                    },
-                                    error: function() {
-                                        alert('An error occurred while sending the notification.');
-                                    }
-                                });
-                            }
-                            
-                            function updateNotification() {
-                                var notificationId = $('#sendNotificationForm').data('notification-id');
-                                var title = $('#notificationTitle').val();
-                                var message = $('#notificationMessage').val();
-                                var priority = $('#notificationPriority').val();
-                                var expiryDate = $('#notificationExpiryDate').val();
-                                
-                                if (!notificationId) {
-                                    alert('Notification ID is missing. Please try again.');
-                                    return;
-                                }
-                                
-                                if (!title || !message || !priority) {
-                                    alert('Please fill in all required fields.');
-                                    return;
-                                }
-                                
-                                if (selectedUsers.length === 0) {
-                                    alert('Please select at least one user.');
-                                    return;
-                                }
-                                
-                                var formData = {
-                                    notificationId: parseInt(notificationId),
-                                    title: title.trim(),
-                                    message: message.trim(),
-                                    priority: priority.trim(),
-                                    expiryDate: expiryDate ? expiryDate : null,
-                                    userIds: selectedUsers.map(id => parseInt(id))
-                                };
-                                
-                                console.log('Updating notification:', formData);
-                                
-                                $.ajax({
-                                    url: '/Notification/Update',
-                                    type: 'POST',
-                                    contentType: 'application/json',
-                                    data: JSON.stringify(formData),
-                                    headers: {
-                                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                    },
-                                    success: function(response) {
-                                        console.log('Update response:', response);
-                                        if (response.success) {
-                                            alert(response.message);
-                                            $('#sendNotificationModal').modal('hide');
-                                            location.reload();
-                                        } else {
-                                            alert(response.message || 'Failed to update notification.');
-                                        }
-                                    },
-                                    error: function(xhr, status, error) {
-                                        console.error('Update error:', error, xhr.responseText);
-                                        var errorMessage = 'An error occurred while updating the notification.';
-                                        if (xhr.responseJSON && xhr.responseJSON.message) {
-                                            errorMessage = xhr.responseJSON.message;
-                                        }
-                                        alert(errorMessage);
-                                    }
-                                });
-                            }
-                            
-                            function deleteNotification(notificationId) {
-                                $.ajax({
-                                    url: '/Notification/Delete',
-                                    type: 'POST',
-                                    data: { id: notificationId },
-                                    headers: {
-                                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
-                                    },
-                                    success: function(response) {
-                                        if (response.success) {
-                                            alert(response.message);
-                                            location.reload();
-                                        } else {
-                                            alert(response.message);
-                                        }
-                                    },
-                                    error: function() {
-                                        alert('An error occurred while deleting the notification.');
-                                    }
-                                });
-                            }
-                        </script>
-                    }
                 }
             </div>
         </div>
@@ -887,4 +513,702 @@ else
             }
         });
     </script> *@
+}
+
+@section Scripts {
+    <script>
+        // Handle View button click for notifications (for regular users)
+        $(document).ready(function() {
+            $(document).on('click', '.view-notification-btn', function(e) {
+                e.stopPropagation();
+                e.preventDefault();
+                
+                
+                var notificationId = $(this).data('notification-id');
+                var title = $(this).data('title');
+                var message = $(this).data('message');
+                var priority = $(this).data('priority');
+                var createdDate = $(this).data('created-date');
+                var expiryDate = $(this).data('expiry-date');
+                var isRead = $(this).data('is-read') === 'true';
+                
+                
+                // Populate modal
+                $('#notificationModalTitle').text(title);
+                $('#notificationModalMessage').text(message);
+                
+                // Set priority badge
+                var priorityClass = priority === 'Critical' ? 'danger' : 
+                                   priority === 'High' ? 'warning' : 
+                                   priority === 'Medium' ? 'info' : 'secondary';
+                $('#notificationModalPriority').html('<span class="badge bg-' + priorityClass + '">' + priority + '</span>');
+                
+                $('#notificationModalCreatedDate').text(createdDate);
+                $('#notificationModalExpiryDate').text(expiryDate || 'Not Set');
+                
+                // Store notification ID for reply button
+                $('#replyNotificationBtn').data('notification-id', notificationId);
+                
+                // Show modal
+                var modalElement = document.getElementById('notificationDetailsModal');
+                if (modalElement) {
+                    var modal = new bootstrap.Modal(modalElement);
+                    modal.show();
+                } else {
+                    console.error('Modal element not found');
+                }
+                
+                // Mark as read if not already read
+                if (!isRead) {
+                    var $item = $(this).closest('.list-group-item');
+                    
+                    $.ajax({
+                        url: '@Url.Action("MarkNotificationAsRead", "Home")',
+                        method: 'POST',
+                        data: { notificationId: notificationId },
+                        headers: {
+                            'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                        },
+                        success: function(response) {
+                            if (response.success) {
+                                // Remove the "New" badge and highlight
+                                $item.removeClass('list-group-item-primary');
+                                $item.css('border-left', '');
+                                $item.find('.badge.bg-primary').remove();
+                                
+                                // Update the button's data attribute
+                                $('.view-notification-btn[data-notification-id="' + notificationId + '"]').data('is-read', 'true');
+                                
+                                // Update unread count
+                                var unreadBadge = $('.card-header .badge.bg-danger');
+                                var currentCount = parseInt(unreadBadge.text()) || 0;
+                                var newCount = currentCount - 1;
+                                
+                                if (newCount > 0) {
+                                    unreadBadge.text(newCount + ' New');
+                                } else {
+                                    unreadBadge.remove();
+                                }
+                            }
+                        },
+                        error: function() {
+                            console.error('Failed to mark notification as read');
+                        }
+                    });
+                }
+            });
+
+            // Handle Reply button click
+            $(document).on('click', '#replyNotificationBtn', function() {
+                var notificationId = $(this).data('notification-id');
+                if (!notificationId) {
+                    alert('Notification ID not found.');
+                    return;
+                }
+
+                // Check if user has already replied to this notification
+                var userRepliedNotificationIds = @Html.Raw(Json.Serialize(ViewBag.UserRepliedNotificationIds ?? new List<long>()));
+                var hasReplied = userRepliedNotificationIds.includes(parseInt(notificationId));
+                
+                if (hasReplied) {
+                    // If user has already replied, show error message directly without opening popup
+                    alert('You are not allowed to send multiple Replies');
+                    return;
+                }
+
+                // Store notification ID for send reply button
+                $('#sendReplyBtn').data('notification-id', notificationId);
+                
+                // Clear previous reply
+                $('#notificationReply').val('');
+                
+                // Close notification details modal
+                var detailsModal = bootstrap.Modal.getInstance(document.getElementById('notificationDetailsModal'));
+                if (detailsModal) {
+                    detailsModal.hide();
+                }
+                
+                // Show reply modal
+                var replyModalElement = document.getElementById('replyNotificationModal');
+                if (replyModalElement) {
+                    var replyModal = new bootstrap.Modal(replyModalElement);
+                    replyModal.show();
+                }
+            });
+
+            // Handle Send Reply button click
+            $(document).on('click', '#sendReplyBtn', function() {
+                var notificationId = $(this).data('notification-id');
+                var reply = $('#notificationReply').val().trim();
+
+                if (!notificationId) {
+                    alert('Notification ID not found.');
+                    return;
+                }
+
+                if (!reply) {
+                    alert('Please enter a reply.');
+                    $('#notificationReply').focus();
+                    return;
+                }
+
+                // Disable button during request
+                var $sendBtn = $(this);
+                $sendBtn.prop('disabled', true).text('Sending...');
+
+                $.ajax({
+                    url: '@Url.Action("SendNotificationReply", "Home")',
+                    method: 'POST',
+                    data: {
+                        notificationId: notificationId,
+                        reply: reply
+                    },
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            
+                            // Close reply modal
+                            var replyModal = bootstrap.Modal.getInstance(document.getElementById('replyNotificationModal'));
+                            if (replyModal) {
+                                replyModal.hide();
+                            }
+                            
+                            // Clear reply field
+                            $('#notificationReply').val('');
+                        } else {
+                            alert(response.message || 'Failed to send reply.');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error sending reply:', error);
+                        alert('An error occurred while sending the reply. Please try again.');
+                    },
+                    complete: function() {
+                        // Re-enable button
+                        $sendBtn.prop('disabled', false).text('Send');
+                    }
+                });
+            });
+        });
+    </script>
+    
+    @if (User.IsInRole("SuperAdmin"))
+    {
+        <script>
+            var selectedOrganizations = [];
+            var selectedUsers = [];
+            var allOrganizations = [];
+            var allUsers = [];
+            
+            $(document).ready(function() {
+                // Check if we need to auto-open edit modal (from Details page)
+                var urlParams = new URLSearchParams(window.location.search);
+                var editNotificationId = urlParams.get('editNotificationId');
+                if (editNotificationId) {
+                    // Trigger edit for this notification
+                    setTimeout(function() {
+                        $('.edit-notification[data-id="' + editNotificationId + '"]').trigger('click');
+                        // Clean up URL
+                        window.history.replaceState({}, document.title, window.location.pathname);
+                    }, 500);
+                }
+                
+                // Load organizations when Send Notification button is clicked
+                $('[data-bs-target="#sendNotificationModal"]').on('click', function() {
+                    console.log('Send Notification button clicked');
+                    setTimeout(function() {
+                        loadOrganizations();
+                    }, 100);
+                });
+                
+                // Load organizations when modal is opened
+                $('#sendNotificationModal').on('shown.bs.modal', function() {
+                    console.log('Modal opened, loading organizations...');
+                    loadOrganizations();
+                });
+                
+                // Select All Organizations checkbox handler
+                $(document).on('change', '#selectAllOrgsCheckbox', function(e) {
+                    e.stopPropagation();
+                    var isChecked = $(this).prop('checked');
+                    
+                    if (isChecked) {
+                        selectedOrganizations = allOrganizations.map(org => org.organizationId);
+                        $('.org-checkbox').prop('checked', true);
+                    } else {
+                        selectedOrganizations = [];
+                        $('.org-checkbox').prop('checked', false);
+                    }
+                    updateOrganizationBadges();
+                    loadUsersBySelectedOrganizations();
+                });
+                
+                // Select All Organizations container click handler
+                $(document).on('click', '#selectAllOrgs', function(e) {
+                    if ($(e.target).is('#selectAllOrgsCheckbox')) {
+                        return;
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var checkbox = $('#selectAllOrgsCheckbox');
+                    checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+                });
+                
+                // Organization checkbox handler
+                $(document).on('change', '.org-checkbox', function() {
+                    var orgId = $(this).data('org-id');
+                    if ($(this).prop('checked')) {
+                        if (!selectedOrganizations.includes(orgId)) {
+                            selectedOrganizations.push(orgId);
+                        }
+                    } else {
+                        selectedOrganizations = selectedOrganizations.filter(id => id !== orgId);
+                        $('#selectAllOrgsCheckbox').prop('checked', false);
+                    }
+                    updateOrganizationBadges();
+                    loadUsersBySelectedOrganizations();
+                });
+                
+                // Select All Users checkbox handler
+                $(document).on('change', '#selectAllUsersCheckbox', function(e) {
+                    e.stopPropagation();
+                    var isChecked = $(this).prop('checked');
+                    
+                    if (isChecked) {
+                        selectedUsers = allUsers.map(user => user.id);
+                        $('.user-checkbox').prop('checked', true);
+                    } else {
+                        selectedUsers = [];
+                        $('.user-checkbox').prop('checked', false);
+                    }
+                    updateUserBadges();
+                });
+                
+                // Select All Users container click handler
+                $(document).on('click', '#selectAllUsers', function(e) {
+                    if ($(e.target).is('#selectAllUsersCheckbox')) {
+                        return;
+                    }
+                    e.preventDefault();
+                    e.stopPropagation();
+                    var checkbox = $('#selectAllUsersCheckbox');
+                    checkbox.prop('checked', !checkbox.prop('checked')).trigger('change');
+                });
+                
+                // User checkbox handler
+                $(document).on('change', '.user-checkbox', function() {
+                    var userId = $(this).data('user-id');
+                    if ($(this).prop('checked')) {
+                        if (!selectedUsers.includes(userId)) {
+                            selectedUsers.push(userId);
+                        }
+                    } else {
+                        selectedUsers = selectedUsers.filter(id => id !== userId);
+                        $('#selectAllUsersCheckbox').prop('checked', false);
+                    }
+                    updateUserBadges();
+                });
+                
+                // Edit notification handler
+                $(document).on('click', '.edit-notification', function() {
+                    var notificationId = $(this).data('id');
+                    
+                    // Load notification details via AJAX
+                    $.get('/Notification/GetNotification', { id: notificationId }, function(response) {
+                        if (response.success) {
+                            // Populate form fields
+                            $('#notificationTitle').val(response.notification.title);
+                            $('#notificationMessage').val(response.notification.message);
+                            $('#notificationPriority').val(response.notification.priority);
+                            
+                            if (response.notification.expiryDate) {
+                                $('#notificationExpiryDate').val(response.notification.expiryDate);
+                            } else {
+                                $('#notificationExpiryDate').val('');
+                            }
+                            
+                            // Store notification ID for update
+                            $('#sendNotificationForm').data('notification-id', notificationId);
+                            $('#sendNotificationForm').data('is-edit', true);
+                            
+                            // Change modal title and button text
+                            $('#sendNotificationModalLabel').text('Edit Notification');
+                            $('#sendNotificationForm button[type="submit"]').text('Update Notification');
+                            
+                            // Load organizations first
+                            loadOrganizations();
+                            
+                            // After organizations load, select the users
+                            setTimeout(function() {
+                                // Get user IDs from response
+                                var userIds = response.notification.userIds || [];
+                                
+                                // Load users for all organizations to show them
+                                loadAllUsersForEdit(userIds);
+                            }, 500);
+                            
+                            // Open modal
+                            var modalElement = document.getElementById('sendNotificationModal');
+                            if (modalElement) {
+                                var modal = new bootstrap.Modal(modalElement);
+                                modal.show();
+                            }
+                        } else {
+                            alert('Failed to load notification details.');
+                        }
+                    }).fail(function() {
+                        alert('An error occurred while loading notification details.');
+                    });
+                });
+                
+                // Form submit handler
+                $('#sendNotificationForm').on('submit', function(e) {
+                    e.preventDefault();
+                    var isEdit = $(this).data('is-edit');
+                    if (isEdit) {
+                        updateNotification();
+                    } else {
+                        sendNotification();
+                    }
+                });
+                
+                // Delete notification handler
+                $(document).on('click', '.delete-notification', function() {
+                    if (confirm('Are you sure you want to delete this notification?')) {
+                        var notificationId = $(this).data('id');
+                        deleteNotification(notificationId);
+                    }
+                });
+                
+                // Reset form when modal is closed
+                $('#sendNotificationModal').on('hidden.bs.modal', function() {
+                    $('#sendNotificationForm')[0].reset();
+                    selectedOrganizations = [];
+                    selectedUsers = [];
+                    allUsers = [];
+                    updateOrganizationBadges();
+                    updateUserBadges();
+                    $('#organizationOptions').empty();
+                    $('#userOptions').empty();
+                    $('#selectAllOrgsCheckbox').prop('checked', false);
+                    $('#selectAllUsersCheckbox').prop('checked', false);
+                });
+            });
+            
+            function loadOrganizations() {
+                $.get('/Notification/GetOrganizations', function(data) {
+                    if (data && data.length > 0) {
+                        allOrganizations = data;
+                        var optionsContainer = $('#organizationOptions');
+                        optionsContainer.empty();
+                        
+                        $.each(data, function(index, org) {
+                            var listItem = $('<li></li>');
+                            var checkboxId = 'org-' + org.organizationId;
+                            var item = $('<a class="dropdown-item" href="#"></a>');
+                            item.append($('<input>', {
+                                type: 'checkbox',
+                                class: 'form-check-input me-2 org-checkbox',
+                                id: checkboxId,
+                                'data-org-id': org.organizationId
+                            }));
+                            item.append($('<label>', {
+                                class: 'form-check-label',
+                                'for': checkboxId,
+                                text: org.organizationName,
+                                style: 'cursor: pointer; width: 100%;'
+                            }));
+                            listItem.append(item);
+                            optionsContainer.append(listItem);
+                        });
+                    } else {
+                        console.log('No organizations found');
+                        $('#organizationOptions').html('<li><span class="dropdown-item-text">No organizations available</span></li>');
+                    }
+                }).fail(function(xhr, status, error) {
+                    console.error('Error loading organizations:', error);
+                    $('#organizationOptions').html('<li><span class="dropdown-item-text text-danger">Error loading organizations</span></li>');
+                });
+            }
+            
+            function loadUsersBySelectedOrganizations() {
+                if (selectedOrganizations.length === 0) {
+                    $('#userOptions').empty();
+                    allUsers = [];
+                    selectedUsers = [];
+                    updateUserBadges();
+                    $('#selectAllUsersCheckbox').prop('checked', false);
+                    return;
+                }
+                
+                $('#userOptions').html('<li><span class="dropdown-item-text">Loading...</span></li>');
+                
+                var allUsersList = [];
+                var loadedCount = 0;
+                
+                selectedOrganizations.forEach(function(orgId) {
+                    $.get('/Notification/GetUsersByOrganization', { organizationId: orgId }, function(data) {
+                        allUsersList = allUsersList.concat(data);
+                        loadedCount++;
+                        
+                        if (loadedCount === selectedOrganizations.length) {
+                            var uniqueUsers = [];
+                            var userIdSet = new Set();
+                            allUsersList.forEach(function(user) {
+                                if (!userIdSet.has(user.id)) {
+                                    userIdSet.add(user.id);
+                                    uniqueUsers.push(user);
+                                }
+                            });
+                            
+                            allUsers = uniqueUsers;
+                            renderUsers(uniqueUsers);
+                        }
+                    });
+                });
+            }
+            
+            function renderUsers(users) {
+                var optionsContainer = $('#userOptions');
+                optionsContainer.empty();
+                
+                $.each(users, function(index, user) {
+                    var listItem = $('<li></li>');
+                    var checkboxId = 'user-' + user.id;
+                    var item = $('<a class="dropdown-item" href="#"></a>');
+                    item.append($('<input>', {
+                        type: 'checkbox',
+                        class: 'form-check-input me-2 user-checkbox',
+                        id: checkboxId,
+                        'data-user-id': user.id,
+                        checked: selectedUsers.includes(user.id)
+                    }));
+                    item.append($('<label>', {
+                        class: 'form-check-label',
+                        'for': checkboxId,
+                        text: user.userName + ' (' + user.email + ')',
+                        style: 'cursor: pointer; width: 100%;'
+                    }));
+                    listItem.append(item);
+                    optionsContainer.append(listItem);
+                });
+                
+                if (users.length > 0 && selectedUsers.length === users.length) {
+                    $('#selectAllUsersCheckbox').prop('checked', true);
+                } else {
+                    $('#selectAllUsersCheckbox').prop('checked', false);
+                }
+            }
+            
+            function updateOrganizationBadges() {
+                var badgesContainer = $('#selectedOrganizationsBadges');
+                badgesContainer.empty();
+                
+                if (selectedOrganizations.length === 0) {
+                    $('#organizationDropdownText').text('Select Organizations');
+                    return;
+                }
+                
+                var selectedOrgNames = selectedOrganizations.map(function(orgId) {
+                    var org = allOrganizations.find(o => o.organizationId === orgId);
+                    return org ? org.organizationName : '';
+                }).filter(name => name !== '');
+                
+                $('#organizationDropdownText').text(selectedOrgNames.length + ' organization(s) selected');
+                
+                selectedOrgNames.forEach(function(orgName) {
+                    var orgId = allOrganizations.find(o => o.organizationName === orgName).organizationId;
+                    var badge = $('<span>', {
+                        class: 'badge bg-primary me-1 mb-1',
+                        text: orgName + ' ×',
+                        style: 'cursor: pointer;'
+                    });
+                    badge.on('click', function() {
+                        selectedOrganizations = selectedOrganizations.filter(id => id !== orgId);
+                        $('.org-checkbox[data-org-id="' + orgId + '"]').prop('checked', false);
+                        $('#selectAllOrgsCheckbox').prop('checked', false);
+                        updateOrganizationBadges();
+                        loadUsersBySelectedOrganizations();
+                    });
+                    badgesContainer.append(badge);
+                });
+            }
+            
+            function updateUserBadges() {
+                var badgesContainer = $('#selectedUsersBadges');
+                badgesContainer.empty();
+                
+                if (selectedUsers.length === 0) {
+                    $('#userDropdownText').text('Select Users');
+                    return;
+                }
+                
+                var selectedUserNames = selectedUsers.map(function(userId) {
+                    var user = allUsers.find(u => u.id === userId);
+                    return user ? user.userName + ' (' + user.email + ')' : '';
+                }).filter(name => name !== '');
+                
+                $('#userDropdownText').text(selectedUsers.length + ' user(s) selected');
+                
+                selectedUserNames.forEach(function(userName) {
+                    var userId = allUsers.find(u => (u.userName + ' (' + u.email + ')') === userName).id;
+                    var badge = $('<span>', {
+                        class: 'badge bg-primary me-1 mb-1',
+                        text: userName + ' ×',
+                        style: 'cursor: pointer;'
+                    });
+                    badge.on('click', function() {
+                        selectedUsers = selectedUsers.filter(id => id !== userId);
+                        $('.user-checkbox[data-user-id="' + userId + '"]').prop('checked', false);
+                        $('#selectAllUsersCheckbox').prop('checked', false);
+                        updateUserBadges();
+                    });
+                    badgesContainer.append(badge);
+                });
+            }
+            
+            function sendNotification() {
+                var title = $('#notificationTitle').val();
+                var message = $('#notificationMessage').val();
+                var priority = $('#notificationPriority').val();
+                var expiryDate = $('#notificationExpiryDate').val();
+                
+                if (!title || !message || !priority) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+                
+                if (selectedUsers.length === 0) {
+                    alert('Please select at least one user.');
+                    return;
+                }
+                
+                var formData = {
+                    title: title,
+                    message: message,
+                    priority: priority,
+                    expiryDate: expiryDate || null,
+                    userIds: selectedUsers.map(id => parseInt(id))
+                };
+                
+                $.ajax({
+                    url: '/Notification/Create',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while sending the notification.');
+                    }
+                });
+            }
+            
+            function loadAllUsersForEdit(userIds) {
+                // Load all users from all organizations
+                $.get('/Notification/GetUsersByOrganization', function(data) {
+                    allUsers = data;
+                    selectedUsers = userIds || [];
+                    renderUsers(data);
+                    updateUserBadges();
+                });
+            }
+            
+            function updateNotification() {
+                var notificationId = $('#sendNotificationForm').data('notification-id');
+                var title = $('#notificationTitle').val();
+                var message = $('#notificationMessage').val();
+                var priority = $('#notificationPriority').val();
+                var expiryDate = $('#notificationExpiryDate').val();
+                
+                if (!notificationId) {
+                    alert('Notification ID is missing. Please try again.');
+                    return;
+                }
+                
+                if (!title || !message || !priority) {
+                    alert('Please fill in all required fields.');
+                    return;
+                }
+                
+                if (selectedUsers.length === 0) {
+                    alert('Please select at least one user.');
+                    return;
+                }
+                
+                var formData = {
+                    notificationId: parseInt(notificationId),
+                    title: title.trim(),
+                    message: message.trim(),
+                    priority: priority.trim(),
+                    expiryDate: expiryDate ? expiryDate : null,
+                    userIds: selectedUsers.map(id => parseInt(id))
+                };
+                
+                console.log('Updating notification:', formData);
+                
+                $.ajax({
+                    url: '/Notification/Update',
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(formData),
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        console.log('Update response:', response);
+                        if (response.success) {
+                            alert(response.message);
+                            $('#sendNotificationModal').modal('hide');
+                            location.reload();
+                        } else {
+                            alert(response.message || 'Failed to update notification.');
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Update error:', error, xhr.responseText);
+                        var errorMessage = 'An error occurred while updating the notification.';
+                        if (xhr.responseJSON && xhr.responseJSON.message) {
+                            errorMessage = xhr.responseJSON.message;
+                        }
+                        alert(errorMessage);
+                    }
+                });
+            }
+            
+            function deleteNotification(notificationId) {
+                $.ajax({
+                    url: '/Notification/Delete',
+                    type: 'POST',
+                    data: { id: notificationId },
+                    headers: {
+                        'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            alert(response.message);
+                            location.reload();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        alert('An error occurred while deleting the notification.');
+                    }
+                });
+            }
+        </script>
+    }
 }

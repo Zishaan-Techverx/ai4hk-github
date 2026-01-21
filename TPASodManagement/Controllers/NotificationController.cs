@@ -13,17 +13,20 @@ public class NotificationController : Controller
 {
     private readonly INotificationService _notificationService;
     private readonly IOrganizationService _organizationService;
+    private readonly INotificationResponseService _notificationResponseService;
     private readonly UserManager<TpaSodManagementUser> _userManager;
     private readonly ILogger<NotificationController> _logger;
 
     public NotificationController(
         INotificationService notificationService,
         IOrganizationService organizationService,
+        INotificationResponseService notificationResponseService,
         UserManager<TpaSodManagementUser> userManager,
         ILogger<NotificationController> logger)
     {
         _notificationService = notificationService;
         _organizationService = organizationService;
+        _notificationResponseService = notificationResponseService;
         _userManager = userManager;
         _logger = logger;
     }
@@ -140,11 +143,21 @@ public class NotificationController : Controller
             return Json(new { success = false, message = "Please select at least one user." });
         }
 
+        DateTimeOffset? expiryDate = null;
+        if (!string.IsNullOrEmpty(model.ExpiryDate))
+        {
+            if (DateTimeOffset.TryParse(model.ExpiryDate, out var parsedDate))
+            {
+                expiryDate = parsedDate;
+            }
+        }
+
         var notification = new Notification
         {
             Title = model.Title,
             Message = model.Message,
             Priority = model.Priority,
+            ExpiryDate = expiryDate,
             IsActive = true
         };
 
@@ -187,6 +200,10 @@ public class NotificationController : Controller
             return NotFound();
         }
 
+        // Fetch replies for this notification
+        var replies = await _notificationResponseService.GetResponsesByNotificationIdAsync(id.Value);
+        ViewBag.Replies = replies;
+
         ViewBag.IsDetailsView = true;
         ViewBag.Title = "Notification Details";
         return View(notification);
@@ -216,7 +233,11 @@ public class NotificationController : Controller
             return Json(new { success = false, message = "Notification not found" });
         }
 
-        var userIds = notification.NotificationUsers.Select(nu => nu.UserId).ToList();
+        // Get only active users for the UI
+        var userIds = notification.NotificationUsers
+            .Where(nu => nu.DeletedDate == null)
+            .Select(nu => nu.UserId)
+            .ToList();
         
         return Json(new
         {
@@ -227,6 +248,7 @@ public class NotificationController : Controller
                 notification.Title,
                 notification.Message,
                 notification.Priority,
+                ExpiryDate = notification.ExpiryDate?.ToString("yyyy-MM-ddTHH:mm"),
                 UserIds = userIds
             }
         });
@@ -279,6 +301,7 @@ public class NotificationController : Controller
         existingNotification.Title = model.Title;
         existingNotification.Message = model.Message;
         existingNotification.Priority = model.Priority;
+        existingNotification.ExpiryDate = expiryDate;
 
         var response = await _notificationService.UpdateNotificationAsync(existingNotification, model.UserIds);
 

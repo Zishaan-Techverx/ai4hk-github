@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TpaSodManagement.Database;
 
@@ -11,9 +12,11 @@ using TpaSodManagement.Database;
 namespace TpaSodManagement.Database.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260121124111_AddNotificationResponse")]
+    partial class AddNotificationResponse
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -366,7 +369,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("StateProvinceId");
 
-                    b.ToTable("Addresses", (string)null);
+                    b.ToTable("Addresses");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.AddressType", b =>
@@ -411,7 +414,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("AddressTypeId");
 
-                    b.ToTable("AddressTypes", (string)null);
+                    b.ToTable("AddressTypes");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.AreaType", b =>
@@ -463,7 +466,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("AreaTypeId");
 
-                    b.ToTable("AreaTypes", (string)null);
+                    b.ToTable("AreaTypes");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Certificate", b =>
@@ -566,7 +569,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("WasteId");
 
-                    b.ToTable("Certificates", (string)null);
+                    b.ToTable("Certificates");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.CertificateType", b =>
@@ -620,7 +623,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("CertificateTypeId");
 
-                    b.ToTable("CertificateTypes", (string)null);
+                    b.ToTable("CertificateTypes");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Country", b =>
@@ -668,7 +671,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("CountryId");
 
-                    b.ToTable("Countries", (string)null);
+                    b.ToTable("Countries");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Currency", b =>
@@ -716,7 +719,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("CurrencyId");
 
-                    b.ToTable("Currencies", (string)null);
+                    b.ToTable("Currencies");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Customer", b =>
@@ -779,7 +782,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("PersonId");
 
-                    b.ToTable("Customers", (string)null);
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Farm", b =>
@@ -850,7 +853,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("OrganizationId");
 
-                    b.ToTable("Farms", (string)null);
+                    b.ToTable("Farms");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Field", b =>
@@ -925,7 +928,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("FarmId");
 
-                    b.ToTable("Fields", (string)null);
+                    b.ToTable("Fields");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Notification", b =>
@@ -1130,7 +1133,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("OrganizationId");
 
-                    b.ToTable("Organizations", (string)null);
+                    b.ToTable("Organizations");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Permission", b =>
@@ -1241,7 +1244,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("PersonId");
 
-                    b.ToTable("People", (string)null);
+                    b.ToTable("People");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Product", b =>
@@ -1313,7 +1316,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("ProductCategoryId");
 
-                    b.ToTable("Products", (string)null);
+                    b.ToTable("Products");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.ProductCategory", b =>
@@ -1358,7 +1361,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("ProductCategoryId");
 
-                    b.ToTable("ProductCategories", (string)null);
+                    b.ToTable("ProductCategories");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.RolePermission", b =>
@@ -1502,7 +1505,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Sales", (string)null);
+                    b.ToTable("Sales");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.SaleLineItem", b =>
@@ -1593,7 +1596,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("TagRangeId");
 
-                    b.ToTable("SaleLineItems", (string)null);
+                    b.ToTable("SaleLineItems");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.SaleType", b =>
@@ -1649,7 +1652,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("CertificateTypeId");
 
-                    b.ToTable("SaleTypes", (string)null);
+                    b.ToTable("SaleTypes");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Seeding", b =>
@@ -1729,7 +1732,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Seedings", (string)null);
+                    b.ToTable("Seedings");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.StateProvince", b =>
@@ -1776,7 +1779,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("CountryId");
 
-                    b.ToTable("StateProvinces", (string)null);
+                    b.ToTable("StateProvinces");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Status", b =>
@@ -1831,7 +1834,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("StatusId");
 
-                    b.ToTable("Statuses", (string)null);
+                    b.ToTable("Statuses");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.TagRange", b =>
@@ -1884,7 +1887,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("TagRangeId");
 
-                    b.ToTable("TagRanges", (string)null);
+                    b.ToTable("TagRanges");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Testimonial", b =>
@@ -2000,7 +2003,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("StatusId");
 
-                    b.ToTable("Testimonials", (string)null);
+                    b.ToTable("Testimonials");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Waste", b =>
@@ -2090,7 +2093,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasIndex("WasteReasonId");
 
-                    b.ToTable("Wastes", (string)null);
+                    b.ToTable("Wastes");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.WasteCertificate", b =>
@@ -2192,7 +2195,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("WasteReasonId");
 
-                    b.ToTable("WasteReasons", (string)null);
+                    b.ToTable("WasteReasons");
                 });
 
             modelBuilder.Entity("TpaSodManagement.Database.Entities.Website", b =>
@@ -2236,7 +2239,7 @@ namespace TpaSodManagement.Database.Migrations
 
                     b.HasKey("WebsiteId");
 
-                    b.ToTable("Websites", (string)null);
+                    b.ToTable("Websites");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<long>", b =>
