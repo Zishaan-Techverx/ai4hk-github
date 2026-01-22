@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
+using TpaSodManagement.Database;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
@@ -15,6 +16,7 @@ public class NotificationController : Controller
     private readonly IOrganizationService _organizationService;
     private readonly INotificationResponseService _notificationResponseService;
     private readonly UserManager<TpaSodManagementUser> _userManager;
+    private readonly ApplicationDbContext _context;
     private readonly ILogger<NotificationController> _logger;
 
     public NotificationController(
@@ -22,12 +24,14 @@ public class NotificationController : Controller
         IOrganizationService organizationService,
         INotificationResponseService notificationResponseService,
         UserManager<TpaSodManagementUser> userManager,
+        ApplicationDbContext context,
         ILogger<NotificationController> logger)
     {
         _notificationService = notificationService;
         _organizationService = organizationService;
         _notificationResponseService = notificationResponseService;
         _userManager = userManager;
+        _context = context;
         _logger = logger;
     }
 
@@ -199,6 +203,27 @@ public class NotificationController : Controller
         {
             return NotFound();
         }
+
+        // Load Person data for all users in the notification
+        var users = notification.NotificationUsers
+            .Where(nu => nu.User != null && nu.User.PersonId.HasValue)
+            .Select(nu => nu.User!)
+            .ToList();
+        var personIds = users
+            .Where(u => u.PersonId.HasValue)
+            .Select(u => u.PersonId!.Value)
+            .Distinct()
+            .ToList();
+        
+        Dictionary<long, Person> personsDict = new Dictionary<long, Person>();
+        if (personIds.Any())
+        {
+            var persons = await _context.People
+                .Where(p => personIds.Contains(p.PersonId))
+                .ToListAsync();
+            personsDict = persons.ToDictionary(p => p.PersonId, p => p);
+        }
+        ViewBag.Persons = personsDict;
 
         // Fetch replies for this notification
         var replies = await _notificationResponseService.GetResponsesByNotificationIdAsync(id.Value);

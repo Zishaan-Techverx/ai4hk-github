@@ -61,7 +61,38 @@ else
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h1>Dashboard</h1>
-
+                    <div class="d-flex align-items-center">
+                        @if (User.IsInRole("SuperAdmin"))
+                        {
+                            <label for="adminPageSizeSelect" class="form-label me-2 mb-0">Page Size:</label>
+                            <select id="adminPageSizeSelect" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="changeAdminPageSize(this.value)">
+                                @{
+                                    var adminPageSize = ViewBag.PageSize as int? ?? 10;
+                                }
+                                <option value="10" selected="@(adminPageSize == 10)">10</option>
+                                <option value="15" selected="@(adminPageSize == 15)">15</option>
+                                <option value="20" selected="@(adminPageSize == 20)">20</option>
+                                <option value="25" selected="@(adminPageSize == 25)">25</option>
+                                <option value="50" selected="@(adminPageSize == 50)">50</option>
+                                <option value="100" selected="@(adminPageSize == 100)">100</option>
+                            </select>
+                        }
+                        else
+                        {
+                            <label for="userPageSizeSelect" class="form-label me-2 mb-0">Page Size:</label>
+                            <select id="userPageSizeSelect" class="form-select form-select-sm d-inline-block" style="width: auto;" onchange="changeUserPageSize(this.value)">
+                                @{
+                                    var userPageSize = ViewBag.PageSize as int? ?? 10;
+                                }
+                                <option value="10" selected="@(userPageSize == 10)">10</option>
+                                <option value="15" selected="@(userPageSize == 15)">15</option>
+                                <option value="20" selected="@(userPageSize == 20)">20</option>
+                                <option value="25" selected="@(userPageSize == 25)">25</option>
+                                <option value="50" selected="@(userPageSize == 50)">50</option>
+                                <option value="100" selected="@(userPageSize == 100)">100</option>
+                            </select>
+                        }
+                    </div>
                 </div>
 
                 <!-- Welcome Toast Popup -->
@@ -202,14 +233,19 @@ else
                         <div class="row mt-4">
                             <div class="col-12">
                                 <div class="card">
-                                    <div class="card-header d-flex justify-content-between align-items-center">
-                                        <h5 class="card-title mb-0">
-                                            <i class="bi bi-bell-fill me-2"></i>Notifications
-                                            @if (unreadCount > 0)
-                                            {
-                                                <span class="badge bg-danger ms-2">@unreadCount New</span>
-                                            }
-                                        </h5>
+                                    <div class="card-header">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <h5 class="card-title mb-0">
+                                                <i class="bi bi-bell-fill me-2"></i>Notifications
+                                                @if (unreadCount > 0)
+                                                {
+                                                    <span class="badge bg-danger ms-2">@unreadCount New</span>
+                                                }
+                                            </h5>
+                                            <button type="button" class="btn btn-sm btn-outline-primary" onclick="location.reload();" title="Refresh notifications">
+                                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                                            </button>
+                                        </div>
                                     </div>
                                     <div class="card-body">
                                         <div class="list-group">
@@ -259,6 +295,36 @@ else
                                                 </div>
                                             }
                                         </div>
+                                        
+                                        @* Pagination for User Notifications *@
+                                        @{
+                                            var userPageNumber = ViewBag.PageNumber as int? ?? 1;
+                                            var userTotalPages = ViewBag.TotalPages as int? ?? 1;
+                                            var userTotalCount = ViewBag.TotalCount as int? ?? 0;
+                                            var userPageSize = ViewBag.PageSize as int? ?? 10;
+                                        }
+                                        @if (userTotalCount > 0)
+                                        {
+                                            <nav aria-label="Page navigation" class="mt-3">
+                                                <ul class="pagination justify-content-center">
+                                                    <li class="page-item @(userPageNumber == 1 ? "disabled" : "")">
+                                                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = userPageNumber - 1, pageSize = userPageSize })">Previous</a>
+                                                    </li>
+                                                    @for (int i = 1; i <= userTotalPages; i++)
+                                                    {
+                                                        <li class="page-item @(i == userPageNumber ? "active" : "")">
+                                                            <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = userPageSize })">@i</a>
+                                                        </li>
+                                                    }
+                                                    <li class="page-item @(userPageNumber == userTotalPages ? "disabled" : "")">
+                                                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = userPageNumber + 1, pageSize = userPageSize })">Next</a>
+                                                    </li>
+                                                </ul>
+                                            </nav>
+                                            <div class="text-muted text-center mt-2">
+                                                Showing @((userPageNumber - 1) * userPageSize + 1) to @Math.Min(userPageNumber * userPageSize, userTotalCount) of @userTotalCount notifications
+                                            </div>
+                                        }
                                     </div>
                                 </div>
                             </div>
@@ -276,12 +342,29 @@ else
                                 <div class="modal-body">
                                     <div class="row">
                                         <div class="col-12 mb-3">
-                                            <label class="form-label fw-bold">Title</label>
-                                            <p id="notificationModalTitle" class="form-control-plaintext"></p>
+                                            <div class="d-flex align-items-center">
+                                                <label class="form-label fw-bold mb-0" style="min-width: 150px;">Priority</label>
+                                                <span id="notificationModalPriority"></span>
+                                            </div>
                                         </div>
                                         <div class="col-12 mb-3">
-                                            <label class="form-label fw-bold">Priority</label>
-                                            <p id="notificationModalPriority" class="form-control-plaintext"></p>
+                                            <div class="d-flex align-items-center">
+                                                <label class="form-label fw-bold mb-0" style="min-width: 150px;">Created Date</label>
+                                                <span id="notificationModalCreatedDate" class="fw-normal"></span>
+                                            </div>
+                                        </div>
+                                        <div class="col-12 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <label class="form-label fw-bold mb-0" style="min-width: 150px;">Expiry Date</label>
+                                                <span id="notificationModalExpiryDate" class="fw-normal"></span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="col-12 mb-3">
+                                            <div class="d-flex align-items-center">
+                                                <label class="form-label fw-bold mb-0" style="min-width: 150px;">Title</label>
+                                                <span id="notificationModalTitle" class="fw-normal"></span>
+                                            </div>
                                         </div>
                                         <div class="col-12 mb-3">
                                             <label class="form-label fw-bold">Message</label>
@@ -289,13 +372,11 @@ else
                                                 <p id="notificationModalMessage" class="mb-0" style="white-space: pre-wrap; word-wrap: break-word; overflow-wrap: break-word; word-break: break-word;"></p>
                                             </div>
                                         </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label fw-bold">Created Date</label>
-                                            <p id="notificationModalCreatedDate" class="form-control-plaintext"></p>
-                                        </div>
-                                        <div class="col-md-6 mb-3">
-                                            <label class="form-label fw-bold">Expiry Date</label>
-                                            <p id="notificationModalExpiryDate" class="form-control-plaintext"></p>
+                                        <div class="col-12 mb-3">
+                                            <label class="form-label fw-bold">Your Reply</label>
+                                            <div class="border rounded p-3" style="background-color: #f8f9fa;">
+                                                <p id="notificationModalReply" class="mb-0 text-muted">Loading...</p>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -335,14 +416,26 @@ else
                 @if (User.IsInRole("SuperAdmin"))
                 {
                     var notifications = ViewBag.Notifications as List<TpaSodManagement.Database.Entities.Notification>;
+                    var notificationsWithReplies = ViewBag.NotificationsWithReplies as List<long> ?? new List<long>();
+                    var repliesCount = ViewBag.NotificationsWithRepliesCount as int? ?? 0;
                     <div class="row mt-4">
                         <div class="col-12">
                             <div class="card">
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="card-title mb-0">Notifications Management</h5>
-                                    <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendNotificationModal">
-                                        <i class="bi bi-plus-circle"></i> Send Notification
-                                    </button>
+                                <div class="card-header">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <h5 class="card-title mb-0">
+                                            Notifications Management
+                                            <span class="badge bg-success ms-2" id="repliesCountBadge" style="display: none;">0 Replies</span>
+                                        </h5>
+                                        <div>
+                                            <button type="button" class="btn btn-sm btn-outline-primary me-2" onclick="location.reload();" title="Refresh notifications and replies">
+                                                <i class="bi bi-arrow-clockwise"></i> Refresh
+                                            </button>
+                                            <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#sendNotificationModal">
+                                                <i class="bi bi-plus-circle"></i> Send Notification
+                                            </button>
+                                        </div>
+                                    </div>
                                 </div>
                                 <div class="card-body">
                                     @if (TempData["ErrorMessage"] != null)
@@ -361,60 +454,97 @@ else
                                         </div>
                                     }
 
-                                    <div class="table-responsive">
-                                        <table class="table table-striped table-hover" id="notificationsTable">
-                                            <thead>
-                                                <tr>
-                                                    <th>Title</th>
-                                                    <th>Message</th>
-                                                    <th>Priority</th>
-                                                    <th>Recipients</th>
-                                                    <th>Created Date</th>
-                                                    <th>Expiry Date</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                @if (notifications != null && notifications.Any())
-                                                {
-                                                    @foreach (var notification in notifications)
-                                                    {
-                                                        <tr>
-                                                            <td>@notification.Title</td>
-                                                            <td>@(notification.Message.Length > 50 ? notification.Message.Substring(0, 50) + "..." : notification.Message)</td>
-                                                            <td>
-                                                                <span class="badge bg-@(notification.Priority == "Critical" ? "danger" : notification.Priority == "High" ? "warning" : notification.Priority == "Medium" ? "info" : "secondary")">
+                                    <div class="list-group">
+                                        @if (notifications != null && notifications.Any())
+                                        {
+                                            @foreach (var notification in notifications)
+                                            {
+                                                var hasReply = notificationsWithReplies.Contains(notification.NotificationId);
+                                                <div class="list-group-item @(hasReply ? "list-group-item-success" : "") superadmin-notification-item" 
+                                                     data-notification-id="@notification.NotificationId" 
+                                                     data-has-reply="@hasReply.ToString().ToLower()"
+                                                     style="@(hasReply ? "border-left: 4px solid #198754;" : "")">
+                                                    <div class="d-flex w-100 justify-content-between align-items-start">
+                                                        <div class="flex-grow-1">
+                                                            <h6 class="mb-1">
+                                                                @if (hasReply)
+                                                                {
+                                                                    <span class="badge bg-success me-2">Reply</span>
+                                                                }
+                                                                @notification.Title
+                                                                <span class="badge bg-@(notification.Priority == "Critical" ? "danger" : notification.Priority == "High" ? "warning" : notification.Priority == "Medium" ? "info" : "secondary") ms-2">
                                                                     @notification.Priority
                                                                 </span>
-                                                            </td>
-                                                            <td>@notification.NotificationUsers.Count</td>
-                                                            <td>@notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")</td>
-                                                            <td>@(notification.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")</td>
-                                                            <td>
-                                                                <div class="btn-group btn-group-sm">
-                                                                    <a class="btn btn-info" asp-controller="Notification" asp-action="Details" asp-route-id="@notification.NotificationId">
-                                                                        View
-                                                                    </a>
-                                                                    <button class="btn btn-warning edit-notification" data-id="@notification.NotificationId" data-title="@notification.Title" data-message="@notification.Message" data-priority="@notification.Priority">
-                                                                        <i class="bi bi-pencil"></i> Edit
-                                                                    </button>
-                                                                    <button class="btn btn-danger delete-notification" data-id="@notification.NotificationId">
-                                                                        <i class="bi bi-trash"></i> Delete
-                                                                    </button>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                    }
-                                                }
-                                                else
-                                                {
-                                                    <tr>
-                                                        <td colspan="7" class="text-center">No notifications found.</td>
-                                                    </tr>
-                                                }
-                                            </tbody>
-                                        </table>
+                                                            </h6>
+                                                            <p class="mb-1">@(notification.Message.Length > 100 ? notification.Message.Substring(0, 100) + "..." : notification.Message)</p>
+                                                            <small class="text-muted">
+                                                                <i class="bi bi-clock"></i> @notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")
+                                                                <span class="ms-2">| Recipients: @notification.NotificationUsers.Count</span>
+                                                                <span class="ms-2">| Expiry: @(notification.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")</span>
+                                                            </small>
+                                                        </div>
+                                                        <div class="ms-3">
+                                                            <div class="btn-group btn-group-sm">
+                                                                <a class="btn btn-info view-notification-details-btn" 
+                                                                   asp-controller="Notification" 
+                                                                   asp-action="Details" 
+                                                                   asp-route-id="@notification.NotificationId"
+                                                                   data-notification-id="@notification.NotificationId"
+                                                                   data-has-reply="@hasReply.ToString().ToLower()">
+                                                                    <i class="bi bi-eye"></i> View
+                                                                </a>
+                                                                <button class="btn btn-warning edit-notification" 
+                                                                        data-id="@notification.NotificationId" 
+                                                                        data-title="@notification.Title" 
+                                                                        data-message="@notification.Message" 
+                                                                        data-priority="@notification.Priority">
+                                                                    <i class="bi bi-pencil"></i> Edit
+                                                                </button>
+                                                                <button class="btn btn-danger delete-notification" 
+                                                                        data-id="@notification.NotificationId">
+                                                                    <i class="bi bi-trash"></i> Delete
+                                                                </button>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <div class="list-group-item text-center">No notifications found.</div>
+                                        }
                                     </div>
+                                    
+                                    @* Pagination for SuperAdmin Notifications *@
+                                    @{
+                                        var adminPageNumber = ViewBag.PageNumber as int? ?? 1;
+                                        var adminTotalPages = ViewBag.TotalPages as int? ?? 1;
+                                        var adminTotalCount = ViewBag.TotalCount as int? ?? 0;
+                                        var adminPageSize = ViewBag.PageSize as int? ?? 10;
+                                    }
+                                    @if (adminTotalCount > 0)
+                                    {
+                                        <nav aria-label="Page navigation" class="mt-3">
+                                            <ul class="pagination justify-content-center">
+                                                <li class="page-item @(adminPageNumber == 1 ? "disabled" : "")">
+                                                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = adminPageNumber - 1, pageSize = adminPageSize })">Previous</a>
+                                                </li>
+                                                @for (int i = 1; i <= adminTotalPages; i++)
+                                                {
+                                                    <li class="page-item @(i == adminPageNumber ? "active" : "")">
+                                                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = adminPageSize })">@i</a>
+                                                    </li>
+                                                }
+                                                <li class="page-item @(adminPageNumber == adminTotalPages ? "disabled" : "")">
+                                                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = adminPageNumber + 1, pageSize = adminPageSize })">Next</a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                        <div class="text-muted text-center mt-2">
+                                            Showing @((adminPageNumber - 1) * adminPageSize + 1) to @Math.Min(adminPageNumber * adminPageSize, adminTotalCount) of @adminTotalCount notifications
+                                        </div>
+                                    }
                                 </div>
                             </div>
                         </div>
@@ -540,7 +670,8 @@ else
                 // Set priority badge
                 var priorityClass = priority === 'Critical' ? 'danger' : 
                                    priority === 'High' ? 'warning' : 
-                                   priority === 'Medium' ? 'info' : 'secondary';
+                                   priority === 'Medium' ? 'info' : 
+                                   priority === 'Low' ? 'secondary' : 'secondary';
                 $('#notificationModalPriority').html('<span class="badge bg-' + priorityClass + '">' + priority + '</span>');
                 
                 $('#notificationModalCreatedDate').text(createdDate);
@@ -548,6 +679,9 @@ else
                 
                 // Store notification ID for reply button
                 $('#replyNotificationBtn').data('notification-id', notificationId);
+                
+                // Load user's reply for this notification
+                loadUserReply(notificationId);
                 
                 // Show modal
                 var modalElement = document.getElementById('notificationDetailsModal');
@@ -598,6 +732,44 @@ else
                 }
             });
 
+            // Function to load user's reply
+            function loadUserReply(notificationId) {
+                $('#notificationModalReply').html('<span class="text-muted">Loading...</span>');
+                $.ajax({
+                    url: '@Url.Action("GetUserReplyForNotification", "Home")',
+                    method: 'GET',
+                    data: { notificationId: notificationId },
+                    success: function(response) {
+                        if (response.success) {
+                            if (response.hasReply) {
+                                var replyHtml = '<div class="mb-2"><strong>Reply:</strong> ' + escapeHtml(response.reply) + '</div>';
+                                replyHtml += '<div class="small text-muted">Replied on: ' + response.replyDate + '</div>';
+                                $('#notificationModalReply').removeClass('text-muted').html(replyHtml);
+                            } else {
+                                $('#notificationModalReply').addClass('text-muted').text('Not responded');
+                            }
+                        } else {
+                            $('#notificationModalReply').addClass('text-muted').text('Not responded');
+                        }
+                    },
+                    error: function() {
+                        $('#notificationModalReply').addClass('text-muted').text('Not responded');
+                    }
+                });
+            }
+            
+            // Helper function to escape HTML
+            function escapeHtml(text) {
+                var map = {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                };
+                return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+            }
+            
             // Handle Reply button click
             $(document).on('click', '#replyNotificationBtn', function() {
                 var notificationId = $(this).data('notification-id');
@@ -669,6 +841,12 @@ else
                     success: function(response) {
                         if (response.success) {
                             alert(response.message);
+                            
+                            // Reload user's reply in the notification details modal
+                            var notificationId = $('#replyNotificationBtn').data('notification-id');
+                            if (notificationId) {
+                                loadUserReply(notificationId);
+                            }
                             
                             // Close reply modal
                             var replyModal = bootstrap.Modal.getInstance(document.getElementById('replyNotificationModal'));
@@ -1208,6 +1386,132 @@ else
                         alert('An error occurred while deleting the notification.');
                     }
                 });
+            }
+
+            // SuperAdmin: Handle viewed notifications with replies
+            $(document).ready(function() {
+                // Function to update UI based on viewed notifications
+                function updateViewedNotifications() {
+                    // Load viewed notifications from localStorage (persists across app restarts)
+                    var viewedNotifications = JSON.parse(localStorage.getItem('superadminViewedNotifications') || '[]');
+                    
+                    // Remove highlight from already viewed notifications
+                    viewedNotifications.forEach(function(notificationId) {
+                        var $item = $('.superadmin-notification-item[data-notification-id="' + notificationId + '"]');
+                        if ($item.length) {
+                            $item.removeClass('list-group-item-success');
+                            $item.css('border-left', '');
+                            $item.find('.badge.bg-success').remove();
+                            $item.attr('data-has-reply', 'false');
+                            $item.find('.view-notification-details-btn').data('has-reply', 'false');
+                        }
+                    });
+                    
+                    // Update replies count badge
+                    updateRepliesCount();
+                }
+                
+                // Initial update on page load
+                updateViewedNotifications();
+                
+                // Initial count update
+                updateRepliesCount();
+                
+                // Also update when page becomes visible (when returning from details page)
+                document.addEventListener('visibilitychange', function() {
+                    if (!document.hidden) {
+                        setTimeout(updateViewedNotifications, 100);
+                    }
+                });
+                
+                // Update on focus (when tab becomes active)
+                $(window).on('focus', function() {
+                    setTimeout(updateViewedNotifications, 100);
+                });
+                
+                // Update when page is shown (for browser back/forward navigation)
+                window.addEventListener('pageshow', function(event) {
+                    if (event.persisted) {
+                        // Page was loaded from cache (back/forward button)
+                        setTimeout(updateViewedNotifications, 100);
+                    }
+                });
+                
+                // Handle View button click for SuperAdmin
+                $(document).on('click', '.view-notification-details-btn', function(e) {
+                    var notificationId = $(this).data('notification-id');
+                    var hasReply = $(this).data('has-reply') === 'true';
+                    var href = $(this).attr('href');
+                    
+                    // If notification has reply, mark it as viewed before navigation
+                    if (hasReply) {
+                        e.preventDefault();
+                        var $item = $(this).closest('.superadmin-notification-item');
+                        
+                        // Load current viewed notifications from localStorage
+                        var viewedNotifications = JSON.parse(localStorage.getItem('superadminViewedNotifications') || '[]');
+                        
+                        // Add to viewed list
+                        if (viewedNotifications.indexOf(notificationId) === -1) {
+                            viewedNotifications.push(notificationId);
+                            localStorage.setItem('superadminViewedNotifications', JSON.stringify(viewedNotifications));
+                        }
+                        
+                        // Remove highlight immediately
+                        $item.removeClass('list-group-item-success');
+                        $item.css('border-left', '');
+                        $item.find('.badge.bg-success').remove();
+                        $item.attr('data-has-reply', 'false');
+                        $(this).data('has-reply', 'false');
+                        
+                        // Update replies count
+                        updateRepliesCount();
+                        
+                        // Navigate to details page
+                        window.location.href = href;
+                    }
+                    // If no reply, allow normal navigation
+                });
+                
+                function updateRepliesCount() {
+                    // Get viewed notifications from localStorage (persists across app restarts)
+                    var viewedNotifications = JSON.parse(localStorage.getItem('superadminViewedNotifications') || '[]');
+                    
+                    // Count only unviewed notifications with replies
+                    var unviewedRepliesCount = 0;
+                    $('.superadmin-notification-item').each(function() {
+                        var notificationId = $(this).data('notification-id');
+                        var hasReply = $(this).data('has-reply') === 'true';
+                        var isViewed = viewedNotifications.indexOf(notificationId) !== -1;
+                        
+                        if (hasReply && !isViewed) {
+                            unviewedRepliesCount++;
+                        }
+                    });
+                    
+                    var repliesBadge = $('#repliesCountBadge');
+                    
+                    if (unviewedRepliesCount > 0) {
+                        repliesBadge.text(unviewedRepliesCount + ' Replies').show();
+                    } else {
+                        repliesBadge.hide();
+                    }
+                }
+            });
+            
+            // Page size change functions
+            function changeUserPageSize(size) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('pageSize', size);
+                url.searchParams.set('pageNumber', '1'); // Reset to first page
+                window.location.href = url.toString();
+            }
+            
+            function changeAdminPageSize(size) {
+                const url = new URL(window.location.href);
+                url.searchParams.set('pageSize', size);
+                url.searchParams.set('pageNumber', '1'); // Reset to first page
+                window.location.href = url.toString();
             }
         </script>
     }

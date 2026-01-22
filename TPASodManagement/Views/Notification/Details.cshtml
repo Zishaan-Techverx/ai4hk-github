@@ -48,26 +48,13 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Priority</label>
-                            <input type="text" class="form-control" value="@Model.Priority" readonly />
-                        </div>
-
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Expiry Date</label>
-                            <input type="text" class="form-control" value="@(Model.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")" readonly />
-                        </div>
-
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
                             <label class="form-label fw-bold">Is Active</label>
                             <input type="text" class="form-control" value="@(Model.IsActive ? "Yes" : "No")" readonly />
                         </div>
 
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-bold">Recipients Count</label>
-                            <input type="text" class="form-control" value="@Model.NotificationUsers.Count" readonly />
+                            <label class="form-label fw-bold">Expiry Date</label>
+                            <input type="text" class="form-control" value="@(Model.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")" readonly />
                         </div>
                     </div>
 
@@ -83,11 +70,26 @@
                         </div>
                     </div>
 
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Priority</label>
+                            <div>
+                                @{
+                                    var priorityClass = Model.Priority == "Critical" ? "danger" : 
+                                                       Model.Priority == "High" ? "warning" : 
+                                                       Model.Priority == "Medium" ? "info" : 
+                                                       Model.Priority == "Low" ? "secondary" : "secondary";
+                                }
+                                <span class="badge bg-@priorityClass">@Model.Priority</span>
+                            </div>
+                        </div>
+                    </div>
+
                     @if (Model.NotificationUsers != null && Model.NotificationUsers.Any())
                     {
                         <div class="row">
                             <div class="col-md-12 mb-3">
-                                <label class="form-label fw-bold">Recipients</label>
+                                <label class="form-label fw-bold">Recipients (@Model.NotificationUsers.Count)</label>
                                 <div class="table-responsive">
                                     <table class="table table-bordered table-sm">
                                         <thead>
@@ -103,11 +105,22 @@
                                             @{
                                                 var replies = ViewBag.Replies as List<TpaSodManagement.Database.Entities.NotificationResponse> ?? new List<TpaSodManagement.Database.Entities.NotificationResponse>();
                                             }
+                                            @{
+                                                var persons = ViewBag.Persons as Dictionary<long, TpaSodManagement.Database.Entities.Person> ?? new Dictionary<long, TpaSodManagement.Database.Entities.Person>();
+                                            }
                                             @foreach (var notificationUser in Model.NotificationUsers)
                                             {
                                                 var userReplies = replies.Where(r => r.UserId == notificationUser.UserId).ToList();
+                                                var person = notificationUser.User?.PersonId.HasValue == true && persons.ContainsKey(notificationUser.User.PersonId.Value) 
+                                                    ? persons[notificationUser.User.PersonId.Value] 
+                                                    : null;
+                                                var userNameDisplay = notificationUser.User?.UserName ?? "N/A";
+                                                if (person != null)
+                                                {
+                                                    userNameDisplay = $"{userNameDisplay} ({person.FirstName} {person.LastName})";
+                                                }
                                                 <tr>
-                                                    <td>@(notificationUser.User?.UserName ?? "N/A")</td>
+                                                    <td>@userNameDisplay</td>
                                                     <td>@(notificationUser.User?.Email ?? "N/A")</td>
                                                     <td>@(notificationUser.IsRead ? "Yes" : "No")</td>
                                                     <td>@(notificationUser.ReadDate?.ToString("yyyy-MM-dd HH:mm") ?? "N/A")</td>
@@ -158,6 +171,21 @@
 @section Scripts {
     <script>
         $(document).ready(function() {
+            // Mark notification as viewed if it has replies
+            var notificationId = @Model.NotificationId;
+            var hasReplies = @((ViewBag.Replies as List<TpaSodManagement.Database.Entities.NotificationResponse> ?? new List<TpaSodManagement.Database.Entities.NotificationResponse>()).Any() ? "true" : "false");
+            
+            if (hasReplies) {
+                // Load existing viewed notifications from localStorage (persists across app restarts)
+                var viewedNotifications = JSON.parse(localStorage.getItem('superadminViewedNotifications') || '[]');
+                
+                // Add this notification if not already in the list
+                if (viewedNotifications.indexOf(notificationId) === -1) {
+                    viewedNotifications.push(notificationId);
+                    localStorage.setItem('superadminViewedNotifications', JSON.stringify(viewedNotifications));
+                }
+            }
+            
             // Edit button handler for details page
             $('.edit-notification').on('click', function() {
                 var notificationId = $(this).data('id');

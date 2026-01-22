@@ -37,6 +37,7 @@ public class NotificationService : INotificationService
         return await _context.Notifications
             .Include(n => n.NotificationUsers)
             .ThenInclude(nu => nu.User)
+            .ThenInclude(u => u.Organization)
             .FirstOrDefaultAsync(n => n.NotificationId == id);
     }
 

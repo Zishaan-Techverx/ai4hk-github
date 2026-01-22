@@ -37,7 +37,7 @@ public class HomeController : Controller
         _notificationResponseService = notificationResponseService;
     }
 
-    public async Task<IActionResult> Index()
+    public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
     {
         var vm = await _homeService.GetHomeIndexViewModelAsync(User.Identity?.IsAuthenticated ?? false);
 
@@ -66,27 +66,52 @@ public class HomeController : Controller
                 if (isSuperAdmin)
                 {
                     // Load all notifications for SuperAdmin (management view)
-                    var notifications = await _notificationService.GetAllNotificationsAsync();
-                    ViewBag.Notifications = notifications;
+                    var allNotifications = await _notificationService.GetAllNotificationsAsync();
+                    
+                    // Get all notification IDs
+                    var notificationIds = allNotifications.Select(n => n.NotificationId).ToList();
+                    
+                    // Get notifications that have replies
+                    var notificationsWithReplies = await _context.NotificationResponses
+                        .Where(nr => notificationIds.Contains(nr.NotificationId) && nr.DeletedDate == null)
+                        .Select(nr => nr.NotificationId)
+                        .Distinct()
+                        .ToListAsync();
+                    
+                    ViewBag.NotificationsWithReplies = notificationsWithReplies;
+                    // Note: Count will be calculated on client-side based on sessionStorage (unviewed replies only)
+                    ViewBag.NotificationsWithRepliesCount = notificationsWithReplies.Count;
+                    
+                    // Apply pagination for SuperAdmin
+                    var totalCount = allNotifications.Count;
+                    var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                    var paginatedNotifications = allNotifications
+                        .Skip((pageNumber - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
+                    
+                    ViewBag.Notifications = paginatedNotifications;
+                    ViewBag.PageNumber = pageNumber;
+                    ViewBag.TotalPages = totalPages;
+                    ViewBag.TotalCount = totalCount;
+                    ViewBag.PageSize = pageSize;
                 }
                 else
                 {
                     // Load user-specific notifications with read status for regular users
-                    var userNotificationUsers = await _context.NotificationUsers
+                    var allUserNotificationUsers = await _context.NotificationUsers
                         .Where(nu => nu.UserId == currentUser.Id && nu.DeletedDate == null)
                         .Include(nu => nu.Notification)
                         .Where(nu => nu.Notification.DeletedDate == null && nu.Notification.IsActive)
                         .OrderByDescending(nu => nu.Notification.CreatedDate)
                         .ToListAsync();
                     
-                    ViewBag.UserNotificationUsers = userNotificationUsers;
-                    
-                    // Count unread notifications
-                    var unreadCount = userNotificationUsers.Count(nu => !nu.IsRead);
+                    // Count unread notifications (before pagination)
+                    var unreadCount = allUserNotificationUsers.Count(nu => !nu.IsRead);
                     ViewBag.UnreadNotificationCount = unreadCount;
                     
                     // Check which notifications the user has already replied to
-                    var notificationIds = userNotificationUsers.Select(nu => nu.NotificationId).ToList();
+                    var notificationIds = allUserNotificationUsers.Select(nu => nu.NotificationId).ToList();
                     var userReplies = await _context.NotificationResponses
                         .Where(nr => nr.UserId == currentUser.Id 
                             && notificationIds.Contains(nr.NotificationId) 
@@ -95,6 +120,20 @@ public class HomeController : Controller
                         .ToListAsync();
                     
                     ViewBag.UserRepliedNotificationIds = userReplies;
+                    
+                    // Apply pagination for user notifications
+                    var totalCount = allUserNotificationUsers.Count;
+                    var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
+                    var paginatedUserNotificationUsers = allUserNotificationUsers
+                        .Skip((pageNumber - 1) * pageSize)
+                        .Take(pageSize)
+                        .ToList();
+                    
+                    ViewBag.UserNotificationUsers = paginatedUserNotificationUsers;
+                    ViewBag.PageNumber = pageNumber;
+                    ViewBag.TotalPages = totalPages;
+                    ViewBag.TotalCount = totalCount;
+                    ViewBag.PageSize = pageSize;
                 }
             }
         }
@@ -437,6 +476,34 @@ public class HomeController : Controller
         }
 
         return Json(new { success = false, message = response.Message });
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetUserReplyForNotification(long notificationId)
+    {
+        var currentUser = await _userManager.GetUserAsync(User);
+        if (currentUser == null)
+        {
+            return Json(new { success = false, message = "User not found" });
+        }
+
+        var replies = await _notificationResponseService.GetResponsesByNotificationIdAsync(notificationId);
+        var userReply = replies.FirstOrDefault(r => r.UserId == currentUser.Id && r.DeletedDate == null);
+
+        if (userReply != null)
+        {
+            return Json(new { 
+                success = true, 
+                hasReply = true,
+                reply = userReply.Reply,
+                replyDate = userReply.CreatedDate.ToString("yyyy-MM-dd HH:mm")
+            });
+        }
+
+        return Json(new { 
+            success = true, 
+            hasReply = false 
+        });
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]

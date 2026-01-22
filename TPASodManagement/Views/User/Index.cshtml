@@ -19,10 +19,10 @@
                     <button type="button" class="btn btn-secondary me-2" id="printBtn">
                         <i class="fas fa-download me-1"></i> Export to Excel
                     </button>
-                    @if (User.HasPermission("User.Create"))
-                    {
-                        <a asp-action="Create" class="btn btn-primary">Create New</a>
-                    }
+                @if (User.HasPermission("User.Create"))
+                {
+                    <a asp-action="Create" class="btn btn-primary">Create New</a>
+                }
                 </div>
             </div>
 
@@ -64,7 +64,7 @@
                                 </li>
                                 <li><hr class="dropdown-divider"></li>
                             </ul>
-                        </div>
+                </div>
                         @await Html.PartialAsync("_FilterPartial", new Dictionary<string, string>())
                     </div>
                     <div id="hiddenColumnsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
@@ -85,10 +85,10 @@
             </div>
 
             <div class="card card-body shadow-sm">
-                <div class="table-responsive">
+                    <div class="table-responsive">
                     <table class="table" id="dataTable">
-                        <thead>
-                            <tr>
+                            <thead>
+                                <tr>
                                 <th data-column="UserName">User Name</th>
                                 <th data-column="Email">Email</th>
                                 <th data-column="FirstName">First Name</th>
@@ -100,11 +100,11 @@
                                 <th data-column="PostalCode">Postal Code</th>
                                 <th data-column="IsActive">Is Active</th>
                                 <th data-column="Actions" class="no-hide-column">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            @foreach (var user in Model)
-                            {
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model)
+                                {
                                 <tr id="row-@user.Id">
                                     <td data-column="UserName">@Html.DisplayFor(modelItem => user.UserName)</td>
                                     <td data-column="Email">@Html.DisplayFor(modelItem => user.Email)</td>
@@ -116,69 +116,69 @@
                                     <td data-column="StateName">@Html.DisplayFor(modelItem => user.StateName)</td>
                                     <td data-column="PostalCode">@Html.DisplayFor(modelItem => user.PostalCode)</td>
                                     <td data-column="IsActive">
-                                        @if (user.IsActive)
-                                        {
-                                            <span class="badge bg-success">Active</span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-danger">Inactive</span>
-                                        }
-                                    </td>
-                                    <td>
-                                        <div class="btn-group btn-group-sm">
-                                            <!-- DETAILS BUTTON -->
-                                            @if (User.HasPermission("User.Detail"))
+                                            @if (user.IsActive)
                                             {
-                                                <a class="btn btn-info"
-                                                   asp-action="Details"
-                                                   asp-route-id="@user.Id">
-                                                    Details
-                                                </a>
+                                                <span class="badge bg-success">Active</span>
                                             }
+                                            else
+                                            {
+                                                <span class="badge bg-danger">Inactive</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            <div class="btn-group btn-group-sm">
+                                                <!-- DETAILS BUTTON -->
+                                                @if (User.HasPermission("User.Detail"))
+                                                {
+                                                    <a class="btn btn-info"
+                                                       asp-action="Details"
+                                                       asp-route-id="@user.Id">
+                                                        Details
+                                                    </a>
+                                                }
 
-                                            <!-- EDIT BUTTON -->
-                                            @if (User.HasPermission("User.Edit"))
-                                            {
-                                                <a class="btn btn-warning"
-                                                   asp-action="Edit"
-                                                   asp-route-id="@user.Id">
-                                                    Edit
-                                                </a>
-                                            }
+                                                <!-- EDIT BUTTON -->
+                                                @if (User.HasPermission("User.Edit"))
+                                                {
+                                                    <a class="btn btn-warning"
+                                                       asp-action="Edit"
+                                                       asp-route-id="@user.Id">
+                                                        Edit
+                                                    </a>
+                                                }
 
-                                            <!-- RESET PASSWORD BUTTON -->
-                                            @if (User.HasPermission("User.Edit"))
-                                            {
-                                                <button type="button" class="btn btn-secondary reset-password-btn"
-                                                        data-user-id="@user.Id"
-                                                        data-user-name="@user.UserName"
-                                                        data-bs-toggle="modal"
-                                                        data-bs-target="#resetPasswordModal"
-                                                        title="Reset Password">
-                                                    Reset Password
-                                                </button>
-                                            }
+                                                <!-- RESET PASSWORD BUTTON -->
+                                                @if (User.HasPermission("User.Edit"))
+                                                {
+                                                    <button type="button" class="btn btn-secondary reset-password-btn"
+                                                            data-user-id="@user.Id"
+                                                            data-user-name="@user.UserName"
+                                                            data-bs-toggle="modal"
+                                                            data-bs-target="#resetPasswordModal"
+                                                            title="Reset Password">
+                                                        Reset Password
+                                                    </button>
+                                                }
 
-                                            <!-- DELETE BUTTON -->
-                                            @if (User.HasPermission("User.Delete"))
-                                            {
-                                                <a href="#" class="btn btn-danger delete-user-btn"
-                                                   data-user-id="@user.Id"
-                                                   data-user-name="@user.UserName"
-                                                   data-user-email="@user.Email"
-                                                   data-bs-toggle="modal"
-                                                   data-bs-target="#deleteUserModal"
-                                                   title="Delete User">
-                                                    Delete
-                                                </a>
-                                            }
-                                        </div>
-                                    </td>
-                                </tr>
-                            }
-                        </tbody>
-                    </table>
+                                                <!-- DELETE BUTTON -->
+                                                @if (User.HasPermission("User.Delete"))
+                                                {
+                                                    <a href="#" class="btn btn-danger delete-user-btn"
+                                                       data-user-id="@user.Id"
+                                                       data-user-name="@user.UserName"
+                                                       data-user-email="@user.Email"
+                                                       data-bs-toggle="modal"
+                                                       data-bs-target="#deleteUserModal"
+                                                       title="Delete User">
+                                                        Delete
+                                                    </a>
+                                                }
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
                 </div>
             </div>
 
@@ -298,29 +298,29 @@
     </div>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const moduleName = 'User';
-        const storageKey = `hiddenColumns_${moduleName}`;
-        const table = document.getElementById('dataTable');
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const moduleName = 'User';
+            const storageKey = `hiddenColumns_${moduleName}`;
+            const table = document.getElementById('dataTable');
         const columnFilterDropdown = document.getElementById('columnFilterDropdown');
         const columnFilterMenu = document.getElementById('columnFilterMenu');
         const showAllOption = document.getElementById('showAllOption');
         const showAllCheckbox = document.getElementById('showAllCheckbox');
-        const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
-        
+            const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
+            
         if (!table || !columnFilterMenu) return;
         
-        // Get all column headers except Actions
-        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
-        const columnMap = new Map(); // Store column name -> display name mapping
-        
+                // Get all column headers except Actions
+                const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+                const columnMap = new Map(); // Store column name -> display name mapping
+                
         // Populate dropdown with checkboxes
-        headers.forEach(header => {
-            const columnName = header.getAttribute('data-column');
-            const displayName = header.textContent.trim();
-            columnMap.set(columnName, displayName);
-            
+                headers.forEach(header => {
+                    const columnName = header.getAttribute('data-column');
+                    const displayName = header.textContent.trim();
+                    columnMap.set(columnName, displayName);
+                    
             const listItem = document.createElement('li');
             const checkboxId = `colCheckbox_${columnName}`;
             
@@ -367,17 +367,17 @@
                 // Update filter inputs state
                 updateFilterInputsState(hiddenColumns);
             });
-        });
-        
-        // Load saved preferences
-        let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
+                });
+                
+                // Load saved preferences
+                let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
         
         // Update checkboxes based on saved preferences
         updateCheckboxes();
-        
-        // Update UI based on saved preferences
-        updateHiddenColumnsUI(hiddenColumns, columnMap);
-        applyColumnVisibility(hiddenColumns);
+                
+                // Update UI based on saved preferences
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
         updateDropdownButton();
         // Update filter inputs state
         updateFilterInputsState(hiddenColumns);
@@ -415,7 +415,7 @@
                 
                 // Update hiddenColumns array
                 if (isChecked) {
-                    // Hide the column
+                        // Hide the column
                     if (!hiddenColumns.includes(columnName)) {
                         hiddenColumns.push(columnName);
                     }
@@ -426,13 +426,13 @@
                 
                 // Update "Show All" checkbox state
                 updateShowAllCheckbox();
-                
-                // Save to localStorage
-                localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
-                
-                // Update UI
-                updateHiddenColumnsUI(hiddenColumns, columnMap);
-                applyColumnVisibility(hiddenColumns);
+                    
+                    // Save to localStorage
+                    localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                    
+                    // Update UI
+                    updateHiddenColumnsUI(hiddenColumns, columnMap);
+                    applyColumnVisibility(hiddenColumns);
                 updateDropdownButton();
             }
         });
@@ -470,68 +470,68 @@
                 columnFilterDropdown.textContent = `${hiddenColumns.length} Column(s) Hidden`;
             }
         }
-        
-        function updateHiddenColumnsUI(hiddenCols, colMap) {
-            hiddenColumnsBadges.innerHTML = '';
-            hiddenCols.forEach(columnName => {
-                const displayName = colMap.get(columnName);
-                const badge = document.createElement('span');
-                badge.className = 'badge bg-secondary me-1 mb-1';
-                badge.style.cursor = 'pointer';
-                badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
-                badge.addEventListener('click', function(e) {
-                    e.stopPropagation();
+                
+                function updateHiddenColumnsUI(hiddenCols, colMap) {
+                    hiddenColumnsBadges.innerHTML = '';
+                    hiddenCols.forEach(columnName => {
+                        const displayName = colMap.get(columnName);
+                        const badge = document.createElement('span');
+                        badge.className = 'badge bg-secondary me-1 mb-1';
+                        badge.style.cursor = 'pointer';
+                        badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
+                        badge.addEventListener('click', function(e) {
+                            e.stopPropagation();
                     // Uncheck the corresponding checkbox
                     const checkbox = columnFilterMenu.querySelector(`input[data-column="${columnName}"]`);
                     if (checkbox) {
                         checkbox.checked = false;
                         
                         // Remove from hiddenColumns array
-                        hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                            hiddenColumns = hiddenColumns.filter(col => col !== columnName);
                         
                         // Update "Show All" checkbox state
                         updateShowAllCheckbox();
                         
                         // Save to localStorage
-                        localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                            localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
                         
                 // Update UI
-                updateHiddenColumnsUI(hiddenColumns, columnMap);
-                applyColumnVisibility(hiddenColumns);
-                updateDropdownButton();
+                            updateHiddenColumnsUI(hiddenColumns, columnMap);
+                            applyColumnVisibility(hiddenColumns);
+                                updateDropdownButton();
                 // Update filter inputs state
                 updateFilterInputsState(hiddenColumns);
-                    }
-                });
-                hiddenColumnsBadges.appendChild(badge);
-            });
-        }
-        
-        function applyColumnVisibility(hiddenCols) {
+                            }
+                        });
+                        hiddenColumnsBadges.appendChild(badge);
+                    });
+                }
+                
+                function applyColumnVisibility(hiddenCols) {
             // Get table and headers from DOM each time (not from closure) to ensure fresh references
             const currentTable = document.getElementById('dataTable');
             if (!currentTable) return;
             
             const currentHeaders = currentTable.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
             currentHeaders.forEach(header => {
-                const columnName = header.getAttribute('data-column');
-                const isHidden = hiddenCols.includes(columnName);
-                
-                // Hide/show header
-                header.style.display = isHidden ? 'none' : '';
-                
-                // Hide/show all cells in this column
+                        const columnName = header.getAttribute('data-column');
+                        const isHidden = hiddenCols.includes(columnName);
+                        
+                        // Hide/show header
+                        header.style.display = isHidden ? 'none' : '';
+                        
+                        // Hide/show all cells in this column
                 const cells = currentTable.querySelectorAll(`tbody td[data-column="${columnName}"]`);
-                cells.forEach(cell => {
-                    cell.style.display = isHidden ? 'none' : '';
-                });
-            });
-            
-            // Ensure Actions column is always visible
+                        cells.forEach(cell => {
+                            cell.style.display = isHidden ? 'none' : '';
+                        });
+                    });
+                    
+                    // Ensure Actions column is always visible
             const actionsHeaders = currentTable.querySelectorAll('thead th[data-column="Actions"]');
             const actionsCells = currentTable.querySelectorAll('tbody td[data-column="Actions"]');
-            actionsHeaders.forEach(header => header.style.display = '');
-            actionsCells.forEach(cell => cell.style.display = '');
+                    actionsHeaders.forEach(header => header.style.display = '');
+                    actionsCells.forEach(cell => cell.style.display = '');
             
             // Disable/enable filter inputs for hidden columns
             updateFilterInputsState(hiddenCols);
@@ -606,52 +606,52 @@
         
         // Delete functionality
         const deleteModal = new bootstrap.Modal(document.getElementById('deleteUserModal'));
-        const userIdInput = document.getElementById('userIdToDelete');
-        const userNamePlaceholder = document.getElementById('userNamePlaceholder');
-        const userEmailPlaceholder = document.getElementById('userEmailPlaceholder');
-        const confirmDeleteBtn = document.getElementById('confirmUserDeleteBtn');
-        const deleteErrorAlert = document.getElementById('deleteUserError');
+            const userIdInput = document.getElementById('userIdToDelete');
+            const userNamePlaceholder = document.getElementById('userNamePlaceholder');
+            const userEmailPlaceholder = document.getElementById('userEmailPlaceholder');
+            const confirmDeleteBtn = document.getElementById('confirmUserDeleteBtn');
+            const deleteErrorAlert = document.getElementById('deleteUserError');
         const deleteSuccessToast = document.getElementById('deleteSuccessToast');
 
         const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
 
         document.querySelectorAll('.delete-user-btn').forEach(button => {
             button.addEventListener('click', function (e) {
-                e.preventDefault();
-                const userId = this.getAttribute('data-user-id');
-                const userName = this.getAttribute('data-user-name');
-                const userEmail = this.getAttribute('data-user-email');
+                    e.preventDefault();
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
+                    const userEmail = this.getAttribute('data-user-email');
 
                 userIdInput.value = userId;
                 userNamePlaceholder.innerText = userName;
                 userEmailPlaceholder.innerText = userEmail;
-                deleteErrorAlert.classList.add('d-none');
-                confirmDeleteBtn.disabled = false;
-                confirmDeleteBtn.innerHTML = 'Delete User';
+                        deleteErrorAlert.classList.add('d-none');
+                        confirmDeleteBtn.disabled = false;
+                        confirmDeleteBtn.innerHTML = 'Delete User';
+                });
             });
-        });
 
-        confirmDeleteBtn.addEventListener('click', function () {
-            const userId = userIdInput.value;
+                confirmDeleteBtn.addEventListener('click', function () {
+                    const userId = userIdInput.value;
             if (!userId) {
                 deleteErrorAlert.innerText = 'Error: User ID not found.';
-                deleteErrorAlert.classList.remove('d-none');
-                return;
-            }
+                            deleteErrorAlert.classList.remove('d-none');
+                        return;
+                    }
 
-            confirmDeleteBtn.disabled = true;
-            confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+                    confirmDeleteBtn.disabled = true;
+                    confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
 
-            const requestBody = 'id=' + encodeURIComponent(userId) +
-                '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+                    const requestBody = 'id=' + encodeURIComponent(userId) +
+                        '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
 
-            fetch('@Url.Action("DeleteUser", "User")', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: requestBody
-            })
+                    fetch('@Url.Action("DeleteUser", "User")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: requestBody
+                    })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
@@ -664,86 +664,86 @@
                             const toast = new bootstrap.Toast(deleteSuccessToast);
                             toast.show();
                         }
-                    } else {
+                            } else {
                         deleteErrorAlert.innerText = data.message || 'Error deleting the record. Please try again.';
                         deleteErrorAlert.classList.remove('d-none');
                     }
                 })
-                .catch(error => {
+                        .catch(error => {
                     console.error('Delete failed:', error);
                     deleteErrorAlert.innerText = 'Deletion failed: ' + error.message;
-                    deleteErrorAlert.classList.remove('d-none');
+                                deleteErrorAlert.classList.remove('d-none');
                 })
                 .finally(() => {
-                    confirmDeleteBtn.disabled = false;
-                    confirmDeleteBtn.innerHTML = 'Delete User';
+                            confirmDeleteBtn.disabled = false;
+                            confirmDeleteBtn.innerHTML = 'Delete User';
+                        });
                 });
-        });
 
         // Reset Password functionality
         const resetPasswordModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
-        const userIdToResetInput = document.getElementById('userIdToResetPassword');
-        const resetPasswordUserNamePlaceholder = document.getElementById('resetPasswordUserNamePlaceholder');
-        const newPasswordInput = document.getElementById('newPasswordInput');
-        const confirmResetPasswordBtn = document.getElementById('confirmResetPasswordBtn');
-        const resetPasswordErrorAlert = document.getElementById('resetPasswordError');
+            const userIdToResetInput = document.getElementById('userIdToResetPassword');
+            const resetPasswordUserNamePlaceholder = document.getElementById('resetPasswordUserNamePlaceholder');
+            const newPasswordInput = document.getElementById('newPasswordInput');
+            const confirmResetPasswordBtn = document.getElementById('confirmResetPasswordBtn');
+            const resetPasswordErrorAlert = document.getElementById('resetPasswordError');
 
         document.querySelectorAll('.reset-password-btn').forEach(button => {
             button.addEventListener('click', function (e) {
-                e.preventDefault();
-                const userId = this.getAttribute('data-user-id');
-                const userName = this.getAttribute('data-user-name');
+                    e.preventDefault();
+                    const userId = this.getAttribute('data-user-id');
+                    const userName = this.getAttribute('data-user-name');
 
                 userIdToResetInput.value = userId;
                 resetPasswordUserNamePlaceholder.innerText = userName;
                 
                 // Generate default password
-                const defaultPassword = userName + '@@123';
-                newPasswordInput.value = defaultPassword;
-                
-                resetPasswordErrorAlert.classList.add('d-none');
-                confirmResetPasswordBtn.disabled = false;
-                confirmResetPasswordBtn.innerHTML = 'Reset Password';
+                    const defaultPassword = userName + '@@123';
+                        newPasswordInput.value = defaultPassword;
+
+                        resetPasswordErrorAlert.classList.add('d-none');
+                        confirmResetPasswordBtn.disabled = false;
+                        confirmResetPasswordBtn.innerHTML = 'Reset Password';
+                });
             });
-        });
 
-        confirmResetPasswordBtn.addEventListener('click', function () {
-            const userId = userIdToResetInput.value;
-            const newPassword = newPasswordInput.value;
+                confirmResetPasswordBtn.addEventListener('click', function () {
+                    const userId = userIdToResetInput.value;
+                    const newPassword = newPasswordInput.value;
 
-            if (!userId) {
+                    if (!userId) {
                 resetPasswordErrorAlert.innerText = 'Error: User ID not found.';
-                resetPasswordErrorAlert.classList.remove('d-none');
-                return;
-            }
+                            resetPasswordErrorAlert.classList.remove('d-none');
+                        return;
+                    }
 
-            if (!newPassword || newPassword.trim() === '') {
-                resetPasswordErrorAlert.innerText = 'Error: Please enter a password.';
-                resetPasswordErrorAlert.classList.remove('d-none');
-                newPasswordInput.focus();
-                return;
-            }
+                    if (!newPassword || newPassword.trim() === '') {
+                            resetPasswordErrorAlert.innerText = 'Error: Please enter a password.';
+                            resetPasswordErrorAlert.classList.remove('d-none');
+                        newPasswordInput.focus();
+                        return;
+                    }
 
-            confirmResetPasswordBtn.disabled = true;
-            confirmResetPasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Resetting...';
+                    confirmResetPasswordBtn.disabled = true;
+                    confirmResetPasswordBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Resetting...';
 
-            const requestBody = 'id=' + encodeURIComponent(userId) +
-                '&newPassword=' + encodeURIComponent(newPassword) +
-                '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+                    const requestBody = 'id=' + encodeURIComponent(userId) +
+                        '&newPassword=' + encodeURIComponent(newPassword) +
+                        '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
 
-            fetch('@Url.Action("ResetPassword", "User")', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: requestBody
-            })
+                    fetch('@Url.Action("ResetPassword", "User")', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: requestBody
+                    })
                 .then(response => response.json())
                 .then(data => {
                     if (data.success) {
                         alert('Password reset successfully!\n\nAn email has been sent to the user with the new password.');
                         resetPasswordModal.hide();
-                    } else {
+                            } else {
                         resetPasswordErrorAlert.innerText = data.message || 'Error resetting password. Please try again.';
                         resetPasswordErrorAlert.classList.remove('d-none');
                     }
@@ -976,8 +976,8 @@
                 updateTable(getPaginatedData()); // updateTable already calls applyColumnVisibility at the end
                 updateFilterTags();
                 updateFilterCount();
-                
-                // Close modal
+                                
+                                // Close modal
                 const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
                 if (modal) modal.hide();
             } else {
@@ -1002,7 +1002,7 @@
             if (clearAllBtn) {
                 clearAllBtn.style.display = 'inline-block';
             }
-        } else {
+                            } else {
             if (countBadge) {
                 countBadge.style.display = 'none';
             }
