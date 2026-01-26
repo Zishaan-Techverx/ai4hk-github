@@ -1764,18 +1764,62 @@ else
                     if (!container) return;
                     
                     container.innerHTML = '';
+                    if (Object.keys(adminActiveFilters).length === 0) {
+                        return;
+                    }
+                    
                     Object.keys(adminActiveFilters).forEach(key => {
                         const value = adminActiveFilters[key];
+                        let displayKey = key;
+                        let displayValue = value;
+                        
+                        // Format display key and value
+                        if (key === 'Search') {
+                            displayKey = 'Search';
+                        } else if (key.endsWith('_From')) {
+                            displayKey = key.replace('_From', '') + ' (From)';
+                        } else if (key.endsWith('_To')) {
+                            displayKey = key.replace('_To', '') + ' (To)';
+                        }
+                        
                         const tag = document.createElement('span');
                         tag.className = 'badge bg-primary me-1 mb-1';
                         tag.style.cursor = 'pointer';
-                        tag.innerHTML = `${key}: ${value} <span class="ms-1">&times;</span>`;
-                        tag.onclick = function() {
+                        tag.innerHTML = `${displayKey}: ${escapeHtml(displayValue)} <i class="fa-solid fa-times ms-1"></i>`;
+                        tag.addEventListener('click', function(e) {
+                            e.stopPropagation();
                             delete adminActiveFilters[key];
+                            
+                            // Clear corresponding input fields
+                            if (key === 'Search') {
+                                const filterInput = document.querySelector('.filter-input[data-column="Search"]');
+                                if (filterInput) filterInput.value = '';
+                                const clearBtn = document.querySelector('.clear-column-filter[data-column="Search"]');
+                                if (clearBtn) clearBtn.style.display = 'none';
+                            } else if (key.endsWith('_From')) {
+                                const baseColumn = key.replace('_From', '');
+                                const dateFromInput = document.querySelector(`.filter-date-from[data-column="${baseColumn}"]`);
+                                if (dateFromInput) dateFromInput.value = '';
+                                const clearBtn = document.querySelector(`.clear-date-from-filter[data-column="${baseColumn}"]`);
+                                if (clearBtn) clearBtn.style.display = 'none';
+                            } else if (key.endsWith('_To')) {
+                                const baseColumn = key.replace('_To', '');
+                                const dateToInput = document.querySelector(`.filter-date-to[data-column="${baseColumn}"]`);
+                                if (dateToInput) dateToInput.value = '';
+                                const clearBtn = document.querySelector(`.clear-date-to-filter[data-column="${baseColumn}"]`);
+                                if (clearBtn) clearBtn.style.display = 'none';
+                            }
+                            
                             updateAdminFilterTags();
                             updateAdminFilterCount();
-                            window.applyAdminFilters();
-                        };
+                            
+                            // If no filters left, reload page
+                            if (Object.keys(adminActiveFilters).length === 0) {
+                                window.location.reload();
+                            } else {
+                                window.applyAdminFilters();
+                            }
+                        });
                         container.appendChild(tag);
                     });
                 }
@@ -2015,18 +2059,62 @@ else
                     if (!container) return;
                     
                     container.innerHTML = '';
+                    if (Object.keys(userActiveFilters).length === 0) {
+                        return;
+                    }
+                    
                     Object.keys(userActiveFilters).forEach(key => {
                         const value = userActiveFilters[key];
+                        let displayKey = key;
+                        let displayValue = value;
+                        
+                        // Format display key and value
+                        if (key === 'Search') {
+                            displayKey = 'Search';
+                        } else if (key.endsWith('_From')) {
+                            displayKey = key.replace('_From', '') + ' (From)';
+                        } else if (key.endsWith('_To')) {
+                            displayKey = key.replace('_To', '') + ' (To)';
+                        }
+                        
                         const tag = document.createElement('span');
                         tag.className = 'badge bg-primary me-1 mb-1';
                         tag.style.cursor = 'pointer';
-                        tag.innerHTML = `${key}: ${value} <span class="ms-1">&times;</span>`;
-                        tag.onclick = function() {
+                        tag.innerHTML = `${displayKey}: ${escapeHtml(displayValue)} <i class="fa-solid fa-times ms-1"></i>`;
+                        tag.addEventListener('click', function(e) {
+                            e.stopPropagation();
                             delete userActiveFilters[key];
+                            
+                            // Clear corresponding input fields
+                            if (key === 'Search') {
+                                const filterInput = document.querySelector('.filter-input[data-column="Search"]');
+                                if (filterInput) filterInput.value = '';
+                                const clearBtn = document.querySelector('.clear-column-filter[data-column="Search"]');
+                                if (clearBtn) clearBtn.style.display = 'none';
+                            } else if (key.endsWith('_From')) {
+                                const baseColumn = key.replace('_From', '');
+                                const dateFromInput = document.querySelector(`.filter-date-from[data-column="${baseColumn}"]`);
+                                if (dateFromInput) dateFromInput.value = '';
+                                const clearBtn = document.querySelector(`.clear-date-from-filter[data-column="${baseColumn}"]`);
+                                if (clearBtn) clearBtn.style.display = 'none';
+                            } else if (key.endsWith('_To')) {
+                                const baseColumn = key.replace('_To', '');
+                                const dateToInput = document.querySelector(`.filter-date-to[data-column="${baseColumn}"]`);
+                                if (dateToInput) dateToInput.value = '';
+                                const clearBtn = document.querySelector(`.clear-date-to-filter[data-column="${baseColumn}"]`);
+                                if (clearBtn) clearBtn.style.display = 'none';
+                            }
+                            
                             updateUserFilterTags();
                             updateUserFilterCount();
-                            window.applyUserFilters();
-                        };
+                            
+                            // If no filters left, reload page
+                            if (Object.keys(userActiveFilters).length === 0) {
+                                window.location.reload();
+                            } else {
+                                window.applyUserFilters();
+                            }
+                        });
                         container.appendChild(tag);
                     });
                 }
