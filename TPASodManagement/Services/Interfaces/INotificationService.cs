@@ -13,5 +13,7 @@ public interface INotificationService
     Task<List<Notification>> GetUserNotificationsAsync(long userId);
     Task<bool> MarkAsReadAsync(long notificationId, long userId);
     Task<List<Notification>> GetNotificationsByOrganizationAsync(long? organizationId);
+    Task<ServiceResponse<List<Notification>>> GetFilteredAsync(Dictionary<string, string> filters);
+    Task<ServiceResponse<List<NotificationUser>>> GetFilteredUserNotificationsAsync(long userId, Dictionary<string, string> filters);
 }
 

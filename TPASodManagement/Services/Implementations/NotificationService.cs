@@ -289,5 +289,150 @@ public class NotificationService : INotificationService
             .OrderByDescending(n => n.CreatedDate)
             .ToListAsync();
     }
+
+    public async Task<ServiceResponse<List<Notification>>> GetFilteredAsync(Dictionary<string, string> filters)
+    {
+        var response = new ServiceResponse<List<Notification>>();
+        try
+        {
+            var query = _context.Notifications
+                .Include(n => n.NotificationUsers)
+                .ThenInclude(nu => nu.User)
+                .AsQueryable();
+
+            // Apply filters
+            if (filters != null && filters.Count > 0)
+            {
+                // Search filter - searches in both Title and Message
+                if (filters.ContainsKey("Search") && !string.IsNullOrWhiteSpace(filters["Search"]))
+                {
+                    var searchValue = filters["Search"].Trim();
+                    query = query.Where(n => (n.Title != null && n.Title.Contains(searchValue)) || 
+                                             (n.Message != null && n.Message.Contains(searchValue)));
+                }
+
+                // Date filters for CreatedDate
+                if (filters.ContainsKey("CreatedDate_From") && !string.IsNullOrWhiteSpace(filters["CreatedDate_From"]))
+                {
+                    if (DateTimeOffset.TryParse(filters["CreatedDate_From"], out var fromDate))
+                    {
+                        query = query.Where(n => n.CreatedDate >= fromDate);
+                    }
+                }
+
+                if (filters.ContainsKey("CreatedDate_To") && !string.IsNullOrWhiteSpace(filters["CreatedDate_To"]))
+                {
+                    if (DateTimeOffset.TryParse(filters["CreatedDate_To"], out var toDate))
+                    {
+                        // Add one day to include the entire day
+                        toDate = toDate.AddDays(1).AddTicks(-1);
+                        query = query.Where(n => n.CreatedDate <= toDate);
+                    }
+                }
+
+                // Date filters for ExpiryDate
+                if (filters.ContainsKey("ExpiryDate_From") && !string.IsNullOrWhiteSpace(filters["ExpiryDate_From"]))
+                {
+                    if (DateTimeOffset.TryParse(filters["ExpiryDate_From"], out var fromDate))
+                    {
+                        query = query.Where(n => n.ExpiryDate != null && n.ExpiryDate >= fromDate);
+                    }
+                }
+
+                if (filters.ContainsKey("ExpiryDate_To") && !string.IsNullOrWhiteSpace(filters["ExpiryDate_To"]))
+                {
+                    if (DateTimeOffset.TryParse(filters["ExpiryDate_To"], out var toDate))
+                    {
+                        // Add one day to include the entire day
+                        toDate = toDate.AddDays(1).AddTicks(-1);
+                        query = query.Where(n => n.ExpiryDate != null && n.ExpiryDate <= toDate);
+                    }
+                }
+            }
+
+            response.Data = await query.OrderByDescending(n => n.CreatedDate).ToListAsync();
+            response.Success = true;
+        }
+        catch (System.Exception ex)
+        {
+            response.Success = false;
+            response.Message = $"Error filtering notifications: {ex.Message}";
+            _logger.LogError(ex, "Error filtering notifications");
+        }
+        return response;
+    }
+
+    public async Task<ServiceResponse<List<NotificationUser>>> GetFilteredUserNotificationsAsync(long userId, Dictionary<string, string> filters)
+    {
+        var response = new ServiceResponse<List<NotificationUser>>();
+        try
+        {
+            var query = _context.NotificationUsers
+                .Where(nu => nu.UserId == userId && nu.DeletedDate == null)
+                .Include(nu => nu.Notification)
+                .Where(nu => nu.Notification.DeletedDate == null && nu.Notification.IsActive)
+                .AsQueryable();
+
+            // Apply filters
+            if (filters != null && filters.Count > 0)
+            {
+                // Search filter - searches in both Title and Message
+                if (filters.ContainsKey("Search") && !string.IsNullOrWhiteSpace(filters["Search"]))
+                {
+                    var searchValue = filters["Search"].Trim();
+                    query = query.Where(nu => (nu.Notification.Title != null && nu.Notification.Title.Contains(searchValue)) || 
+                                             (nu.Notification.Message != null && nu.Notification.Message.Contains(searchValue)));
+                }
+
+                // Date filters for CreatedDate
+                if (filters.ContainsKey("CreatedDate_From") && !string.IsNullOrWhiteSpace(filters["CreatedDate_From"]))
+                {
+                    if (DateTimeOffset.TryParse(filters["CreatedDate_From"], out var fromDate))
+                    {
+                        query = query.Where(nu => nu.Notification.CreatedDate >= fromDate);
+                    }
+                }
+
+                if (filters.ContainsKey("CreatedDate_To") && !string.IsNullOrWhiteSpace(filters["CreatedDate_To"]))
+                {
+                    if (DateTimeOffset.TryParse(filters["CreatedDate_To"], out var toDate))
+                    {
+                        // Add one day to include the entire day
+                        toDate = toDate.AddDays(1).AddTicks(-1);
+                        query = query.Where(nu => nu.Notification.CreatedDate <= toDate);
+                    }
+                }
+
+                // Date filters for ExpiryDate
+                if (filters.ContainsKey("ExpiryDate_From") && !string.IsNullOrWhiteSpace(filters["ExpiryDate_From"]))
+                {
+                    if (DateTimeOffset.TryParse(filters["ExpiryDate_From"], out var fromDate))
+                    {
+                        query = query.Where(nu => nu.Notification.ExpiryDate != null && nu.Notification.ExpiryDate >= fromDate);
+                    }
+                }
+
+                if (filters.ContainsKey("ExpiryDate_To") && !string.IsNullOrWhiteSpace(filters["ExpiryDate_To"]))
+                {
+                    if (DateTimeOffset.TryParse(filters["ExpiryDate_To"], out var toDate))
+                    {
+                        // Add one day to include the entire day
+                        toDate = toDate.AddDays(1).AddTicks(-1);
+                        query = query.Where(nu => nu.Notification.ExpiryDate != null && nu.Notification.ExpiryDate <= toDate);
+                    }
+                }
+            }
+
+            response.Data = await query.OrderByDescending(nu => nu.Notification.CreatedDate).ToListAsync();
+            response.Success = true;
+        }
+        catch (System.Exception ex)
+        {
+            response.Success = false;
+            response.Message = $"Error filtering user notifications: {ex.Message}";
+            _logger.LogError(ex, "Error filtering user notifications");
+        }
+        return response;
+    }
 }
 

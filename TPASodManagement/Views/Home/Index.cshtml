@@ -228,10 +228,30 @@ else
                     var userNotificationUsers = ViewBag.UserNotificationUsers as List<TpaSodManagement.Database.Entities.NotificationUser>;
                     var unreadCount = ViewBag.UnreadNotificationCount as int? ?? 0;
                     
+                    // Set filter columns for regular users
+                    ViewBag.FilterColumns = new Dictionary<string, string>
+                    {
+                        { "Search", "Search (Title/Message)" },
+                        { "CreatedDate", "Created Date" },
+                        { "ExpiryDate", "Expiry Date" }
+                    };
+                    ViewBag.ModuleName = "Notifications";
+                    ViewBag.DateColumns = new HashSet<string> { "CreatedDate", "ExpiryDate" };
+                    
                     if (userNotificationUsers != null && userNotificationUsers.Any())
                     {
                         <div class="row mt-4">
                             <div class="col-12">
+                                <!-- Filter Controls -->
+                                <div class="row mb-3">
+                                    <div class="col-md-12">
+                                        <div class="d-flex align-items-center gap-2">
+                                            @await Html.PartialAsync("_FilterPartial", new Dictionary<string, string>())
+                                        </div>
+                                        <div id="activeFilterTags" class="mt-2 d-flex flex-wrap gap-1"></div>
+                                    </div>
+                                </div>
+                                
                                 <div class="card">
                                     <div class="card-header">
                                         <div class="d-flex justify-content-between align-items-center mb-2">
@@ -420,6 +440,16 @@ else
                     var repliesCount = ViewBag.NotificationsWithRepliesCount as int? ?? 0;
                     <div class="row mt-4">
                         <div class="col-12">
+                            <!-- Filter Controls -->
+                            <div class="row mb-3">
+                                <div class="col-md-12">
+                                    <div class="d-flex align-items-center gap-2">
+                                        @await Html.PartialAsync("_FilterPartial", new Dictionary<string, string>())
+                                    </div>
+                                    <div id="activeFilterTags" class="mt-2 d-flex flex-wrap gap-1"></div>
+                                </div>
+                            </div>
+                            
                             <div class="card">
                                 <div class="card-header">
                                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -1513,6 +1543,517 @@ else
                 url.searchParams.set('pageNumber', '1'); // Reset to first page
                 window.location.href = url.toString();
             }
+
+            // SuperAdmin Filter Functionality
+            (function() {
+                var adminActiveFilters = {};
+                var adminFilteredData = [];
+                var adminIsFiltered = false;
+                var adminCurrentPage = 1;
+                var adminPageSize = @(ViewBag.PageSize as int? ?? 10);
+
+                // Initialize filter functionality
+                (function() {
+                    // Handle clear all filters in modal
+                    const clearAllFiltersInModalBtn = document.getElementById('clearAllFiltersInModalBtn');
+                    if (clearAllFiltersInModalBtn) {
+                        clearAllFiltersInModalBtn.addEventListener('click', function() {
+                            document.querySelectorAll('.filter-input, .filter-date-from, .filter-date-to').forEach(input => {
+                                input.value = '';
+                            });
+                            document.querySelectorAll('.clear-column-filter, .clear-date-from-filter, .clear-date-to-filter').forEach(btn => {
+                                btn.style.display = 'none';
+                            });
+                            adminActiveFilters = {};
+                        });
+                    }
+
+                    // Clear all filters button (outside modal)
+                    const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
+                    if (clearAllFiltersBtn) {
+                        clearAllFiltersBtn.addEventListener('click', async function() {
+                            document.querySelectorAll('.filter-input, .filter-date-from, .filter-date-to').forEach(input => {
+                                input.value = '';
+                            });
+                            document.querySelectorAll('.clear-column-filter, .clear-date-from-filter, .clear-date-to-filter').forEach(btn => {
+                                btn.style.display = 'none';
+                            });
+                            adminActiveFilters = {};
+                            adminIsFiltered = false;
+                            updateAdminFilterTags();
+                            updateAdminFilterCount();
+                            window.location.reload();
+                        });
+                    }
+
+                    // Attach apply filter button handler
+                    const applyFilterBtn = document.getElementById('applyFilterBtn');
+                    if (applyFilterBtn) {
+                        applyFilterBtn.addEventListener('click', async function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (typeof window.applyAdminFilters === 'function') {
+                                await window.applyAdminFilters();
+                            } else {
+                                console.error('window.applyAdminFilters not found');
+                                alert('Filter function not found. Please refresh the page.');
+                            }
+                        });
+                    }
+                })();
+
+                window.applyAdminFilters = async function() {
+                    try {
+                        // Collect all filter values from inputs
+                        adminActiveFilters = {};
+                        
+                        // Collect from text inputs (Search field)
+                        const filterInputs = document.querySelectorAll('.filter-input:not(:disabled)');
+                        filterInputs.forEach(input => {
+                            const column = input.getAttribute('data-column');
+                            const value = input.value.trim();
+                            if (value) {
+                                adminActiveFilters[column] = value;
+                            }
+                        });
+                        
+                        // Collect from date inputs
+                        const filterDateFroms = document.querySelectorAll('.filter-date-from:not(:disabled)');
+                        filterDateFroms.forEach(input => {
+                            const column = input.getAttribute('data-column');
+                            const value = input.value;
+                            if (value) {
+                                adminActiveFilters[`${column}_From`] = value;
+                            }
+                        });
+                        
+                        const filterDateTos = document.querySelectorAll('.filter-date-to:not(:disabled)');
+                        filterDateTos.forEach(input => {
+                            const column = input.getAttribute('data-column');
+                            const value = input.value;
+                            if (value) {
+                                adminActiveFilters[`${column}_To`] = value;
+                            }
+                        });
+
+                        // If no filters are active, clear everything and reload
+                        if (Object.keys(adminActiveFilters).length === 0) {
+                            updateAdminFilterTags();
+                            updateAdminFilterCount();
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                            if (modal) modal.hide();
+                            window.location.reload();
+                            return;
+                        }
+
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                        const response = await fetch('@Url.Action("FilterNotifications", "Home")', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': token
+                            },
+                            body: JSON.stringify(adminActiveFilters)
+                        });
+                        
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('Response error:', response.status, errorText);
+                            alert('Error: Server returned status ' + response.status);
+                            return;
+                        }
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            adminFilteredData = result.data || [];
+                            adminIsFiltered = Object.keys(adminActiveFilters).length > 0;
+                            adminCurrentPage = 1;
+                            updateAdminTable(adminFilteredData, result.replies || []);
+                            updateAdminFilterTags();
+                            updateAdminFilterCount();
+                            setTimeout(function() {
+                                if (typeof updateViewedNotifications === 'function') {
+                                    updateViewedNotifications();
+                                }
+                                if (typeof updateRepliesCount === 'function') {
+                                    updateRepliesCount();
+                                }
+                            }, 200);
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                            if (modal) modal.hide();
+                        } else {
+                            alert('Error: ' + (result.message || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error applying filters: ' + error.message);
+                    }
+                }
+
+                function updateAdminTable(data, replies) {
+                    let listGroup = document.querySelector('.superadmin-notification-item')?.closest('.list-group');
+                    if (!listGroup) {
+                        const cardBody = document.querySelector('.card-body');
+                        if (cardBody) {
+                            const newListGroup = document.createElement('div');
+                            newListGroup.className = 'list-group';
+                            cardBody.insertBefore(newListGroup, cardBody.firstChild);
+                            listGroup = newListGroup;
+                        } else {
+                            return;
+                        }
+                    }
+                    
+                    const viewedNotifications = JSON.parse(localStorage.getItem('superadminViewedNotifications') || '[]');
+                    const repliesList = replies || [];
+                    
+                    listGroup.innerHTML = '';
+                    if (data.length === 0) {
+                        listGroup.innerHTML = '<div class="list-group-item text-center">No notifications found.</div>';
+                        return;
+                    }
+                    
+                    data.forEach(item => {
+                        const notificationId = typeof item.notificationId === 'number' ? item.notificationId : parseInt(item.notificationId);
+                        const hasReply = repliesList.includes(notificationId);
+                        const isViewed = viewedNotifications.indexOf(notificationId) !== -1;
+                        const shouldHighlight = hasReply && !isViewed;
+                        
+                        const priorityClass = item.priority === 'Critical' ? 'danger' : 
+                                           item.priority === 'High' ? 'warning' : 
+                                           item.priority === 'Medium' ? 'info' : 'secondary';
+                        
+                        const hasReplyStr = String(hasReply).toLowerCase();
+                        const itemHtml = `
+                            <div class="list-group-item ${shouldHighlight ? 'list-group-item-success' : ''} superadmin-notification-item" 
+                                 data-notification-id="${notificationId}" 
+                                 data-has-reply="${hasReplyStr}"
+                                 style="${shouldHighlight ? 'border-left: 4px solid #198754;' : ''}">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            ${shouldHighlight ? '<span class="badge bg-success me-2">Reply</span>' : ''}
+                                            ${escapeHtml(item.title || '')}
+                                            <span class="badge bg-${priorityClass} ms-2">${escapeHtml(item.priority || '')}</span>
+                                        </h6>
+                                        <p class="mb-1">${escapeHtml(item.message || '')}</p>
+                                        <small class="text-muted">
+                                            ${item.createdDate} | Recipients: ${item.recipientsCount || 0} | Expiry: ${escapeHtml(item.expiryDate || 'Not Set')}
+                                        </small>
+                                    </div>
+                                    <div class="ms-3">
+                                        <a href="/Notification/Details/${notificationId}" class="btn btn-sm btn-primary view-notification-details-btn" data-notification-id="${notificationId}" data-has-reply="${hasReplyStr}">View</a>
+                                        <button class="btn btn-sm btn-warning edit-notification" data-id="${notificationId}">Edit</button>
+                                        <button class="btn btn-sm btn-danger delete-notification" data-id="${notificationId}">Delete</button>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        listGroup.insertAdjacentHTML('beforeend', itemHtml);
+                    });
+                }
+
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                function updateAdminFilterTags() {
+                    const container = document.getElementById('activeFilterTags');
+                    if (!container) return;
+                    
+                    container.innerHTML = '';
+                    Object.keys(adminActiveFilters).forEach(key => {
+                        const value = adminActiveFilters[key];
+                        const tag = document.createElement('span');
+                        tag.className = 'badge bg-primary me-1 mb-1';
+                        tag.style.cursor = 'pointer';
+                        tag.innerHTML = `${key}: ${value} <span class="ms-1">&times;</span>`;
+                        tag.onclick = function() {
+                            delete adminActiveFilters[key];
+                            updateAdminFilterTags();
+                            updateAdminFilterCount();
+                            window.applyAdminFilters();
+                        };
+                        container.appendChild(tag);
+                    });
+                }
+
+                function updateAdminFilterCount() {
+                    const count = Object.keys(adminActiveFilters).length;
+                    const countBadge = document.getElementById('activeFilterCount');
+                    const clearAllBtn = document.getElementById('clearAllFiltersBtn');
+                    
+                    if (count > 0) {
+                        if (countBadge) {
+                            countBadge.textContent = count;
+                            countBadge.style.display = 'inline-block';
+                        }
+                        if (clearAllBtn) {
+                            clearAllBtn.style.display = 'inline-block';
+                        }
+                    } else {
+                        if (countBadge) {
+                            countBadge.style.display = 'none';
+                        }
+                        if (clearAllBtn) {
+                            clearAllBtn.style.display = 'none';
+                        }
+                    }
+                }
+            })();
+        </script>
+    }
+    
+    @if (!User.IsInRole("SuperAdmin"))
+    {
+        <script>
+            // User Filter Functionality
+            (function() {
+                var userActiveFilters = {};
+                var userFilteredData = [];
+                var userIsFiltered = false;
+                var userCurrentPage = 1;
+                var userPageSize = @(ViewBag.PageSize as int? ?? 10);
+
+                // Initialize filter functionality
+                (function() {
+                    // Handle clear all filters in modal
+                    const clearAllFiltersInModalBtn = document.getElementById('clearAllFiltersInModalBtn');
+                    if (clearAllFiltersInModalBtn) {
+                        clearAllFiltersInModalBtn.addEventListener('click', function() {
+                            document.querySelectorAll('.filter-input, .filter-date-from, .filter-date-to').forEach(input => {
+                                input.value = '';
+                            });
+                            document.querySelectorAll('.clear-column-filter, .clear-date-from-filter, .clear-date-to-filter').forEach(btn => {
+                                btn.style.display = 'none';
+                            });
+                            userActiveFilters = {};
+                        });
+                    }
+
+                    // Clear all filters button (outside modal)
+                    const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
+                    if (clearAllFiltersBtn) {
+                        clearAllFiltersBtn.addEventListener('click', async function() {
+                            document.querySelectorAll('.filter-input, .filter-date-from, .filter-date-to').forEach(input => {
+                                input.value = '';
+                            });
+                            document.querySelectorAll('.clear-column-filter, .clear-date-from-filter, .clear-date-to-filter').forEach(btn => {
+                                btn.style.display = 'none';
+                            });
+                            userActiveFilters = {};
+                            userIsFiltered = false;
+                            updateUserFilterTags();
+                            updateUserFilterCount();
+                            window.location.reload();
+                        });
+                    }
+
+                    // Attach apply filter button handler
+                    const applyFilterBtn = document.getElementById('applyFilterBtn');
+                    if (applyFilterBtn) {
+                        applyFilterBtn.addEventListener('click', async function(e) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            if (typeof window.applyUserFilters === 'function') {
+                                await window.applyUserFilters();
+                            } else {
+                                console.error('window.applyUserFilters not found');
+                                alert('Filter function not found. Please refresh the page.');
+                            }
+                        });
+                    }
+                })();
+
+                window.applyUserFilters = async function() {
+                    try {
+                        // Collect all filter values from inputs
+                        userActiveFilters = {};
+                        
+                        // Collect from text inputs (Search field)
+                        const filterInputs = document.querySelectorAll('.filter-input:not(:disabled)');
+                        filterInputs.forEach(input => {
+                            const column = input.getAttribute('data-column');
+                            const value = input.value.trim();
+                            if (value) {
+                                userActiveFilters[column] = value;
+                            }
+                        });
+                        
+                        // Collect from date inputs
+                        const filterDateFroms = document.querySelectorAll('.filter-date-from:not(:disabled)');
+                        filterDateFroms.forEach(input => {
+                            const column = input.getAttribute('data-column');
+                            const value = input.value;
+                            if (value) {
+                                userActiveFilters[`${column}_From`] = value;
+                            }
+                        });
+                        
+                        const filterDateTos = document.querySelectorAll('.filter-date-to:not(:disabled)');
+                        filterDateTos.forEach(input => {
+                            const column = input.getAttribute('data-column');
+                            const value = input.value;
+                            if (value) {
+                                userActiveFilters[`${column}_To`] = value;
+                            }
+                        });
+
+                        // If no filters are active, clear everything and reload
+                        if (Object.keys(userActiveFilters).length === 0) {
+                            updateUserFilterTags();
+                            updateUserFilterCount();
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                            if (modal) modal.hide();
+                            window.location.reload();
+                            return;
+                        }
+
+                        const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+                        const response = await fetch('@Url.Action("FilterNotifications", "Home")', {
+                            method: 'POST',
+                            headers: { 
+                                'Content-Type': 'application/json',
+                                'RequestVerificationToken': token
+                            },
+                            body: JSON.stringify(userActiveFilters)
+                        });
+                        
+                        if (!response.ok) {
+                            const errorText = await response.text();
+                            console.error('Response error:', response.status, errorText);
+                            alert('Error: Server returned status ' + response.status);
+                            return;
+                        }
+                        
+                        const result = await response.json();
+                        if (result.success) {
+                            userFilteredData = result.data || [];
+                            userIsFiltered = Object.keys(userActiveFilters).length > 0;
+                            userCurrentPage = 1;
+                            updateUserTable(userFilteredData, result.repliedIds || []);
+                            updateUserFilterTags();
+                            updateUserFilterCount();
+                            const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                            if (modal) modal.hide();
+                        } else {
+                            alert('Error: ' + (result.message || 'Unknown error'));
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert('Error applying filters: ' + error.message);
+                    }
+                }
+
+                function updateUserTable(data, repliedIds) {
+                    let listGroup = document.querySelector('.user-notification-item')?.closest('.list-group');
+                    if (!listGroup) {
+                        const cardBody = document.querySelector('.card-body');
+                        if (cardBody) {
+                            const newListGroup = document.createElement('div');
+                            newListGroup.className = 'list-group';
+                            cardBody.insertBefore(newListGroup, cardBody.firstChild);
+                            listGroup = newListGroup;
+                        } else {
+                            return;
+                        }
+                    }
+                    
+                    const repliedList = repliedIds || [];
+                    
+                    listGroup.innerHTML = '';
+                    if (data.length === 0) {
+                        listGroup.innerHTML = '<div class="list-group-item text-center">No notifications found.</div>';
+                        return;
+                    }
+                    
+                    data.forEach(item => {
+                        const notificationId = typeof item.notificationId === 'number' ? item.notificationId : parseInt(item.notificationId);
+                        const hasReplied = repliedList.includes(notificationId);
+                        
+                        const priorityClass = item.priority === 'Critical' ? 'danger' : 
+                                           item.priority === 'High' ? 'warning' : 
+                                           item.priority === 'Medium' ? 'info' : 'secondary';
+                        
+                        const readBadge = item.isRead ? '<span class="badge bg-success ms-2">Read</span>' : '<span class="badge bg-danger ms-2">Unread</span>';
+                        const itemHtml = `
+                            <div class="list-group-item user-notification-item" data-notification-id="${notificationId}">
+                                <div class="d-flex w-100 justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-1">
+                                            ${escapeHtml(item.title || '')}
+                                            <span class="badge bg-${priorityClass} ms-2">${escapeHtml(item.priority || '')}</span>
+                                            ${readBadge}
+                                        </h6>
+                                        <p class="mb-1">${escapeHtml(item.message || '')}</p>
+                                        <small class="text-muted">
+                                            ${item.createdDate} | Expiry: ${escapeHtml(item.expiryDate || 'Not Set')}
+                                            ${item.readDate ? ' | Read: ' + item.readDate : ''}
+                                        </small>
+                                    </div>
+                                    <div class="ms-3">
+                                        <a href="/Notification/Details/${notificationId}" class="btn btn-sm btn-primary">View</a>
+                                        ${hasReplied ? '<span class="badge bg-success ms-2">Replied</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        listGroup.insertAdjacentHTML('beforeend', itemHtml);
+                    });
+                }
+
+                function escapeHtml(text) {
+                    const div = document.createElement('div');
+                    div.textContent = text;
+                    return div.innerHTML;
+                }
+
+                function updateUserFilterTags() {
+                    const container = document.getElementById('activeFilterTags');
+                    if (!container) return;
+                    
+                    container.innerHTML = '';
+                    Object.keys(userActiveFilters).forEach(key => {
+                        const value = userActiveFilters[key];
+                        const tag = document.createElement('span');
+                        tag.className = 'badge bg-primary me-1 mb-1';
+                        tag.style.cursor = 'pointer';
+                        tag.innerHTML = `${key}: ${value} <span class="ms-1">&times;</span>`;
+                        tag.onclick = function() {
+                            delete userActiveFilters[key];
+                            updateUserFilterTags();
+                            updateUserFilterCount();
+                            window.applyUserFilters();
+                        };
+                        container.appendChild(tag);
+                    });
+                }
+
+                function updateUserFilterCount() {
+                    const count = Object.keys(userActiveFilters).length;
+                    const countBadge = document.getElementById('activeFilterCount');
+                    const clearAllBtn = document.getElementById('clearAllFiltersBtn');
+                    
+                    if (count > 0) {
+                        if (countBadge) {
+                            countBadge.textContent = count;
+                            countBadge.style.display = 'inline-block';
+                        }
+                        if (clearAllBtn) {
+                            clearAllBtn.style.display = 'inline-block';
+                        }
+                    } else {
+                        if (countBadge) {
+                            countBadge.style.display = 'none';
+                        }
+                        if (clearAllBtn) {
+                            clearAllBtn.style.display = 'none';
+                        }
+                    }
+                }
+            })();
         </script>
     }
 }

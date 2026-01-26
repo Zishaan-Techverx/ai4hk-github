@@ -65,6 +65,16 @@ public class HomeController : Controller
                 
                 if (isSuperAdmin)
                 {
+                    // Set filter columns for the partial view
+                    ViewBag.FilterColumns = new Dictionary<string, string>
+                    {
+                        { "Search", "Search (Title/Message)" },
+                        { "CreatedDate", "Created Date" },
+                        { "ExpiryDate", "Expiry Date" }
+                    };
+                    ViewBag.ModuleName = "Notifications";
+                    ViewBag.DateColumns = new HashSet<string> { "CreatedDate", "ExpiryDate" };
+
                     // Load all notifications for SuperAdmin (management view)
                     var allNotifications = await _notificationService.GetAllNotificationsAsync();
                     
@@ -504,6 +514,97 @@ public class HomeController : Controller
             success = true, 
             hasReply = false 
         });
+    }
+
+    [HttpPost]
+    [IgnoreAntiforgeryToken]
+    public async Task<IActionResult> FilterNotifications([FromBody] Dictionary<string, string> filters)
+    {
+        try
+        {
+            var currentUser = await _userManager.GetUserAsync(User);
+            if (currentUser == null)
+            {
+                return Json(new { success = false, message = "User not found" });
+            }
+
+            var roles = await _userManager.GetRolesAsync(currentUser);
+            bool isSuperAdmin = roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+
+            if (isSuperAdmin)
+            {
+                // SuperAdmin: Filter all notifications
+                var result = await _notificationService.GetFilteredAsync(filters ?? new Dictionary<string, string>());
+                if (!result.Success)
+                {
+                    return Json(new { success = false, message = result.Message });
+                }
+
+                // Get notifications that have replies
+                var notificationIds = result.Data?.Select(n => n.NotificationId).ToList() ?? new List<long>();
+                var notificationsWithReplies = await _context.NotificationResponses
+                    .Where(nr => notificationIds.Contains(nr.NotificationId) && nr.DeletedDate == null)
+                    .Select(nr => nr.NotificationId)
+                    .Distinct()
+                    .ToListAsync();
+
+                var notifications = result.Data ?? new List<Notification>();
+                var notificationsList = notifications.Select(n => new
+                {
+                    n.NotificationId,
+                    n.Title,
+                    Message = !string.IsNullOrEmpty(n.Message) && n.Message.Length > 100 ? n.Message.Substring(0, 100) + "..." : n.Message ?? "",
+                    n.Priority,
+                    RecipientsCount = n.NotificationUsers?.Count ?? 0,
+                    CreatedDate = n.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                    ExpiryDate = n.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set",
+                    HasReply = notificationsWithReplies.Contains(n.NotificationId)
+                }).ToList();
+
+                return Json(new { success = true, data = notificationsList, replies = notificationsWithReplies });
+            }
+            else
+            {
+                // User: Filter user notifications
+                var result = await _notificationService.GetFilteredUserNotificationsAsync(currentUser.Id, filters ?? new Dictionary<string, string>());
+                if (!result.Success)
+                {
+                    return Json(new { success = false, message = result.Message });
+                }
+
+                var notificationUsers = result.Data ?? new List<NotificationUser>();
+                var unreadCount = notificationUsers.Count(nu => !nu.IsRead);
+
+                // Check which notifications the user has already replied to
+                var notificationIds = notificationUsers.Select(nu => nu.NotificationId).ToList();
+                var userReplies = await _context.NotificationResponses
+                    .Where(nr => nr.UserId == currentUser.Id 
+                        && notificationIds.Contains(nr.NotificationId) 
+                        && nr.DeletedDate == null)
+                    .Select(nr => nr.NotificationId)
+                    .ToListAsync();
+
+                var notificationsList = notificationUsers.Select(nu => new
+                {
+                    nu.NotificationId,
+                    nu.Notification.Title,
+                    Message = !string.IsNullOrEmpty(nu.Notification.Message) && nu.Notification.Message.Length > 100 ? nu.Notification.Message.Substring(0, 100) + "..." : nu.Notification.Message ?? "",
+                    nu.Notification.Priority,
+                    CreatedDate = nu.Notification.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
+                    ExpiryDate = nu.Notification.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set",
+                    IsRead = nu.IsRead,
+                    ReadDate = nu.ReadDate?.ToString("yyyy-MM-dd HH:mm"),
+                    HasReplied = userReplies.Contains(nu.NotificationId)
+                }).ToList();
+
+                return Json(new { success = true, data = notificationsList, unreadCount = unreadCount, repliedIds = userReplies });
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error filtering notifications");
+            return Json(new { success = false, message = "An error occurred while filtering notifications." });
+        }
     }
 
     [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
