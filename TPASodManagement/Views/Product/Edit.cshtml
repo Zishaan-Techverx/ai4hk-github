@@ -54,30 +54,30 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="ProductCode" class="form-label">Product Code</label>
-                                <input asp-for="ProductCode" class="form-control" disabled="@disabledAttr" />
+                                <label asp-for="ProductCode" class="form-label">Product Code <span class="text-danger">*</span></label>
+                                <input asp-for="ProductCode" class="form-control" disabled="@disabledAttr" required />
                                 <span asp-validation-for="ProductCode" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="ProductName" class="form-label">Product Name</label>
-                                <input asp-for="ProductName" class="form-control" disabled="@disabledAttr" />
+                                <label asp-for="ProductName" class="form-label">Product Name <span class="text-danger">*</span></label>
+                                <input asp-for="ProductName" class="form-control" disabled="@disabledAttr" required />
                                 <span asp-validation-for="ProductName" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="ProductCategoryId" class="form-label">Product Category</label>
-                                <select asp-for="ProductCategoryId" class="form-select" asp-items="Model.Categories" disabled="@disabledAttr">
+                                <label asp-for="ProductCategoryId" class="form-label">Product Category <span class="text-danger">*</span></label>
+                                <select asp-for="ProductCategoryId" class="form-select" asp-items="Model.Categories" disabled="@disabledAttr" required>
                                     <option value="">-- Select Category --</option>
                                 </select>
                                 <span asp-validation-for="ProductCategoryId" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="UnitOfMeasure" class="form-label">Unit of Measure</label>
-                                <input asp-for="UnitOfMeasure" class="form-control" disabled="@disabledAttr" />
+                                <label asp-for="UnitOfMeasure" class="form-label">Unit of Measure <span class="text-danger">*</span></label>
+                                <input asp-for="UnitOfMeasure" class="form-control" disabled="@disabledAttr" required />
                                 <span asp-validation-for="UnitOfMeasure" class="text-danger"></span>
                             </div>
                         </div>

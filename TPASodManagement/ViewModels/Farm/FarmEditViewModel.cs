@@ -7,6 +7,10 @@ namespace TpaSodManagement.ViewModels.Farm
     {
         public long FarmId { get; set; }
 
+        [Required(ErrorMessage = "Farm Name is required")]
+        [Display(Name = "Farm Name")]
+        public string FarmName { get; set; } = string.Empty;
+
         public decimal? TotalArea { get; set; }
 
         public bool OrganicCertified { get; set; }
@@ -31,6 +35,9 @@ namespace TpaSodManagement.ViewModels.Farm
         public string? ClimateZone { get; set; }
 
         public long? AreaTypeId { get; set; }
+        
+        [Required(ErrorMessage = "Organization is required")]
+        [Display(Name = "Organization")]
         public long? OrganizationId { get; set; }
 
         public IEnumerable<SelectListItem> AreaTypes { get; set; } = Enumerable.Empty<SelectListItem>();

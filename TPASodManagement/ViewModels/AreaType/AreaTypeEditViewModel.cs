@@ -6,8 +6,9 @@ namespace TpaSodManagement.ViewModels.AreaType
     {
         public int AreaTypeId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Area Type Name is required")]
         [StringLength(100)]
+        [Display(Name = "Area Type Name")]
         public string AreaTypeName { get; set; } = string.Empty;
 
         [StringLength(10)]

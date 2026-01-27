@@ -7,8 +7,9 @@ namespace TpaSodManagement.ViewModels.Customer
     {
         public long CustomerId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Customer Type is required")]
         [StringLength(100)]
+        [Display(Name = "Customer Type")]
         public string? CustomerType { get; set; }
 
         [StringLength(50)]

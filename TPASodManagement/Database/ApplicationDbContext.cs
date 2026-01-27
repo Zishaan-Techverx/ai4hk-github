@@ -277,6 +277,9 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
 
         builder.Entity<Farm>(entity =>
         {
+            entity.Property(e => e.FarmName)
+                .IsRequired()
+                .HasMaxLength(200);
             entity.Property(e => e.DeletedByUserId);
             entity.Property(e => e.DeletedDate);
         });

@@ -10,12 +10,12 @@ namespace TpaSodManagement.ViewModels.User
         [Display(Name = "User Name")]
         public string? UserName { get; set; }
 
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email address")]
         [Display(Name = "Email")]
         public string? Email { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Organization is required")]
         [Display(Name = "Organization")]
         public long? OrganizationId { get; set; }
 
@@ -28,11 +28,11 @@ namespace TpaSodManagement.ViewModels.User
         [Display(Name = "Is Active")]
         public bool IsActive { get; set; } = true;
 
-        [Required]
+        [Required(ErrorMessage = "First Name is required")]
         [Display(Name = "First Name")]
         public string? FirstName { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Last Name is required")]
         [Display(Name = "Last Name")]
         public string? LastName { get; set; }
 

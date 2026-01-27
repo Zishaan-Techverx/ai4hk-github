@@ -42,8 +42,8 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="AreaTypeName" class="form-label">Area Type Name</label>
-                                <input asp-for="AreaTypeName" class="form-control" placeholder="e.g., Square Meters, Hectares" />
+                                <label asp-for="AreaTypeName" class="form-label">Area Type Name <span class="text-danger">*</span></label>
+                                <input asp-for="AreaTypeName" class="form-control" placeholder="e.g., Square Meters, Hectares" required />
                                 <span asp-validation-for="AreaTypeName" class="text-danger"></span>
                             </div>
 

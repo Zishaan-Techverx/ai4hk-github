@@ -42,14 +42,14 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CategoryCode" class="form-label">Category Code</label>
-                                <input asp-for="CategoryCode" class="form-control" />
+                                <label asp-for="CategoryCode" class="form-label">Category Code <span class="text-danger">*</span></label>
+                                <input asp-for="CategoryCode" class="form-control" required />
                                 <span asp-validation-for="CategoryCode" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CategoryName" class="form-label">Category Name</label>
-                                <input asp-for="CategoryName" class="form-control" />
+                                <label asp-for="CategoryName" class="form-label">Category Name <span class="text-danger">*</span></label>
+                                <input asp-for="CategoryName" class="form-control" required />
                                 <span asp-validation-for="CategoryName" class="text-danger"></span>
                             </div>
                         </div>

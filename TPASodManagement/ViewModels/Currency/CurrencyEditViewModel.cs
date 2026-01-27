@@ -6,12 +6,14 @@ namespace TpaSodManagement.ViewModels.Currency
     {
         public int CurrencyId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Currency Code is required")]
         [StringLength(3, MinimumLength = 3)]
+        [Display(Name = "Currency Code")]
         public string CurrencyCode { get; set; } = string.Empty;
 
-        [Required]
+        [Required(ErrorMessage = "Currency Name is required")]
         [StringLength(100)]
+        [Display(Name = "Currency Name")]
         public string CurrencyName { get; set; } = string.Empty;
 
         [StringLength(10)]

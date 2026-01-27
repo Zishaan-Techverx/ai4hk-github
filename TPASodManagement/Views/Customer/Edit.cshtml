@@ -54,8 +54,8 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CustomerType" class="form-label">Customer Type</label>
-                                <input asp-for="CustomerType" class="form-control" disabled="@disabledAttr" />
+                                <label asp-for="CustomerType" class="form-label">Customer Type <span class="text-danger">*</span></label>
+                                <input asp-for="CustomerType" class="form-control" disabled="@disabledAttr" required />
                                 <span asp-validation-for="CustomerType" class="text-danger"></span>
                             </div>
 

@@ -7,14 +7,19 @@ namespace TpaSodManagement.ViewModels.Product
     {
         public long ProductId { get; set; }
 
+        [Required(ErrorMessage = "Product Code is required")]
         [StringLength(50)]
+        [Display(Name = "Product Code")]
         public string? ProductCode { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Product Name is required")]
         [StringLength(200)]
+        [Display(Name = "Product Name")]
         public string? ProductName { get; set; }
 
+        [Required(ErrorMessage = "Unit of Measure is required")]
         [StringLength(50)]
+        [Display(Name = "Unit of Measure")]
         public string? UnitOfMeasure { get; set; }
 
         public decimal? StandardPrice { get; set; }
@@ -28,6 +33,9 @@ namespace TpaSodManagement.ViewModels.Product
         public int? CertificateTypeId { get; set; }
         public long? CreatedByUserId { get; set; }
         public int? CurrencyId { get; set; }
+        
+        [Required(ErrorMessage = "Product Category is required")]
+        [Display(Name = "Product Category")]
         public int? ProductCategoryId { get; set; }
 
         public DateTimeOffset? CreatedDate { get; set; }

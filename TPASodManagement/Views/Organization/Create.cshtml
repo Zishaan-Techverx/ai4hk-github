@@ -42,14 +42,14 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationName" class="form-label">Organization Name</label>
-                                <input asp-for="OrganizationName" class="form-control" placeholder="Enter organization name" />
+                                <label asp-for="OrganizationName" class="form-label">Organization Name <span class="text-danger">*</span></label>
+                                <input asp-for="OrganizationName" class="form-control" placeholder="Enter organization name" required />
                                 <span asp-validation-for="OrganizationName" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationType" class="form-label">Organization Type</label>
-                                <input asp-for="OrganizationType" class="form-control" placeholder="Enter organization type" />
+                                <label asp-for="OrganizationType" class="form-label">Organization Type <span class="text-danger">*</span></label>
+                                <input asp-for="OrganizationType" class="form-control" placeholder="Enter organization type" required />
                                 <span asp-validation-for="OrganizationType" class="text-danger"></span>
                             </div>
                         </div>

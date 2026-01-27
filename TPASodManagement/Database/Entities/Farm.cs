@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -8,6 +9,9 @@ namespace TpaSodManagement.Database.Entities;
 public partial class Farm : AuditBaseEntity
 {
     public long FarmId { get; set; }
+
+    [Required(ErrorMessage = "Farm Name is required")]
+    public string FarmName { get; set; } = null!;
 
     public long OrganizationId { get; set; }
 

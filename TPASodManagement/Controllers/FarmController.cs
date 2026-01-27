@@ -34,6 +34,7 @@ namespace TpaSodManagement.Controllers
             // Set filter columns for the partial view
             ViewBag.FilterColumns = new Dictionary<string, string>
             {
+                { "FarmName", "Farm Name" },
                 { "TotalArea", "Total Area" },
                 { "OrganicCertified", "Organic Certified" },
                 { "LicenseNumber", "License Number" },
@@ -44,8 +45,7 @@ namespace TpaSodManagement.Controllers
                 { "SoilType", "Soil Type" },
                 { "IrrigationType", "Irrigation Type" },
                 { "ClimateZone", "Climate Zone" },
-                { "AreaType", "Area Type" },
-                { "Organization", "Organization" }
+                { "AreaType", "Area Type" }
             };
             ViewBag.ModuleName = "Farms";
             ViewBag.BooleanColumns = new HashSet<string> { "OrganicCertified" };
@@ -109,7 +109,12 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(FarmEditViewModel farmVm)
         {
-            // Validations removed - directly save
+            if (!ModelState.IsValid)
+            {
+                await PopulateDropdowns(farmVm);
+                return View(farmVm);
+            }
+
             var farm = MapToEntity(farmVm);
             var result = await _farmService.CreateAsync(farm);
             if (!result.Success)
@@ -141,7 +146,12 @@ namespace TpaSodManagement.Controllers
         {
             if (id != farmVm.FarmId) return NotFound();
 
-            // Validations removed - directly update
+            if (!ModelState.IsValid)
+            {
+                await PopulateDropdowns(farmVm, farmVm.OrganizationId, farmVm.AreaTypeId);
+                return View(farmVm);
+            }
+
             var farm = MapToEntity(farmVm);
             var result = await _farmService.UpdateAsync(farm);
             if (!result.Success)
@@ -234,6 +244,7 @@ namespace TpaSodManagement.Controllers
 
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
+                    ("Farm Name", "FarmName"),
                     ("Total Area", "TotalArea"),
                     ("Organic Certified", "OrganicCertified"),
                     ("License Number", "LicenseNumber"),
@@ -244,8 +255,7 @@ namespace TpaSodManagement.Controllers
                     ("Soil Type", "SoilType"),
                     ("Irrigation Type", "IrrigationType"),
                     ("Climate Zone", "ClimateZone"),
-                    ("Area Type", "AreaType"),
-                    ("Organization", "Organization")
+                    ("Area Type", "AreaType")
                 };
 
                 var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
@@ -261,6 +271,7 @@ namespace TpaSodManagement.Controllers
                     {
                         var allValues = new List<object>
                         {
+                            item.FarmName ?? "",
                             item.TotalArea?.ToString("N2") ?? "",
                             item.OrganicCertified ? "Yes" : "No",
                             item.LicenseNumber ?? "",
@@ -271,8 +282,7 @@ namespace TpaSodManagement.Controllers
                             item.SoilType ?? "",
                             item.IrrigationType ?? "",
                             item.ClimateZone ?? "",
-                            item.AreaTypeName ?? "",
-                            item.OrganizationName ?? ""
+                            item.AreaTypeName ?? ""
                         };
                         return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
@@ -293,6 +303,7 @@ namespace TpaSodManagement.Controllers
             return new FarmItemViewModel
             {
                 FarmId = entity.FarmId,
+                FarmName = entity.FarmName ?? string.Empty,
                 TotalArea = entity.TotalArea,
                 OrganicCertified = entity.OrganicCertified,
                 LicenseNumber = entity.LicenseNumber,
@@ -313,6 +324,7 @@ namespace TpaSodManagement.Controllers
             return new FarmEditViewModel
             {
                 FarmId = entity.FarmId,
+                FarmName = entity.FarmName ?? string.Empty,
                 TotalArea = entity.TotalArea,
                 OrganicCertified = entity.OrganicCertified,
                 LicenseNumber = entity.LicenseNumber,
@@ -334,6 +346,7 @@ namespace TpaSodManagement.Controllers
             return new Farm
             {
                 FarmId = vm.FarmId,
+                FarmName = vm.FarmName ?? string.Empty,
                 TotalArea = vm.TotalArea,
                 OrganicCertified = vm.OrganicCertified,
                 LicenseNumber = vm.LicenseNumber,

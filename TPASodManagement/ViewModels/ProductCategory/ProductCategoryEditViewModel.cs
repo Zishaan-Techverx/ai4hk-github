@@ -6,12 +6,14 @@ namespace TpaSodManagement.ViewModels.ProductCategory
     {
         public int ProductCategoryId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Category Code is required")]
         [StringLength(50)]
+        [Display(Name = "Category Code")]
         public string? CategoryCode { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Category Name is required")]
         [StringLength(100)]
+        [Display(Name = "Category Name")]
         public string? CategoryName { get; set; }
 
         [StringLength(500)]

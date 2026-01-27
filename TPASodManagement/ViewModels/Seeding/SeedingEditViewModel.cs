@@ -7,14 +7,30 @@ namespace TpaSodManagement.ViewModels.Seeding
     {
         public long SeedingId { get; set; }
 
+        [Required(ErrorMessage = "Area Amount is required")]
+        [Display(Name = "Area Amount")]
         public decimal? AreaAmount { get; set; }
 
+        [Required(ErrorMessage = "Area Type is required")]
+        [Display(Name = "Area Type")]
         public int? AreaTypeId { get; set; }
+        
+        [Required(ErrorMessage = "Farm is required")]
+        [Display(Name = "Farm")]
         public long? FarmId { get; set; }
+        
         public long? FieldId { get; set; }
+        
+        [Required(ErrorMessage = "Tag Range is required")]
+        [Display(Name = "Tag Range")]
         public long? TagRangeId { get; set; }
+        
+        [Required(ErrorMessage = "User is required")]
+        [Display(Name = "User")]
         public long? UserId { get; set; }
 
+        [Required(ErrorMessage = "Seeding Date is required")]
+        [Display(Name = "Seeding Date")]
         public DateOnly? SeedingDate { get; set; }
         public string? SeedingMethod { get; set; }
         public decimal? SeedRatePerUnit { get; set; }

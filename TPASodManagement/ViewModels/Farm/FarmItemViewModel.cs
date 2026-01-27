@@ -3,6 +3,7 @@ namespace TpaSodManagement.ViewModels.Farm
     public class FarmItemViewModel
     {
         public long FarmId { get; set; }
+        public string FarmName { get; set; } = string.Empty;
         public decimal? TotalArea { get; set; }
         public bool OrganicCertified { get; set; }
         public string? LicenseNumber { get; set; }

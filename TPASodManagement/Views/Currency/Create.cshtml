@@ -42,14 +42,14 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CurrencyCode" class="form-label">Currency Code</label>
-                                <input asp-for="CurrencyCode" class="form-control" placeholder="e.g., USD, PKR, EUR" maxlength="3" style="text-transform:uppercase;" />
+                                <label asp-for="CurrencyCode" class="form-label">Currency Code <span class="text-danger">*</span></label>
+                                <input asp-for="CurrencyCode" class="form-control" placeholder="e.g., USD, PKR, EUR" maxlength="3" style="text-transform:uppercase;" required />
                                 <span asp-validation-for="CurrencyCode" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CurrencyName" class="form-label">Currency Name</label>
-                                <input asp-for="CurrencyName" class="form-control" placeholder="e.g., US Dollar, Pakistani Rupee" />
+                                <label asp-for="CurrencyName" class="form-label">Currency Name <span class="text-danger">*</span></label>
+                                <input asp-for="CurrencyName" class="form-control" placeholder="e.g., US Dollar, Pakistani Rupee" required />
                                 <span asp-validation-for="CurrencyName" class="text-danger"></span>
                             </div>
                         </div>

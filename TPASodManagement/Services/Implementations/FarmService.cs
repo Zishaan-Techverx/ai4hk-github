@@ -48,6 +48,12 @@ namespace TpaSodManagement.Services.Implementations
                 // Apply filters
                 if (filters != null && filters.Count > 0)
                 {
+                    if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
+                    {
+                        var filterValue = filters["FarmName"].Trim();
+                        query = query.Where(f => f.FarmName != null && f.FarmName.Contains(filterValue));
+                    }
+
                     if (filters.ContainsKey("TotalArea") && !string.IsNullOrWhiteSpace(filters["TotalArea"]))
                     {
                         if (decimal.TryParse(filters["TotalArea"], out decimal totalArea))
@@ -131,12 +137,6 @@ namespace TpaSodManagement.Services.Implementations
                         var filterValue = filters["AreaType"].Trim();
                         query = query.Where(f => f.AreaType != null && f.AreaType.AreaTypeName.Contains(filterValue));
                     }
-
-                    if (filters.ContainsKey("Organization") && !string.IsNullOrWhiteSpace(filters["Organization"]))
-                    {
-                        var filterValue = filters["Organization"].Trim();
-                        query = query.Where(f => f.Organization != null && f.Organization.OrganizationName.Contains(filterValue));
-                    }
                 }
 
                 response.Data = await query.OrderBy(f => f.FarmId).ToListAsync();
@@ -213,6 +213,7 @@ namespace TpaSodManagement.Services.Implementations
                 }
 
                 // Update only the properties that are provided
+                existingFarm.FarmName = farm.FarmName;
                 existingFarm.OrganizationId = farm.OrganizationId;
                 existingFarm.TotalArea = farm.TotalArea;
                 existingFarm.AreaTypeId = farm.AreaTypeId;

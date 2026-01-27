@@ -7,23 +7,28 @@ namespace TpaSodManagement.ViewModels.Field
     {
         public long FieldId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Field Name is required")]
         [StringLength(150)]
+        [Display(Name = "Field Name")]
         public string? FieldName { get; set; }
 
         [StringLength(50)]
         public string? FieldCode { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Farm is required")]
+        [Display(Name = "Farm")]
         public long? FarmId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Area Type is required")]
+        [Display(Name = "Area Type")]
         public long? AreaTypeId { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Area Amount is required")]
+        [Display(Name = "Area Amount")]
         public decimal? AreaAmount { get; set; }
 
-        [Required]
+        [Required(ErrorMessage = "Created By User is required")]
+        [Display(Name = "Created By User")]
         public long? CreatedByUserId { get; set; }
 
         [StringLength(100)]

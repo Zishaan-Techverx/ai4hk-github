@@ -42,8 +42,8 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="FieldName" class="form-label">Field Name *</label>
-                                <input asp-for="FieldName" class="form-control" />
+                                <label asp-for="FieldName" class="form-label">Field Name <span class="text-danger">*</span></label>
+                                <input asp-for="FieldName" class="form-control" required />
                                 <span asp-validation-for="FieldName" class="text-danger"></span>
                             </div>
 
@@ -56,16 +56,16 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="FarmId" class="form-label">Farm *</label>
-                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms">
+                                <label asp-for="FarmId" class="form-label">Farm <span class="text-danger">*</span></label>
+                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms" required>
                                     <option value="">-- Select Farm --</option>
                                 </select>
                                 <span asp-validation-for="FarmId" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="AreaTypeId" class="form-label">Area Type *</label>
-                                <select asp-for="AreaTypeId" class="form-select" asp-items="Model.AreaTypes">
+                                <label asp-for="AreaTypeId" class="form-label">Area Type <span class="text-danger">*</span></label>
+                                <select asp-for="AreaTypeId" class="form-select" asp-items="Model.AreaTypes" required>
                                     <option value="">-- Select Area Type --</option>
                                 </select>
                                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>
@@ -74,14 +74,14 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="AreaAmount" class="form-label">Area Amount *</label>
-                                <input asp-for="AreaAmount" type="number" step="0.01" class="form-control" />
+                                <label asp-for="AreaAmount" class="form-label">Area Amount <span class="text-danger">*</span></label>
+                                <input asp-for="AreaAmount" type="number" step="0.01" class="form-control" required />
                                 <span asp-validation-for="AreaAmount" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CreatedByUserId" class="form-label">Created By User *</label>
-                                <select asp-for="CreatedByUserId" class="form-select" asp-items="Model.Users">
+                                <label asp-for="CreatedByUserId" class="form-label">Created By User <span class="text-danger">*</span></label>
+                                <select asp-for="CreatedByUserId" class="form-select" asp-items="Model.Users" required>
                                     <option value="">-- Select User --</option>
                                 </select>
                                 <span asp-validation-for="CreatedByUserId" class="text-danger"></span>

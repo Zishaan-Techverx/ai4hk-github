@@ -85,6 +85,8 @@
     <table class="table" id="dataTable">
         <thead>
             <tr>
+                <th data-column="FarmName">Farm Name</th>
+                    <th data-column="AreaType">Area Type</th>
                 <th data-column="TotalArea">Total Area</th>
                 <th data-column="OrganicCertified">Organic Certified</th>
                 <th data-column="LicenseNumber">License Number</th>
@@ -95,8 +97,7 @@
                 <th data-column="SoilType">Soil Type</th>
                 <th data-column="IrrigationType">Irrigation Type</th>
                 <th data-column="ClimateZone">Climate Zone</th>
-                <th data-column="AreaType">Area Type</th>
-                <th data-column="Organization">Organization</th>
+                @* <th data-column="Organization">Organization</th> *@
                 <th data-column="Actions" class="no-hide-column">Actions</th>
             </tr>
         </thead>
@@ -104,6 +105,8 @@
             @foreach (var item in Model)
             {
                 <tr id="row-@item.FarmId">
+                    <td data-column="FarmName">@Html.DisplayFor(modelItem => item.FarmName)</td>
+                        <td data-column="AreaType">@(item.AreaTypeName ?? "N/A")</td>
                     <td data-column="TotalArea">@Html.DisplayFor(modelItem => item.TotalArea)</td>
                     <td data-column="OrganicCertified"><input type="checkbox" class="form-check-input" disabled @(item.OrganicCertified ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="LicenseNumber">@Html.DisplayFor(modelItem => item.LicenseNumber)</td>
@@ -114,8 +117,7 @@
                     <td data-column="SoilType">@Html.DisplayFor(modelItem => item.SoilType)</td>
                     <td data-column="IrrigationType">@Html.DisplayFor(modelItem => item.IrrigationType)</td>
                     <td data-column="ClimateZone">@Html.DisplayFor(modelItem => item.ClimateZone)</td>
-                    <td data-column="AreaType">@(item.AreaTypeName ?? "N/A")</td>
-                    <td data-column="Organization">@(item.OrganizationName ?? "N/A")</td>
+                    @* <td data-column="Organization">@(item.OrganizationName ?? "N/A")</td> *@
                     <td data-column="Actions">
                         <div class="btn-group btn-group-sm">
                             @if (User.HasPermission("Farm.Detail"))
@@ -133,7 +135,7 @@
                         @if (User.HasPermission("Farm.Delete"))
                         {
                                 <a href="#" class="btn btn-danger delete-btn" data-id="@item.FarmId" 
-                                data-name="@(!string.IsNullOrEmpty(item.LicenseNumber) ? item.LicenseNumber : $"Farm #{item.FarmId}")"
+                                data-name="@(!string.IsNullOrEmpty(item.FarmName) ? item.FarmName : (!string.IsNullOrEmpty(item.LicenseNumber) ? item.LicenseNumber : $"Farm #{item.FarmId}"))"
                                 data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">
                                     Delete
                             </a>
@@ -914,6 +916,7 @@
             const row = document.createElement('tr');
             row.id = `row-${item.farmId}`;
             row.innerHTML = `
+                <td data-column="FarmName">${escapeHtml(item.farmName || '')}</td>
                 <td data-column="TotalArea">${item.totalArea ? item.totalArea.toFixed(2) : ''}</td>
                 <td data-column="OrganicCertified"><input type="checkbox" class="form-check-input" disabled ${item.organicCertified ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="LicenseNumber">${escapeHtml(item.licenseNumber || '')}</td>
@@ -925,12 +928,11 @@
                 <td data-column="IrrigationType">${escapeHtml(item.irrigationType || '')}</td>
                 <td data-column="ClimateZone">${escapeHtml(item.climateZone || '')}</td>
                 <td data-column="AreaType">${escapeHtml(item.areaTypeName || '')}</td>
-                <td data-column="Organization">${escapeHtml(item.organizationName || '')}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <a class="btn btn-info" href="@Url.Action("Details", "Farm")/${item.farmId}">Details</a>
                         <a class="btn btn-warning" href="@Url.Action("Edit", "Farm")/${item.farmId}">Edit</a>
-                        <a href="#" class="btn btn-danger delete-btn" data-id="${item.farmId}" data-name="${escapeHtml(item.licenseNumber || '')}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
+                        <a href="#" class="btn btn-danger delete-btn" data-id="${item.farmId}" data-name="${escapeHtml(item.farmName || item.licenseNumber || '')}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
                     </div>
                 </td>
             `;
