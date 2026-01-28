@@ -157,10 +157,50 @@
                 href="@Url.Action("Index", new { pageNumber = pageNumber - 1, pageSize = pageSize })">Previous</a>
         </li>
 
-        @for (int i = 1; i <= totalPages; i++)
+        @if (totalPages <= 7)
         {
-            <li class="page-item @(i == pageNumber ? "active" : "")">
-                <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+            @* Show all pages if 7 or fewer *@
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == pageNumber ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                </li>
+            }
+        }
+        else
+        {
+            @* Always show first page *@
+            <li class="page-item @(pageNumber == 1 ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { pageNumber = 1, pageSize = pageSize })">1</a>
+            </li>
+
+            @if (pageNumber > 3)
+            {
+                @* Show ellipsis if current page is far from start *@
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            }
+
+            @* Show pages around current page *@
+            @for (int i = Math.Max(2, pageNumber - 1); i <= Math.Min(totalPages - 1, pageNumber + 1); i++)
+            {
+                <li class="page-item @(i == pageNumber ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                </li>
+            }
+
+            @if (pageNumber < totalPages - 2)
+            {
+                @* Show ellipsis if current page is far from end *@
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            }
+
+            @* Always show last page *@
+            <li class="page-item @(pageNumber == totalPages ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { pageNumber = totalPages, pageSize = pageSize })">@totalPages</a>
             </li>
         }
 
@@ -878,10 +918,57 @@
                 </li>
             `;
             
-            for (let i = 1; i <= totalPages; i++) {
+            if (totalPages <= 7) {
+                // Show all pages if 7 or fewer
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                        </li>
+                    `;
+                }
+            } else {
+                // Always show first page
                 paginationHTML += `
-                    <li class="page-item ${i === currentPage ? 'active' : ''}">
-                        <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                    <li class="page-item ${currentPage === 1 ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changeFilteredPage(1); return false;">1</a>
+                    </li>
+                `;
+                
+                // Show ellipsis if current page is far from start
+                if (currentPage > 3) {
+                    paginationHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
+                }
+                
+                // Show pages around current page
+                const startPage = Math.max(2, currentPage - 1);
+                const endPage = Math.min(totalPages - 1, currentPage + 1);
+                
+                for (let i = startPage; i <= endPage; i++) {
+                    paginationHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                        </li>
+                    `;
+                }
+                
+                // Show ellipsis if current page is far from end
+                if (currentPage < totalPages - 2) {
+                    paginationHTML += `
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                    `;
+                }
+                
+                // Always show last page
+                paginationHTML += `
+                    <li class="page-item ${currentPage === totalPages ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changeFilteredPage(${totalPages}); return false;">${totalPages}</a>
                     </li>
                 `;
             }
