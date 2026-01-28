@@ -266,7 +266,7 @@
             
             listItem.innerHTML = `
                 <a class="dropdown-item" href="#" style="pointer-events: none;">
-                    <input type="checkbox" id="${checkboxId}" class="form-check-input me-2" data-column="${columnName}" style="pointer-events: auto;">
+                    <input type="checkbox" id="${checkboxId}" class="form-check-input me-2" data-column="${columnName}" checked style="pointer-events: auto;">
                     <label class="form-check-label" for="${checkboxId}" style="cursor: pointer; width: 100%; pointer-events: auto;">${displayName}</label>
                 </a>
             `;
@@ -284,13 +284,14 @@
                 const isChecked = this.checked;
                 
                 // Update hiddenColumns array
-                if (isChecked) {
-                    // Hide the column
+                // Checked = visible, Unchecked = hidden
+                if (!isChecked) {
+                    // Hide the column (unchecked)
                     if (!hiddenColumns.includes(columnName)) {
                         hiddenColumns.push(columnName);
                     }
                 } else {
-                    // Show the column
+                    // Show the column (checked)
                     hiddenColumns = hiddenColumns.filter(col => col !== columnName);
                 }
                 
@@ -313,30 +314,52 @@
         // Update checkboxes based on saved preferences
         updateCheckboxes();
         
+        // Update "Show All" checkbox state based on current column visibility
+        updateShowAllCheckbox();
+        
         // Update UI based on saved preferences
         updateHiddenColumnsUI(hiddenColumns, columnMap);
         applyColumnVisibility(hiddenColumns);
         updateDropdownButton();
         
-        // Handle "Show All" option click
-        showAllOption.addEventListener('click', function(e) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            // Uncheck all column checkboxes
+        // Function to handle "Show All" action
+        function handleShowAll() {
+            // Check all column checkboxes (show all columns)
             const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
             allCheckboxes.forEach(checkbox => {
-                checkbox.checked = false;
+                checkbox.checked = true;
             });
             
             // Update hiddenColumns
             hiddenColumns = [];
             localStorage.setItem(storageKey, JSON.stringify([]));
             
+            // Update "Show All" checkbox state (should be checked when all columns are visible)
+            showAllCheckbox.checked = true;
+            
             // Update UI
             updateHiddenColumnsUI(hiddenColumns, columnMap);
             applyColumnVisibility(hiddenColumns);
             updateDropdownButton();
+        }
+        
+        // Handle "Show All" option click (on text/label)
+        showAllOption.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleShowAll();
+        });
+        
+        // Handle "Show All" checkbox direct click
+        showAllCheckbox.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // If checkbox is being checked, show all columns
+            if (this.checked) {
+                handleShowAll();
+            } else {
+                // If unchecking, don't allow it - keep it checked
+                this.checked = true;
+            }
         });
         
         // Handle individual checkbox changes
@@ -348,13 +371,14 @@
                 const isChecked = e.target.checked;
                 
                 // Update hiddenColumns array
-                if (isChecked) {
-                    // Hide the column
+                // Checked = visible, Unchecked = hidden
+                if (!isChecked) {
+                    // Hide the column (unchecked)
                     if (!hiddenColumns.includes(columnName)) {
                         hiddenColumns.push(columnName);
                     }
                 } else {
-                    // Show the column
+                    // Show the column (checked)
                     hiddenColumns = hiddenColumns.filter(col => col !== columnName);
                 }
                 
@@ -383,7 +407,8 @@
             const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
             allCheckboxes.forEach(checkbox => {
                 const columnName = checkbox.dataset.column;
-                checkbox.checked = hiddenColumns.includes(columnName);
+                // Checked = visible, Unchecked = hidden
+                checkbox.checked = !hiddenColumns.includes(columnName);
             });
             updateShowAllCheckbox();
         }
@@ -391,10 +416,9 @@
         function updateShowAllCheckbox() {
             const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
             const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
-            const allUnchecked = Array.from(allCheckboxes).every(cb => !cb.checked);
             
-            // Show All checkbox should be checked only if all columns are visible (unchecked)
-            showAllCheckbox.checked = allUnchecked;
+            // Show All checkbox should be checked only if all columns are visible (checked)
+            showAllCheckbox.checked = allChecked;
         }
         
         function updateDropdownButton() {
@@ -415,10 +439,10 @@
                 badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
                 badge.addEventListener('click', function(e) {
                     e.stopPropagation();
-                    // Uncheck the corresponding checkbox
+                    // Check the corresponding checkbox (to show the column)
                     const checkbox = columnFilterMenu.querySelector(`input[data-column="${columnName}"]`);
                     if (checkbox) {
-                        checkbox.checked = false;
+                        checkbox.checked = true;
                         
                         // Remove from hiddenColumns array
                         hiddenColumns = hiddenColumns.filter(col => col !== columnName);
