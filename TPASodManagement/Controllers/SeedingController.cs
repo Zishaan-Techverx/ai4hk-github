@@ -43,7 +43,6 @@ namespace TpaSodManagement.Controllers
                 { "SoilTemperature", "Soil Temperature" },
                 { "SoilMoisture", "Soil Moisture" },
                 { "Notes", "Notes" },
-                { "CreatedDate", "Created Date" },
                 { "AreaTypeName", "Area Type" },
                 { "FarmLicenseNumber", "Farm" },
                 { "FieldName", "Field" },
@@ -52,7 +51,7 @@ namespace TpaSodManagement.Controllers
             };
             ViewBag.ModuleName = "Seedings";
             ViewBag.BooleanColumns = new HashSet<string>();
-            ViewBag.DateColumns = new HashSet<string> { "SeedingDate", "CreatedDate" };
+            ViewBag.DateColumns = new HashSet<string> { "SeedingDate" };
 
             var result = await _seedingService.GetAllAsync();
             if (!result.Success)
@@ -251,7 +250,6 @@ namespace TpaSodManagement.Controllers
                     ("Soil Temperature", "SoilTemperature"),
                     ("Soil Moisture", "SoilMoisture"),
                     ("Notes", "Notes"),
-                    ("Created Date", "CreatedDate"),
                     ("Area Type", "AreaType"),
                     ("Farm", "Farm"),
                     ("Field", "Field"),
@@ -273,14 +271,13 @@ namespace TpaSodManagement.Controllers
                         var allValues = new List<object>
                         {
                             item.AreaAmount?.ToString("N2") ?? "",
-                            item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("yyyy-MM-dd") : "",
+                            item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("MM/dd/yyyy") : "",
                             item.SeedingMethod ?? "",
                             item.SeedRatePerUnit?.ToString("N2") ?? "",
                             item.WeatherConditions ?? "",
                             item.SoilTemperature?.ToString("N2") ?? "",
                             item.SoilMoisture != null ? Convert.ToDecimal(item.SoilMoisture).ToString("N2") : "",
                             item.Notes ?? "",
-                            item.CreatedDate?.ToString("yyyy-MM-dd") ?? "",
                             item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}",
                             item.FarmDisplay ?? $"Farm #{item.FarmId}",
                             item.FieldName ?? "N/A",

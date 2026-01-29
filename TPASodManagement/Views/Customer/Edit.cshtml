@@ -123,12 +123,12 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label asp-for="CreatedDate" class="form-label">Created Date</label>
-                                    <input asp-for="CreatedDate" type="text" class="form-control" readonly />
+                                    <input type="text" class="form-control" value="@(Model.CreatedDate?.ToString("MM/dd/yyyy"))" readonly />
                                 </div>
 
                                 <div class="col-md-6 mb-3">
                                     <label asp-for="UpdatedDate" class="form-label">Updated Date</label>
-                                    <input asp-for="UpdatedDate" type="text" class="form-control" readonly />
+                                    <input type="text" class="form-control" value="@(Model.UpdatedDate?.ToString("MM/dd/yyyy"))" readonly />
                                 </div>
                             </div>
                         }

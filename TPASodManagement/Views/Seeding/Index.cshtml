@@ -73,7 +73,6 @@
                 <th data-column="SoilTemperature">Soil Temperature</th>
                 <th data-column="SoilMoisture">Soil Moisture</th>
                 <th data-column="Notes">Notes</th>
-                <th data-column="CreatedDate">Created Date</th>
                 <th data-column="AreaType">Area Type</th>
                 <th data-column="Farm">Farm</th>
                 <th data-column="Field">Field</th>
@@ -87,14 +86,13 @@
             {
                 <tr id="row-@item.SeedingId">
                     <td data-column="AreaAmount">@Html.DisplayFor(modelItem => item.AreaAmount)</td>
-                    <td data-column="SeedingDate">@Html.DisplayFor(modelItem => item.SeedingDate)</td>
+                    <td data-column="SeedingDate">@(item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("MM/dd/yyyy") : "")</td>
                     <td data-column="SeedingMethod">@Html.DisplayFor(modelItem => item.SeedingMethod)</td>
                     <td data-column="SeedRatePerUnit">@Html.DisplayFor(modelItem => item.SeedRatePerUnit)</td>
                     <td data-column="WeatherConditions">@Html.DisplayFor(modelItem => item.WeatherConditions)</td>
                     <td data-column="SoilTemperature">@Html.DisplayFor(modelItem => item.SoilTemperature)</td>
                     <td data-column="SoilMoisture">@Html.DisplayFor(modelItem => item.SoilMoisture)</td>
                     <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
-                    <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
                     <td data-column="AreaType">@(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")</td>
                     <td data-column="Farm">@(item.FarmDisplay ?? $"Farm #{item.FarmId}")</td>
                     <td data-column="Field">@(item.FieldName ?? "N/A")</td>
@@ -1057,14 +1055,13 @@
             row.id = `row-${item.seedingId}`;
             row.innerHTML = `
                 <td data-column="AreaAmount">${item.areaAmount || ''}</td>
-                <td data-column="SeedingDate">${item.seedingDate || ''}</td>
+                <td data-column="SeedingDate">${item.seedingDate ? formatDate(item.seedingDate) : ''}</td>
                 <td data-column="SeedingMethod">${escapeHtml(item.seedingMethod || '')}</td>
                 <td data-column="SeedRatePerUnit">${item.seedRatePerUnit || ''}</td>
                 <td data-column="WeatherConditions">${escapeHtml(item.weatherConditions || '')}</td>
                 <td data-column="SoilTemperature">${item.soilTemperature || ''}</td>
                 <td data-column="SoilMoisture">${escapeHtml(item.soilMoisture || '')}</td>
                 <td data-column="Notes">${escapeHtml(item.notes || '')}</td>
-                <td data-column="CreatedDate">${item.createdDate || ''}</td>
                 <td data-column="AreaType">${escapeHtml(item.areaTypeName || `AreaType #${item.areaTypeId}`)}</td>
                 <td data-column="Farm">${escapeHtml(item.farmDisplay || `Farm #${item.farmId}`)}</td>
                 <td data-column="Field">${escapeHtml(item.fieldName || 'N/A')}</td>
@@ -1398,6 +1395,16 @@
             console.error('Error:', error);
             alert('Error loading data: ' + error.message);
         }
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const y = d.getFullYear();
+        return m + '/' + day + '/' + y;
     }
 
     function escapeHtml(text) {

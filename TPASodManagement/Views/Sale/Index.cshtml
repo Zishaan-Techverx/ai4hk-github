@@ -77,8 +77,6 @@
                     <th data-column="TotalAmount">Total Amount</th>
                     <th data-column="PaymentTermsDays">Payment Terms Days</th>
                     <th data-column="Notes">Notes</th>
-                    <th data-column="CreatedDate">Created Date</th>
-                    <th data-column="UpdatedDate">Updated Date</th>
                     <th data-column="Currency">Currency</th>
                     <th data-column="Customer">Customer</th>
                     <th data-column="Farm">Farm</th>
@@ -96,16 +94,14 @@
                         <td data-column="SaleNumber">@Html.DisplayFor(modelItem => item.SaleNumber)</td>
                         <td data-column="InvoiceNumber">@Html.DisplayFor(modelItem => item.InvoiceNumber)</td>
                         <td data-column="PurchaseOrderNumber">@Html.DisplayFor(modelItem => item.PurchaseOrderNumber)</td>
-                        <td data-column="SaleDate">@Html.DisplayFor(modelItem => item.SaleDate)</td>
-                        <td data-column="DueDate">@Html.DisplayFor(modelItem => item.DueDate)</td>
+                        <td data-column="SaleDate">@(item.SaleDate.HasValue ? item.SaleDate.Value.ToString("MM/dd/yyyy") : "")</td>
+                        <td data-column="DueDate">@(item.DueDate.HasValue ? item.DueDate.Value.ToString("MM/dd/yyyy") : "")</td>
                         <td data-column="SubtotalAmount">@Html.DisplayFor(modelItem => item.SubtotalAmount)</td>
                         <td data-column="TaxAmount">@Html.DisplayFor(modelItem => item.TaxAmount)</td>
                         <td data-column="DiscountAmount">@Html.DisplayFor(modelItem => item.DiscountAmount)</td>
                         <td data-column="TotalAmount">@Html.DisplayFor(modelItem => item.TotalAmount)</td>
                         <td data-column="PaymentTermsDays">@Html.DisplayFor(modelItem => item.PaymentTermsDays)</td>
                         <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
-                        <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
-                        <td data-column="UpdatedDate">@Html.DisplayFor(modelItem => item.UpdatedDate)</td>
                         <td data-column="Currency">@(item.CurrencyName ?? "N/A")</td>
                         <td data-column="Customer">@(item.CustomerDisplay ?? $"Customer #{item.CustomerId}")</td>
                         <td data-column="Farm">@(item.FarmDisplay ?? $"Farm #{item.FarmId}")</td>
@@ -1029,16 +1025,14 @@
                 <td data-column="SaleNumber">${escapeHtml(item.saleNumber || '')}</td>
                 <td data-column="InvoiceNumber">${escapeHtml(item.invoiceNumber || '')}</td>
                 <td data-column="PurchaseOrderNumber">${escapeHtml(item.purchaseOrderNumber || '')}</td>
-                <td data-column="SaleDate">${item.saleDate || ''}</td>
-                <td data-column="DueDate">${item.dueDate || ''}</td>
+                <td data-column="SaleDate">${item.saleDate ? formatDate(item.saleDate) : ''}</td>
+                <td data-column="DueDate">${item.dueDate ? formatDate(item.dueDate) : ''}</td>
                 <td data-column="SubtotalAmount">${item.subtotalAmount || ''}</td>
                 <td data-column="TaxAmount">${item.taxAmount || ''}</td>
                 <td data-column="DiscountAmount">${item.discountAmount || ''}</td>
                 <td data-column="TotalAmount">${item.totalAmount || ''}</td>
                 <td data-column="PaymentTermsDays">${item.paymentTermsDays || ''}</td>
                 <td data-column="Notes">${escapeHtml(item.notes || '')}</td>
-                <td data-column="CreatedDate">${item.createdDate || ''}</td>
-                <td data-column="UpdatedDate">${item.updatedDate || ''}</td>
                 <td data-column="Currency">${escapeHtml(item.currencyName || 'N/A')}</td>
                 <td data-column="Customer">${escapeHtml(item.customerDisplay || `Customer #${item.customerId}`)}</td>
                 <td data-column="Farm">${escapeHtml(item.farmDisplay || `Farm #${item.farmId}`)}</td>
@@ -1374,6 +1368,26 @@
             console.error('Error:', error);
             alert('Error loading data: ' + error.message);
         }
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const y = d.getFullYear();
+        return m + '/' + day + '/' + y;
+    }
+
+    function formatDate(dateStr) {
+        if (!dateStr) return '';
+        const d = new Date(dateStr);
+        if (isNaN(d.getTime())) return '';
+        const m = d.getMonth() + 1;
+        const day = d.getDate();
+        const y = d.getFullYear();
+        return m + '/' + day + '/' + y;
     }
 
     function escapeHtml(text) {

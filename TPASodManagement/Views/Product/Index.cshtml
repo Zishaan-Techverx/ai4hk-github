@@ -73,7 +73,6 @@
                 <th data-column="RequiresCertificate">Requires Certificate</th>
                 <th data-column="Description">Description</th>
                 <th data-column="IsActive">IsActive</th>
-                <th data-column="CreatedDate">Created Date</th>
                 <th data-column="CertificateType">Certificate Type</th>
                 <th data-column="CreatedByUser">Created By User</th>
                 <th data-column="Currency">Currency</th>
@@ -92,7 +91,6 @@
                     <td data-column="RequiresCertificate"><input type="checkbox" class="form-check-input" disabled @(item.RequiresCertificate ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="Description">@Html.DisplayFor(modelItem => item.Description)</td>
                     <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
-                    <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
                     <td data-column="CertificateType">@(item.CertificateTypeName ?? "N/A")</td>
                     <td data-column="CreatedByUser">@(item.CreatedByUserName ?? "N/A")</td>
                     <td data-column="Currency">@(item.CurrencyCode ?? "N/A")</td>
@@ -1102,7 +1100,6 @@
                 <td data-column="RequiresCertificate"><input type="checkbox" class="form-check-input" disabled ${item.requiresCertificate ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Description">${escapeHtml(item.description || '')}</td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
-                <td data-column="CreatedDate">${item.createdDate || ''}</td>
                 <td data-column="CertificateType">${escapeHtml(item.certificateTypeName || 'N/A')}</td>
                 <td data-column="CreatedByUser">${escapeHtml(item.createdByUserName || 'N/A')}</td>
                 <td data-column="Currency">${escapeHtml(item.currencyCode || 'N/A')}</td>

@@ -1,4 +1,4 @@
-﻿@{
+@{
     ViewData["Title"] = "Home";
 }
 
@@ -292,10 +292,10 @@ else
                                                             </h6>
                                                             <p class="mb-1">@(notification.Message.Length > 100 ? notification.Message.Substring(0, 100) + "..." : notification.Message)</p>
                                                             <small class="text-muted">
-                                                                <i class="bi bi-clock"></i> @notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")
+                                                                <i class="bi bi-clock"></i> @notification.CreatedDate.ToString("MM/dd/yyyy h:mm tt")
                                                                 @if (isRead && readDate.HasValue)
                                                                 {
-                                                                    <span class="ms-2">| Read: @readDate.Value.ToString("yyyy-MM-dd HH:mm")</span>
+                                                                    <span class="ms-2">| Read: @readDate.Value.ToString("MM/dd/yyyy h:mm tt")</span>
                                                                 }
                                                             </small>
                                                         </div>
@@ -305,8 +305,8 @@ else
                                                                     data-title="@notification.Title"
                                                                     data-message="@notification.Message"
                                                                     data-priority="@notification.Priority"
-                                                                    data-created-date="@notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")"
-                                                                    data-expiry-date="@(notification.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")"
+                                                                    data-created-date="@notification.CreatedDate.ToString("MM/dd/yyyy h:mm tt")"
+                                                                    data-expiry-date="@(notification.ExpiryDate?.ToString("MM/dd/yyyy h:mm tt") ?? "Not Set")"
                                                                     data-is-read="@isRead.ToString().ToLower()">
                                                                 <i class="bi bi-eye"></i> View
                                                             </button>
@@ -508,9 +508,9 @@ else
                                                             </h6>
                                                             <p class="mb-1">@(notification.Message.Length > 100 ? notification.Message.Substring(0, 100) + "..." : notification.Message)</p>
                                                             <small class="text-muted">
-                                                                <i class="bi bi-clock"></i> @notification.CreatedDate.ToString("yyyy-MM-dd HH:mm")
+                                                                <i class="bi bi-clock"></i> @notification.CreatedDate.ToString("MM/dd/yyyy h:mm tt")
                                                                 <span class="ms-2">| Recipients: @notification.NotificationUsers.Count</span>
-                                                                <span class="ms-2">| Expiry: @(notification.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set")</span>
+                                                                <span class="ms-2">| Expiry: @(notification.ExpiryDate?.ToString("MM/dd/yyyy h:mm tt") ?? "Not Set")</span>
                                                             </small>
                                                         </div>
                                                         <div class="ms-3">

@@ -44,7 +44,6 @@ namespace TpaSodManagement.Controllers
                 { "RequiresCertificate", "Requires Certificate" },
                 { "Description", "Description" },
                 { "IsActive", "Is Active" },
-                { "CreatedDate", "Created Date" },
                 { "CertificateTypeName", "Certificate Type" },
                 { "CreatedByUserName", "Created By User" },
                 { "CurrencyCode", "Currency" },
@@ -52,7 +51,7 @@ namespace TpaSodManagement.Controllers
             };
             ViewBag.ModuleName = "Products";
             ViewBag.BooleanColumns = new HashSet<string> { "RequiresCertificate", "IsActive" };
-            ViewBag.DateColumns = new HashSet<string> { "CreatedDate" };
+            ViewBag.DateColumns = new HashSet<string>();
 
             var result = await _productService.GetAllAsync();
             if (!result.Success)
@@ -277,7 +276,6 @@ namespace TpaSodManagement.Controllers
                     ("Requires Certificate", "RequiresCertificate"),
                     ("Description", "Description"),
                     ("Is Active", "IsActive"),
-                    ("Created Date", "CreatedDate"),
                     ("Certificate Type", "CertificateType"),
                     ("Created By User", "CreatedByUser"),
                     ("Currency", "Currency"),
@@ -304,7 +302,6 @@ namespace TpaSodManagement.Controllers
                             item.RequiresCertificate ? "Yes" : "No",
                             item.Description ?? "",
                             item.IsActive ? "Active" : "Inactive",
-                            item.CreatedDate?.ToString("yyyy-MM-dd") ?? "",
                             item.CertificateTypeName ?? "N/A",
                             item.CreatedByUserName ?? "N/A",
                             item.CurrencyCode ?? "N/A",

@@ -52,8 +52,6 @@ namespace TpaSodManagement.Controllers
                 { "TotalAmount", "Total Amount" },
                 { "PaymentTermsDays", "Payment Terms Days" },
                 { "Notes", "Notes" },
-                { "CreatedDate", "Created Date" },
-                { "UpdatedDate", "Updated Date" },
                 { "CurrencyName", "Currency" },
                 { "CustomerDisplay", "Customer" },
                 { "FarmLicenseNumber", "Farm" },
@@ -64,7 +62,7 @@ namespace TpaSodManagement.Controllers
             };
             ViewBag.ModuleName = "Sales";
             ViewBag.BooleanColumns = new HashSet<string>();
-            ViewBag.DateColumns = new HashSet<string> { "SaleDate", "DueDate", "CreatedDate", "UpdatedDate" };
+            ViewBag.DateColumns = new HashSet<string> { "SaleDate", "DueDate" };
 
             var result = await _saleService.GetAllAsync();
             if (!result.Success)
@@ -312,8 +310,8 @@ namespace TpaSodManagement.Controllers
                             item.SaleNumber ?? "",
                             item.InvoiceNumber ?? "",
                             item.PurchaseOrderNumber ?? "",
-                            item.SaleDate.HasValue ? item.SaleDate.Value.ToString("yyyy-MM-dd") : "",
-                            item.DueDate?.ToString("yyyy-MM-dd") ?? "",
+                            item.SaleDate.HasValue ? item.SaleDate.Value.ToString("MM/dd/yyyy") : "",
+                            item.DueDate?.ToString("MM/dd/yyyy") ?? "",
                             item.SubtotalAmount?.ToString("N2") ?? "",
                             item.TaxAmount?.ToString("N2") ?? "",
                             item.DiscountAmount?.ToString("N2") ?? "",

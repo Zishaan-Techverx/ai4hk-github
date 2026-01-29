@@ -41,14 +41,12 @@ namespace TpaSodManagement.Controllers
                 { "TaxExempt", "Tax Exempt" },
                 { "Notes", "Notes" },
                 { "IsActive", "Is Active" },
-                { "CreatedDate", "Created Date" },
-                { "UpdatedDate", "Updated Date" },
                 { "Organization", "Organization" },
                 { "Person", "Person" }
             };
             ViewBag.ModuleName = "Customers";
             ViewBag.BooleanColumns = new HashSet<string> { "IsActive", "TaxExempt" };
-            ViewBag.DateColumns = new HashSet<string> { "CreatedDate", "UpdatedDate" };
+            ViewBag.DateColumns = new HashSet<string>();
 
             var result = await _customerService.GetAllAsync();
             if (!result.Success)

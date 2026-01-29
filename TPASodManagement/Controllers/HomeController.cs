@@ -506,7 +506,7 @@ public class HomeController : Controller
                 success = true, 
                 hasReply = true,
                 reply = userReply.Reply,
-                replyDate = userReply.CreatedDate.ToString("yyyy-MM-dd HH:mm")
+                replyDate = userReply.CreatedDate.ToString("MM/dd/yyyy h:mm tt")
             });
         }
 
@@ -556,8 +556,8 @@ public class HomeController : Controller
                     Message = !string.IsNullOrEmpty(n.Message) && n.Message.Length > 100 ? n.Message.Substring(0, 100) + "..." : n.Message ?? "",
                     n.Priority,
                     RecipientsCount = n.NotificationUsers?.Count ?? 0,
-                    CreatedDate = n.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
-                    ExpiryDate = n.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set",
+                    CreatedDate = n.CreatedDate.ToString("MM/dd/yyyy h:mm tt"),
+                    ExpiryDate = n.ExpiryDate?.ToString("MM/dd/yyyy h:mm tt") ?? "Not Set",
                     HasReply = notificationsWithReplies.Contains(n.NotificationId)
                 }).ToList();
 
@@ -590,10 +590,10 @@ public class HomeController : Controller
                     nu.Notification.Title,
                     Message = !string.IsNullOrEmpty(nu.Notification.Message) && nu.Notification.Message.Length > 100 ? nu.Notification.Message.Substring(0, 100) + "..." : nu.Notification.Message ?? "",
                     nu.Notification.Priority,
-                    CreatedDate = nu.Notification.CreatedDate.ToString("yyyy-MM-dd HH:mm"),
-                    ExpiryDate = nu.Notification.ExpiryDate?.ToString("yyyy-MM-dd HH:mm") ?? "Not Set",
+                    CreatedDate = nu.Notification.CreatedDate.ToString("MM/dd/yyyy h:mm tt"),
+                    ExpiryDate = nu.Notification.ExpiryDate?.ToString("MM/dd/yyyy h:mm tt") ?? "Not Set",
                     IsRead = nu.IsRead,
-                    ReadDate = nu.ReadDate?.ToString("yyyy-MM-dd HH:mm"),
+                    ReadDate = nu.ReadDate?.ToString("MM/dd/yyyy h:mm tt"),
                     HasReplied = userReplies.Contains(nu.NotificationId)
                 }).ToList();
 

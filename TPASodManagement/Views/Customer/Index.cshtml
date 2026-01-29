@@ -93,8 +93,8 @@
                 <th data-column="TaxExempt">Tax Exempt</th>
                 <th data-column="Notes">Notes</th>
                 <th data-column="IsActive">IsActive</th>
-                <th data-column="CreatedDate">Created Date</th>
-                <th data-column="UpdatedDate">Updated Date</th>
+                @* <th data-column="CreatedDate">Created Date</th>
+                <th data-column="UpdatedDate">Updated Date</th> *@
                 <th data-column="Organization">Organization</th>
                 <th data-column="Person">Person</th>
                 <th data-column="Actions" class="no-hide-column">Actions</th>
@@ -111,8 +111,8 @@
                     <td data-column="TaxExempt"><input type="checkbox" class="form-check-input" disabled @(item.TaxExempt ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
                     <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
-                    <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
-                    <td data-column="UpdatedDate">@Html.DisplayFor(modelItem => item.UpdatedDate)</td>
+                    @* <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
+                    <td data-column="UpdatedDate">@Html.DisplayFor(modelItem => item.UpdatedDate)</td> *@
                     <td data-column="Organization">@(item.OrganizationName ?? "N/A")</td>
                     <td data-column="Person">
                         @if (!string.IsNullOrEmpty(item.PersonFullName))
@@ -1135,8 +1135,6 @@
                 <td data-column="TaxExempt"><input type="checkbox" class="form-check-input" disabled ${item.taxExempt ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Notes">${escapeHtml(item.notes || '')}</td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
-                <td data-column="CreatedDate">${item.createdDate ? new Date(item.createdDate).toLocaleDateString() : ''}</td>
-                <td data-column="UpdatedDate">${item.updatedDate ? new Date(item.updatedDate).toLocaleDateString() : ''}</td>
                 <td data-column="Organization">${escapeHtml(item.organizationName || '')}</td>
                 <td data-column="Person">${escapeHtml(item.personFullName || '')}</td>
                 <td>
