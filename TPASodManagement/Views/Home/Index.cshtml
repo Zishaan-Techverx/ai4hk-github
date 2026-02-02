@@ -1546,9 +1546,10 @@ else
 
             // SuperAdmin Filter Functionality
             (function() {
-                var adminActiveFilters = {};
+                const adminDataFiltersStorageKey = 'dataFilters_Notifications_Admin';
+                var adminActiveFilters = JSON.parse(localStorage.getItem(adminDataFiltersStorageKey) || '{}');
                 var adminFilteredData = [];
-                var adminIsFiltered = false;
+                var adminIsFiltered = Object.keys(adminActiveFilters).length > 0;
                 var adminCurrentPage = 1;
                 var adminPageSize = @(ViewBag.PageSize as int? ?? 10);
 
@@ -1565,6 +1566,7 @@ else
                                 btn.style.display = 'none';
                             });
                             adminActiveFilters = {};
+                            localStorage.setItem(adminDataFiltersStorageKey, JSON.stringify({}));
                         });
                     }
 
@@ -1579,6 +1581,7 @@ else
                                 btn.style.display = 'none';
                             });
                             adminActiveFilters = {};
+                            localStorage.setItem(adminDataFiltersStorageKey, JSON.stringify({}));
                             adminIsFiltered = false;
                             updateAdminFilterTags();
                             updateAdminFilterCount();
@@ -1600,7 +1603,36 @@ else
                             }
                         });
                     }
+
+                    // Restore persisted filters on page load
+                    if (adminIsFiltered && Object.keys(adminActiveFilters).length > 0) {
+                        restoreAdminFilterInputsFromStorage();
+                        updateAdminFilterTags();
+                        updateAdminFilterCount();
+                        window.applyAdminFilters();
+                    }
                 })();
+
+                function restoreAdminFilterInputsFromStorage() {
+                    Object.keys(adminActiveFilters).forEach(columnKey => {
+                        const value = adminActiveFilters[columnKey];
+                        const baseCol = columnKey.endsWith('_From') ? columnKey.slice(0, -5) : (columnKey.endsWith('_To') ? columnKey.slice(0, -3) : columnKey);
+                        if (columnKey.endsWith('_From')) {
+                            const dateFrom = document.querySelector(`.filter-date-from[data-column="${baseCol}"]`);
+                            if (dateFrom) dateFrom.value = value;
+                        } else if (columnKey.endsWith('_To')) {
+                            const dateTo = document.querySelector(`.filter-date-to[data-column="${baseCol}"]`);
+                            if (dateTo) dateTo.value = value;
+                        } else {
+                            const filterInput = document.querySelector(`.filter-input[data-column="${baseCol}"]`);
+                            if (filterInput) {
+                                filterInput.value = value;
+                                const clearBtn = document.querySelector(`.clear-column-filter[data-column="${baseCol}"]`);
+                                if (clearBtn) clearBtn.style.display = 'block';
+                            }
+                        }
+                    });
+                }
 
                 window.applyAdminFilters = async function() {
                     try {
@@ -1640,6 +1672,7 @@ else
                         if (Object.keys(adminActiveFilters).length === 0) {
                             updateAdminFilterTags();
                             updateAdminFilterCount();
+                            localStorage.setItem(adminDataFiltersStorageKey, JSON.stringify({}));
                             const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
                             if (modal) modal.hide();
                             window.location.reload();
@@ -1668,6 +1701,7 @@ else
                             adminFilteredData = result.data || [];
                             adminIsFiltered = Object.keys(adminActiveFilters).length > 0;
                             adminCurrentPage = 1;
+                            localStorage.setItem(adminDataFiltersStorageKey, JSON.stringify(adminActiveFilters));
                             updateAdminTable(adminFilteredData, result.replies || []);
                             updateAdminFilterTags();
                             updateAdminFilterCount();
@@ -1789,6 +1823,7 @@ else
                         tag.addEventListener('click', function(e) {
                             e.stopPropagation();
                             delete adminActiveFilters[key];
+                            localStorage.setItem(adminDataFiltersStorageKey, JSON.stringify(adminActiveFilters));
                             
                             // Clear corresponding input fields
                             if (key === 'Search') {
@@ -1855,9 +1890,10 @@ else
         <script>
             // User Filter Functionality
             (function() {
-                var userActiveFilters = {};
+                const userDataFiltersStorageKey = 'dataFilters_Notifications_User';
+                var userActiveFilters = JSON.parse(localStorage.getItem(userDataFiltersStorageKey) || '{}');
                 var userFilteredData = [];
-                var userIsFiltered = false;
+                var userIsFiltered = Object.keys(userActiveFilters).length > 0;
                 var userCurrentPage = 1;
                 var userPageSize = @(ViewBag.PageSize as int? ?? 10);
 
@@ -1874,6 +1910,7 @@ else
                                 btn.style.display = 'none';
                             });
                             userActiveFilters = {};
+                            localStorage.setItem(userDataFiltersStorageKey, JSON.stringify({}));
                         });
                     }
 
@@ -1888,6 +1925,7 @@ else
                                 btn.style.display = 'none';
                             });
                             userActiveFilters = {};
+                            localStorage.setItem(userDataFiltersStorageKey, JSON.stringify({}));
                             userIsFiltered = false;
                             updateUserFilterTags();
                             updateUserFilterCount();
@@ -1909,7 +1947,36 @@ else
                             }
                         });
                     }
+
+                    // Restore persisted filters on page load
+                    if (userIsFiltered && Object.keys(userActiveFilters).length > 0) {
+                        restoreUserFilterInputsFromStorage();
+                        updateUserFilterTags();
+                        updateUserFilterCount();
+                        window.applyUserFilters();
+                    }
                 })();
+
+                function restoreUserFilterInputsFromStorage() {
+                    Object.keys(userActiveFilters).forEach(columnKey => {
+                        const value = userActiveFilters[columnKey];
+                        const baseCol = columnKey.endsWith('_From') ? columnKey.slice(0, -5) : (columnKey.endsWith('_To') ? columnKey.slice(0, -3) : columnKey);
+                        if (columnKey.endsWith('_From')) {
+                            const dateFrom = document.querySelector(`.filter-date-from[data-column="${baseCol}"]`);
+                            if (dateFrom) dateFrom.value = value;
+                        } else if (columnKey.endsWith('_To')) {
+                            const dateTo = document.querySelector(`.filter-date-to[data-column="${baseCol}"]`);
+                            if (dateTo) dateTo.value = value;
+                        } else {
+                            const filterInput = document.querySelector(`.filter-input[data-column="${baseCol}"]`);
+                            if (filterInput) {
+                                filterInput.value = value;
+                                const clearBtn = document.querySelector(`.clear-column-filter[data-column="${baseCol}"]`);
+                                if (clearBtn) clearBtn.style.display = 'block';
+                            }
+                        }
+                    });
+                }
 
                 window.applyUserFilters = async function() {
                     try {
@@ -1949,6 +2016,7 @@ else
                         if (Object.keys(userActiveFilters).length === 0) {
                             updateUserFilterTags();
                             updateUserFilterCount();
+                            localStorage.setItem(userDataFiltersStorageKey, JSON.stringify({}));
                             const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
                             if (modal) modal.hide();
                             window.location.reload();
@@ -1977,6 +2045,7 @@ else
                             userFilteredData = result.data || [];
                             userIsFiltered = Object.keys(userActiveFilters).length > 0;
                             userCurrentPage = 1;
+                            localStorage.setItem(userDataFiltersStorageKey, JSON.stringify(userActiveFilters));
                             updateUserTable(userFilteredData, result.repliedIds || []);
                             updateUserFilterTags();
                             updateUserFilterCount();
@@ -2084,6 +2153,7 @@ else
                         tag.addEventListener('click', function(e) {
                             e.stopPropagation();
                             delete userActiveFilters[key];
+                            localStorage.setItem(userDataFiltersStorageKey, JSON.stringify(userActiveFilters));
                             
                             // Clear corresponding input fields
                             if (key === 'Search') {

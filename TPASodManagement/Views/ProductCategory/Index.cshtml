@@ -646,11 +646,12 @@
     });
     
     // Filter Functionality
-    let activeFilters = {};
+    const dataFiltersStorageKey = 'dataFilters_ProductCategory';
+    let activeFilters = JSON.parse(localStorage.getItem(dataFiltersStorageKey) || '{}');
     let currentFilteredData = [];
     let currentPage = 1;
     let pageSize = @pageSize;
-    let isFiltered = false;
+    let isFiltered = Object.keys(activeFilters).length > 0;
 
     function changePageSize(size) {
         if (isFiltered) {
@@ -714,6 +715,7 @@
                 document.querySelectorAll('.filter-toggle').forEach(toggle => toggle.checked = false);
                 document.querySelectorAll('.clear-column-filter').forEach(btn => btn.style.display = 'none');
                 activeFilters = {};
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
             });
         }
 
@@ -724,6 +726,7 @@
                 document.querySelectorAll('.filter-toggle').forEach(toggle => toggle.checked = false);
                 document.querySelectorAll('.clear-column-filter').forEach(btn => btn.style.display = 'none');
                 activeFilters = {};
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
                 isFiltered = false;
                 currentPage = 1;
                 updateFilterTags();
@@ -751,6 +754,14 @@
             });
         }
 
+        // Restore persisted filters on page load
+        if (isFiltered && Object.keys(activeFilters).length > 0) {
+            restoreFilterInputsFromStorage();
+            updateFilterTags();
+            updateFilterCount();
+            applyFilters();
+        }
+
         const printBtn = document.getElementById('printBtn');
         if (printBtn) {
             printBtn.addEventListener('click', async function() {
@@ -758,6 +769,31 @@
             });
         }
     })();
+
+    function restoreFilterInputsFromStorage() {
+        Object.keys(activeFilters).forEach(columnKey => {
+            const value = activeFilters[columnKey];
+            const baseCol = columnKey.endsWith('_From') ? columnKey.slice(0, -5) : (columnKey.endsWith('_To') ? columnKey.slice(0, -3) : columnKey);
+            if (columnKey.endsWith('_From')) {
+                const dateFrom = document.querySelector(`.filter-date-from[data-column="${baseCol}"]`);
+                if (dateFrom) dateFrom.value = value;
+            } else if (columnKey.endsWith('_To')) {
+                const dateTo = document.querySelector(`.filter-date-to[data-column="${baseCol}"]`);
+                if (dateTo) dateTo.value = value;
+            } else {
+                const filterInput = document.querySelector(`.filter-input[data-column="${baseCol}"]`);
+                if (filterInput) {
+                    filterInput.value = value;
+                    const clearBtn = document.querySelector(`.clear-column-filter[data-column="${baseCol}"]`);
+                    if (clearBtn) clearBtn.style.display = 'block';
+                }
+                const filterToggle = document.querySelector(`.filter-toggle[data-column="${baseCol}"]`);
+                if (filterToggle && (value === 'true' || value === 'false')) {
+                    filterToggle.checked = (value === 'true');
+                }
+            }
+        });
+    }
 
     async function applyFilters() {
         try {
@@ -806,6 +842,7 @@
                 // Clear filter tags and count
                 updateFilterTags();
                 updateFilterCount();
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
                 // Close modal if open
                 const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
                 if (modal) modal.hide();
@@ -825,6 +862,7 @@
                 currentFilteredData = result.data;
                 isFiltered = Object.keys(activeFilters).length > 0;
                 currentPage = 1;
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
                 updatePagination();
                 updateTable(getPaginatedData());
                 // Column visibility is already reapplied in updateTable function
@@ -1119,6 +1157,7 @@
             badge.addEventListener('click', function(e) {
                 e.stopPropagation();
                 delete activeFilters[column];
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
                 const filterInput = document.querySelector(`.filter-input[data-column="${column}"]`);
                 const filterToggle = document.querySelector(`.filter-toggle[data-column="${column}"]`);
                 const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);

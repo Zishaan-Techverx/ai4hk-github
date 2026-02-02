@@ -1,4 +1,4 @@
-﻿@model List<TpaSodManagement.ViewModels.User.UserItemViewModel>
+@model List<TpaSodManagement.ViewModels.User.UserItemViewModel>
 
 @{
     ViewData["Title"] = "User Management";
@@ -476,14 +476,14 @@
                 const columnName = e.target.dataset.column;
                 const isChecked = e.target.checked;
                 
-                // Update hiddenColumns array
-                if (isChecked) {
-                        // Hide the column
+                // Update hiddenColumns array: Checked = visible, Unchecked = hidden
+                if (!isChecked) {
+                    // Hide the column (unchecked)
                     if (!hiddenColumns.includes(columnName)) {
                         hiddenColumns.push(columnName);
                     }
                 } else {
-                    // Show the column
+                    // Show the column (checked)
                     hiddenColumns = hiddenColumns.filter(col => col !== columnName);
                 }
                 
@@ -824,9 +824,10 @@
     });
     
     // Filter Functionality
-    let activeFilters = {};
+    const dataFiltersStorageKey = 'dataFilters_User';
+    let activeFilters = JSON.parse(localStorage.getItem(dataFiltersStorageKey) || '{}');
     let currentFilteredData = [];
-    let isFiltered = false;
+    let isFiltered = Object.keys(activeFilters).length > 0;
     let currentPage = 1;
     let pageSize = @pageSize;
 
@@ -914,6 +915,7 @@
                     btn.style.display = 'none';
                 });
                 activeFilters = {};
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
             });
         }
 
@@ -931,6 +933,7 @@
                     btn.style.display = 'none';
                 });
                 activeFilters = {};
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
                 isFiltered = false;
                 currentPage = 1;
                 updateFilterTags();
@@ -959,6 +962,13 @@
             });
         }
 
+        // Restore persisted filters on page load
+        if (isFiltered && Object.keys(activeFilters).length > 0) {
+            restoreFilterInputsFromStorage();
+            updateFilterTags();
+            updateFilterCount();
+            applyFilters();
+        }
 
         const printBtn = document.getElementById('printBtn');
         if (printBtn) {
@@ -967,6 +977,31 @@
             });
         }
     })();
+
+    function restoreFilterInputsFromStorage() {
+        Object.keys(activeFilters).forEach(columnKey => {
+            const value = activeFilters[columnKey];
+            const baseCol = columnKey.endsWith('_From') ? columnKey.slice(0, -5) : (columnKey.endsWith('_To') ? columnKey.slice(0, -3) : columnKey);
+            if (columnKey.endsWith('_From')) {
+                const dateFrom = document.querySelector(`.filter-date-from[data-column="${baseCol}"]`);
+                if (dateFrom) dateFrom.value = value;
+            } else if (columnKey.endsWith('_To')) {
+                const dateTo = document.querySelector(`.filter-date-to[data-column="${baseCol}"]`);
+                if (dateTo) dateTo.value = value;
+            } else {
+                const filterInput = document.querySelector(`.filter-input[data-column="${baseCol}"]`);
+                if (filterInput) {
+                    filterInput.value = value;
+                    const clearBtn = document.querySelector(`.clear-column-filter[data-column="${baseCol}"]`);
+                    if (clearBtn) clearBtn.style.display = 'block';
+                }
+                const filterToggle = document.querySelector(`.filter-toggle[data-column="${baseCol}"]`);
+                if (filterToggle && (value === 'true' || value === 'false')) {
+                    filterToggle.checked = (value === 'true');
+                }
+            }
+        });
+    }
 
     async function applyFilters() {
         try {
@@ -1016,6 +1051,7 @@
                 // Clear filter tags and count
                 updateFilterTags();
                 updateFilterCount();
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
                 // Close modal if open
                 const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
                 if (modal) modal.hide();
@@ -1035,6 +1071,7 @@
                 currentFilteredData = result.data;
                 isFiltered = Object.keys(activeFilters).length > 0;
                 currentPage = 1; // Reset to first page when filter is applied
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
                 updatePagination();
                 updateTable(getPaginatedData()); // updateTable already calls applyColumnVisibility at the end
                 updateFilterTags();
@@ -1318,6 +1355,7 @@
                         e.stopPropagation();
                         delete activeFilters[`${baseColumn}_From`];
                         delete activeFilters[`${baseColumn}_To`];
+                        localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
                         const filterDateFrom = document.querySelector(`.filter-date-from[data-column="${baseColumn}"]`);
                         const filterDateTo = document.querySelector(`.filter-date-to[data-column="${baseColumn}"]`);
                         const clearFromBtn = document.querySelector(`.clear-date-from-filter[data-column="${baseColumn}"]`);
@@ -1349,6 +1387,7 @@
                 badge.addEventListener('click', async function(e) {
                     e.stopPropagation();
                     delete activeFilters[column];
+                    localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
                     const filterInput = document.querySelector(`.filter-input[data-column="${column}"]`);
                     const filterToggle = document.querySelector(`.filter-toggle[data-column="${column}"]`);
                     const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);
