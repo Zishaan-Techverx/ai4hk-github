@@ -86,7 +86,9 @@
         <table class="table" id="dataTable">
         <thead>
             <tr>
+                <th data-column="Organization">Organization</th>
                 <th data-column="CustomerType">Customer Type</th>
+                <th data-column="Person">Person</th>
                 <th data-column="CustomerCode">Customer Code</th>
                 <th data-column="CreditLimit">Credit Limit</th>
                 <th data-column="PaymentTermsDays">Payment Terms Days</th>
@@ -95,8 +97,6 @@
                 <th data-column="IsActive">IsActive</th>
                 @* <th data-column="CreatedDate">Created Date</th>
                 <th data-column="UpdatedDate">Updated Date</th> *@
-                <th data-column="Organization">Organization</th>
-                <th data-column="Person">Person</th>
                 <th data-column="Actions" class="no-hide-column">Actions</th>
             </tr>
         </thead>
@@ -104,16 +104,8 @@
             @foreach (var item in Model)
             {
                 <tr id="row-@item.CustomerId">
-                    <td data-column="CustomerType">@Html.DisplayFor(modelItem => item.CustomerType)</td>
-                    <td data-column="CustomerCode">@Html.DisplayFor(modelItem => item.CustomerCode)</td>
-                    <td data-column="CreditLimit">@Html.DisplayFor(modelItem => item.CreditLimit)</td>
-                    <td data-column="PaymentTermsDays">@Html.DisplayFor(modelItem => item.PaymentTermsDays)</td>
-                    <td data-column="TaxExempt"><input type="checkbox" class="form-check-input" disabled @(item.TaxExempt ? "checked" : "") style="accent-color: #0d6efd;"></td>
-                    <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
-                    <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
-                    @* <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
-                    <td data-column="UpdatedDate">@Html.DisplayFor(modelItem => item.UpdatedDate)</td> *@
                     <td data-column="Organization">@(item.OrganizationName ?? "N/A")</td>
+                    <td data-column="CustomerType">@Html.DisplayFor(modelItem => item.CustomerType)</td>
                     <td data-column="Person">
                         @if (!string.IsNullOrEmpty(item.PersonFullName))
                         {
@@ -124,6 +116,14 @@
                             <text>N/A</text>
                         }
                     </td>
+                    <td data-column="CustomerCode">@Html.DisplayFor(modelItem => item.CustomerCode)</td>
+                    <td data-column="CreditLimit">@Html.DisplayFor(modelItem => item.CreditLimit)</td>
+                    <td data-column="PaymentTermsDays">@Html.DisplayFor(modelItem => item.PaymentTermsDays)</td>
+                    <td data-column="TaxExempt"><input type="checkbox" class="form-check-input" disabled @(item.TaxExempt ? "checked" : "") style="accent-color: #0d6efd;"></td>
+                    <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
+                    <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
+                    @* <td data-column="CreatedDate">@Html.DisplayFor(modelItem => item.CreatedDate)</td>
+                    <td data-column="UpdatedDate">@Html.DisplayFor(modelItem => item.UpdatedDate)</td> *@
                     <td data-column="Actions">
                         <div class="btn-group btn-group-sm">
                             @if (User.HasPermission("Customer.Detail"))
