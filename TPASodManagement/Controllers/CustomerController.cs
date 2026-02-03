@@ -34,15 +34,16 @@ namespace TpaSodManagement.Controllers
             // Set filter columns for the partial view
             ViewBag.FilterColumns = new Dictionary<string, string>
             {
+                { "Organization", "Organization" },
                 { "CustomerType", "Customer Type" },
+                { "Person", "Person" },
                 { "CustomerCode", "Customer Code" },
                 { "CreditLimit", "Credit Limit" },
                 { "PaymentTermsDays", "Payment Terms Days" },
                 { "TaxExempt", "Tax Exempt" },
                 { "Notes", "Notes" },
-                { "IsActive", "Is Active" },
-                { "Organization", "Organization" },
-                { "Person", "Person" }
+                { "IsActive", "Is Active" }
+                
             };
             ViewBag.ModuleName = "Customers";
             ViewBag.BooleanColumns = new HashSet<string> { "IsActive", "TaxExempt" };
@@ -238,15 +239,15 @@ namespace TpaSodManagement.Controllers
 
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
+                    ("Organization", "Organization"),
                     ("Customer Type", "CustomerType"),
+                    ("Person", "Person"),
                     ("Customer Code", "CustomerCode"),
                     ("Credit Limit", "CreditLimit"),
                     ("Payment Terms Days", "PaymentTermsDays"),
                     ("Tax Exempt", "TaxExempt"),
                     ("Notes", "Notes"),
-                    ("Is Active", "IsActive"),
-                    ("Organization", "Organization"),
-                    ("Person", "Person")
+                    ("Is Active", "IsActive")
                 };
 
                 var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
@@ -262,15 +263,16 @@ namespace TpaSodManagement.Controllers
                     {
                         var allValues = new List<object>
                         {
+                            item.OrganizationName ?? "",
                             item.CustomerType ?? "",
+                            item.PersonFullName ?? "",
                             item.CustomerCode ?? "",
                             item.CreditLimit?.ToString("N2") ?? "",
                             item.PaymentTermsDays ?? 0,
                             item.TaxExempt ? "Yes" : "No",
                             item.Notes ?? "",
-                            item.IsActive ? "Yes" : "No",
-                            item.OrganizationName ?? "",
-                            item.PersonFullName ?? ""
+                            item.IsActive ? "Yes" : "No"
+                            
                         };
                         return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
@@ -291,7 +293,11 @@ namespace TpaSodManagement.Controllers
             return new CustomerItemViewModel
             {
                 CustomerId = entity.CustomerId,
+                OrganizationName = entity.Organization?.OrganizationName,
                 CustomerType = entity.CustomerType,
+                PersonFullName = entity.Person != null
+                    ? $"{entity.Person.FirstName} {entity.Person.LastName}".Trim()
+                    : null,
                 CustomerCode = entity.CustomerCode,
                 CreditLimit = entity.CreditLimit,
                 PaymentTermsDays = entity.PaymentTermsDays,
@@ -299,11 +305,7 @@ namespace TpaSodManagement.Controllers
                 Notes = entity.Notes,
                 IsActive = entity.IsActive,
                 CreatedDate = entity.CreatedDate,
-                UpdatedDate = entity.UpdatedDate,
-                OrganizationName = entity.Organization?.OrganizationName,
-                PersonFullName = entity.Person != null
-                    ? $"{entity.Person.FirstName} {entity.Person.LastName}".Trim()
-                    : null
+                UpdatedDate = entity.UpdatedDate
             };
         }
 
@@ -312,7 +314,9 @@ namespace TpaSodManagement.Controllers
             return new CustomerEditViewModel
             {
                 CustomerId = entity.CustomerId,
+                OrganizationId = entity.OrganizationId,
                 CustomerType = entity.CustomerType,
+                PersonId = entity.PersonId,
                 CustomerCode = entity.CustomerCode,
                 CreditLimit = entity.CreditLimit,
                 PaymentTermsDays = entity.PaymentTermsDays,
@@ -321,8 +325,6 @@ namespace TpaSodManagement.Controllers
                 IsActive = entity.IsActive,
                 CreatedDate = entity.CreatedDate,
                 UpdatedDate = entity.UpdatedDate,
-                OrganizationId = entity.OrganizationId,
-                PersonId = entity.PersonId,
                 IsDetailsView = isDetailsView
             };
         }
@@ -332,7 +334,9 @@ namespace TpaSodManagement.Controllers
             return new Customer
             {
                 CustomerId = vm.CustomerId,
+                OrganizationId = vm.OrganizationId,
                 CustomerType = vm.CustomerType,
+                PersonId = vm.PersonId,
                 CustomerCode = vm.CustomerCode,
                 CreditLimit = vm.CreditLimit,
                 PaymentTermsDays = vm.PaymentTermsDays,
@@ -340,9 +344,9 @@ namespace TpaSodManagement.Controllers
                 Notes = vm.Notes,
                 IsActive = vm.IsActive,
                 CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow,
-                UpdatedDate = vm.UpdatedDate ?? DateTimeOffset.UtcNow,
-                OrganizationId = vm.OrganizationId,
-                PersonId = vm.PersonId
+                UpdatedDate = vm.UpdatedDate ?? DateTimeOffset.UtcNow
+                
+                
             };
         }
 

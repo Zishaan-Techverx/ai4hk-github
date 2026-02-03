@@ -972,18 +972,17 @@
                 }
             });
 
-            // If no filters are active, clear everything and reload
+            // If no filters are active, clear everything and load all data in-place (no reload)
             if (Object.keys(activeFilters).length === 0) {
-                // Clear filter tags and count
+                isFiltered = false;
+                currentPage = 1;
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
                 updateFilterTags();
                 updateFilterCount();
-                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
-                // Close modal if open
                 const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
                 if (modal) modal.hide();
-                // Reload page to show all data with server-side pagination
-                window.location.reload();
-                return; // Exit early - no filters to apply
+                await loadAllData();
+                return;
             }
 
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
@@ -1166,15 +1165,15 @@
             const row = document.createElement('tr');
             row.id = `row-${item.customerId}`;
             row.innerHTML = `
+                <td data-column="Organization">${escapeHtml(item.organizationName || '')}</td>
                 <td data-column="CustomerType">${escapeHtml(item.customerType || '')}</td>
+                <td data-column="Person">${escapeHtml(item.personFullName || '')}</td>
                 <td data-column="CustomerCode">${escapeHtml(item.customerCode || '')}</td>
                 <td data-column="CreditLimit">${item.creditLimit ? item.creditLimit.toFixed(2) : ''}</td>
                 <td data-column="PaymentTermsDays">${item.paymentTermsDays || ''}</td>
                 <td data-column="TaxExempt"><input type="checkbox" class="form-check-input" disabled ${item.taxExempt ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Notes">${escapeHtml(item.notes || '')}</td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
-                <td data-column="Organization">${escapeHtml(item.organizationName || '')}</td>
-                <td data-column="Person">${escapeHtml(item.personFullName || '')}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <a class="btn btn-info" href="@Url.Action("Details", "Customer")/${item.customerId}">Details</a>
