@@ -41,11 +41,10 @@ namespace TpaSodManagement.Controllers
                 { "AreaTypeName", "Area Type" },
                 { "FarmLicenseNumber", "Farm" },
                 { "SoilType", "Soil Type" },
-                { "IrrigationAvailable", "Irrigation Available" },
-                { "IsActive", "Is Active" }
+                { "IrrigationAvailable", "Irrigation Available" }
             };
             ViewBag.ModuleName = "Fields";
-            ViewBag.BooleanColumns = new HashSet<string> { "IrrigationAvailable", "IsActive" };
+            ViewBag.BooleanColumns = new HashSet<string> { "IrrigationAvailable" };
 
             var result = await _fieldService.GetAllAsync();
             if (!result.Success)

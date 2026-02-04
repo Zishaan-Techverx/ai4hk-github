@@ -131,8 +131,8 @@
 
 <br />
 
-<nav aria-label="Page navigation">
-    <ul class="pagination">
+<nav aria-label="Page navigation" class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <ul class="pagination mb-0">
         <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
             <a class="page-link"
                 href="@Url.Action("Index", new { pageNumber = pageNumber - 1, pageSize = pageSize })">Previous</a>
@@ -190,11 +190,10 @@
                 href="@Url.Action("Index", new { pageNumber = pageNumber + 1, pageSize = pageSize })">Next</a>
         </li>
     </ul>
+    <div>@await Html.PartialAsync("_IsActiveTriStatePartial")</div>
 </nav>
 
-<div class="text-muted mt-2">
-    Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records
-</div>
+<div class="text-muted mt-2">Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records</div>
 
 <br />
 <br />
@@ -714,6 +713,8 @@
                 document.querySelectorAll('.filter-input').forEach(input => input.value = '');
                 document.querySelectorAll('.filter-toggle').forEach(toggle => toggle.checked = false);
                 document.querySelectorAll('.clear-column-filter').forEach(btn => btn.style.display = 'none');
+                var tri = document.getElementById('isActiveTriState');
+                if (tri) tri.value = 1;
                 activeFilters = {};
                 localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
             });
@@ -725,6 +726,8 @@
                 document.querySelectorAll('.filter-input').forEach(input => input.value = '');
                 document.querySelectorAll('.filter-toggle').forEach(toggle => toggle.checked = false);
                 document.querySelectorAll('.clear-column-filter').forEach(btn => btn.style.display = 'none');
+                var tri = document.getElementById('isActiveTriState');
+                if (tri) tri.value = 1;
                 activeFilters = {};
                 localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
                 isFiltered = false;
@@ -750,6 +753,28 @@
         const applyFilterBtn = document.getElementById('applyFilterBtn');
         if (applyFilterBtn) {
             applyFilterBtn.addEventListener('click', async function() {
+                await applyFilters();
+            });
+        }
+
+        // Is Active tri-state: init from storage and on change re-apply filters
+        const isActiveTriState = document.getElementById('isActiveTriState');
+        if (isActiveTriState) {
+            var isActiveVal = activeFilters.IsActive;
+            isActiveTriState.value = isActiveVal === 'false' ? 0 : (isActiveVal === 'true' ? 2 : 1);
+            isActiveTriState.addEventListener('change', async function() {
+                var v = parseInt(this.value, 10);
+                if (v === 0) activeFilters.IsActive = 'false';
+                else if (v === 2) activeFilters.IsActive = 'true';
+                else delete activeFilters.IsActive;
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
+                isFiltered = Object.keys(activeFilters).length > 0;
+                if (!isFiltered) {
+                    updateFilterTags();
+                    updateFilterCount();
+                    window.location.reload();
+                    return;
+                }
                 await applyFilters();
             });
         }
@@ -837,6 +862,15 @@
                 }
             });
 
+            // Merge Is Active tri-state (bottom-right) into activeFilters
+            const isActiveTriStateEl = document.getElementById('isActiveTriState');
+            if (isActiveTriStateEl) {
+                var v = parseInt(isActiveTriStateEl.value, 10);
+                if (v === 0) activeFilters.IsActive = 'false';
+                else if (v === 2) activeFilters.IsActive = 'true';
+                else delete activeFilters.IsActive;
+            }
+
             // If no filters are active, clear everything and reload
             if (Object.keys(activeFilters).length === 0) {
                 // Clear filter tags and count
@@ -915,15 +949,29 @@
         const paginationContainer = document.querySelector('nav[aria-label="Page navigation"]');
         const recordCountContainer = document.querySelector('.text-muted.mt-2');
         
-        if (!isFiltered || currentFilteredData.length === 0) {
+        if (!isFiltered) {
             if (paginationContainer) paginationContainer.style.display = 'block';
             if (recordCountContainer) recordCountContainer.style.display = 'block';
             return;
         }
 
-        if (paginationContainer) paginationContainer.style.display = 'none';
-        
+        if (paginationContainer) paginationContainer.style.display = 'block';
+        if (recordCountContainer) recordCountContainer.style.display = 'block';
+
         const totalCount = currentFilteredData.length;
+        if (totalCount === 0) {
+            if (recordCountContainer) recordCountContainer.innerHTML = 'Showing 0 to 0 of 0 records';
+            const ul = paginationContainer ? paginationContainer.querySelector('ul') : null;
+            if (ul) {
+                ul.innerHTML = `
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    <li class="page-item active"><span class="page-link">1</span></li>
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                `;
+            }
+            return;
+        }
+
         const totalPages = Math.ceil(totalCount / pageSize);
         const start = (currentPage - 1) * pageSize + 1;
         const end = Math.min(currentPage * pageSize, totalCount);
@@ -1148,6 +1196,7 @@
             return;
         }
         Object.keys(activeFilters).forEach(column => {
+            if (column === 'IsActive') return; // Is Active shown by tri-state at bottom right, not as tag
             const columnName = document.querySelector(`thead th[data-column="${column}"]`)?.textContent.trim() || column;
             const filterValue = activeFilters[column] === 'true' ? 'Yes' : (activeFilters[column] === 'false' ? 'No' : activeFilters[column]);
             const badge = document.createElement('span');

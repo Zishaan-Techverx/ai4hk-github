@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
@@ -87,11 +87,10 @@ namespace TpaSodManagement.Controllers
                     { "PhoneNumber", "Phone Number" },
                     { "City", "City" },
                     { "StateName", "State" },
-                    { "PostalCode", "Postal Code" },
-                    { "IsActive", "Is Active" }
+                    { "PostalCode", "Postal Code" }
                 };
                 ViewBag.ModuleName = "Users";
-                ViewBag.BooleanColumns = new HashSet<string> { "IsActive" };
+                ViewBag.BooleanColumns = new HashSet<string>();
 
                 return View(viewModel);
             }

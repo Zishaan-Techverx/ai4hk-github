@@ -37,11 +37,10 @@ namespace TpaSodManagement.Controllers
                     { "OrganizationName", "Organization Name" },
                     { "OrganizationType", "Organization Type" },
                     { "Address", "Address" },
-                    { "OrganizationCode", "Organization Code" },
-                    { "IsActive", "Is Active" }
+                    { "OrganizationCode", "Organization Code" }
                 };
             ViewBag.ModuleName = "Organizations";
-            ViewBag.BooleanColumns = new HashSet<string> { "IsActive" };
+            ViewBag.BooleanColumns = new HashSet<string>();
 
             var organizationTypes = await _organizationService.GetAllOrganizationTypesAsync();
             var organizationTypeOptions = new List<SelectListItem>

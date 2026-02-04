@@ -42,12 +42,10 @@ namespace TpaSodManagement.Controllers
                 { "CreditLimit", "Credit Limit" },
                 { "PaymentTermsDays", "Payment Terms Days" },
                 { "TaxExempt", "Tax Exempt" },
-                { "Notes", "Notes" },
-                { "IsActive", "Is Active" }
-                
+                { "Notes", "Notes" }
             };
             ViewBag.ModuleName = "Customers";
-            ViewBag.BooleanColumns = new HashSet<string> { "IsActive", "TaxExempt" };
+            ViewBag.BooleanColumns = new HashSet<string> { "TaxExempt" };
             ViewBag.DateColumns = new HashSet<string>();
 
             var result = await _customerService.GetAllAsync();
