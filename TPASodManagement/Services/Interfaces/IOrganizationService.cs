@@ -7,6 +7,7 @@ namespace TpaSodManagement.Services.Interfaces
 {
     public interface IOrganizationService
     {
+        Task<List<OrganizationType>> GetAllOrganizationTypesAsync();
         Task<List<Organization>> GetAllOrganizationsAsync();
         Task<Organization> GetOrganizationByIdAsync(long id);
         Task<Organization> GetOrganizationByNameAsync(string organizationName);

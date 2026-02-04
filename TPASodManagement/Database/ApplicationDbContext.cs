@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -27,6 +27,7 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
     public virtual DbSet<Farm> Farms { get; set; }
     public virtual DbSet<Field> Fields { get; set; }
     public virtual DbSet<Organization> Organizations { get; set; }
+    public virtual DbSet<OrganizationType> OrganizationTypes { get; set; }
     public virtual DbSet<Person> People { get; set; }
     public virtual DbSet<Product> Products { get; set; }
     public virtual DbSet<ProductCategory> ProductCategories { get; set; }
@@ -292,6 +293,20 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
 
         builder.Entity<Organization>(entity =>
         {
+            entity.HasOne(o => o.OrganizationType)
+                .WithMany(ot => ot.Organizations)
+                .HasForeignKey(o => o.OrganizationTypeId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Organizations_OrganizationType");
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<OrganizationType>(entity =>
+        {
+            entity.ToTable("OrganizationType");
+            entity.HasKey(e => e.OrganizationTypeId);
+            entity.Property(e => e.OrganizationTypeName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.DeletedByUserId);
             entity.Property(e => e.DeletedDate);
         });

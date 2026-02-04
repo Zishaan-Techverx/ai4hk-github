@@ -146,6 +146,14 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 
+// Seed OrganizationType data
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TpaSodManagementUser>>();
+    await context.Database.MigrateAsync();
+    await TpaSodManagement.Database.Seeders.OrganizationTypeSeeder.SeedAsync(context, userManager);
+}
 
 // Configure middleware...
 if (app.Environment.IsDevelopment())

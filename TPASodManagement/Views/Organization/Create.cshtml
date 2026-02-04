@@ -1,4 +1,4 @@
-﻿@model TpaSodManagement.ViewModels.Organization.OrganizationEditViewModel
+@model TpaSodManagement.ViewModels.Organization.OrganizationEditViewModel
 
 @{
     ViewData["Title"] = "Create Organization";
@@ -48,9 +48,11 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationType" class="form-label">Organization Type <span class="text-danger">*</span></label>
-                                <input asp-for="OrganizationType" class="form-control" placeholder="Enter organization type" required />
-                                <span asp-validation-for="OrganizationType" class="text-danger"></span>
+                                <label asp-for="OrganizationTypeId" class="form-label">Organization Type</label>
+                                <select asp-for="OrganizationTypeId" class="form-select" asp-items="ViewBag.OrganizationTypes">
+                                    <option value="">-- Select Organization Type --</option>
+                                </select>
+                                <span asp-validation-for="OrganizationTypeId" class="text-danger"></span>
                             </div>
                         </div>
 

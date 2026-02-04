@@ -97,7 +97,7 @@
             {
                 <tr id="row-@item.OrganizationId">
                     <td data-column="OrganizationName">@Html.DisplayFor(modelItem => item.OrganizationName)</td>
-                    <td data-column="OrganizationType">@Html.DisplayFor(modelItem => item.OrganizationType)</td>
+                    <td data-column="OrganizationType">@Html.DisplayFor(modelItem => item.OrganizationTypeName)</td>
                     <td data-column="Logo">
                         @if (item.HasLogo)
                         {
@@ -1065,7 +1065,7 @@
                 : '<span class="text-muted">No logo</span>';
             row.innerHTML = `
                 <td data-column="OrganizationName">${escapeHtml(item.organizationName || '')}</td>
-                <td data-column="OrganizationType">${escapeHtml(item.organizationType || '')}</td>
+                <td data-column="OrganizationType">${escapeHtml(item.organizationTypeName || '')}</td>
                 <td data-column="Logo">${logoHtml}</td>
                 <td>
                     <div class="btn-group btn-group-sm">

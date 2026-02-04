@@ -8,6 +8,13 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Database\Interceptors\**" />
+    <Content Remove="Database\Interceptors\**" />
+    <EmbeddedResource Remove="Database\Interceptors\**" />
+    <None Remove="Database\Interceptors\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
   </ItemGroup>
 
@@ -31,8 +38,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Database\Interceptors\" />
     <Folder Include="Database\Migrations\" />
+    <Folder Include="Database\Seeders\" />
   </ItemGroup>
 
 </Project>
