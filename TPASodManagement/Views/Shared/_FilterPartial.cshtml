@@ -10,6 +10,8 @@
     var booleanColumns = ViewBag.BooleanColumns as HashSet<string> ?? new HashSet<string> { "IsActive", "TaxExempt" };
     // Get date columns (columns that should use date range filters)
     var dateColumns = ViewBag.DateColumns as HashSet<string> ?? new HashSet<string>();
+    // Get dropdown columns (column key -> list of SelectListItem for filter dropdown)
+    var dropdownFilterColumns = ViewBag.DropdownFilterColumns as Dictionary<string, IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>> ?? new Dictionary<string, IEnumerable<Microsoft.AspNetCore.Mvc.Rendering.SelectListItem>>();
 }
 
 <!-- Filter Button -->
@@ -36,7 +38,9 @@
                     {
                         var isBoolean = booleanColumns.Contains(column.Key);
                         var isDate = dateColumns.Contains(column.Key);
-                        <div class="col-12 filter-item" data-column="@column.Key" data-is-boolean="@isBoolean.ToString().ToLower()" data-is-date="@isDate.ToString().ToLower()">
+                        var isDropdown = dropdownFilterColumns.ContainsKey(column.Key);
+                        var dropdownItems = isDropdown ? dropdownFilterColumns[column.Key] : null;
+                        <div class="col-12 filter-item" data-column="@column.Key" data-is-boolean="@isBoolean.ToString().ToLower()" data-is-date="@isDate.ToString().ToLower()" data-is-dropdown="@isDropdown.ToString().ToLower()">
                             <div class="d-flex align-items-center gap-3">
                                 <label class="form-label mb-0 text-nowrap" style="width: 240px; font-weight: 500; flex-shrink: 0;">
                                     @column.Value:
@@ -65,7 +69,7 @@
                                                        data-column="@column.Key" 
                                                        placeholder="From Date" 
                                                        id="filterDateFrom_@column.Key"
-                                                       style="padding-right: 10px;" />
+                                                       style="padding-right: 25px;" />
                                                 <button type="button" 
                                                         class="btn btn-sm btn-link text-danger p-0 position-absolute clear-date-from-filter" 
                                                         data-column="@column.Key"
@@ -80,7 +84,7 @@
                                                        data-column="@column.Key" 
                                                        placeholder="To Date" 
                                                        id="filterDateTo_@column.Key"
-                                                       style="padding-right: 10px;" />
+                                                       style="padding-right: 25px;" />
                                                 <button type="button" 
                                                         class="btn btn-sm btn-link text-danger p-0 position-absolute clear-date-to-filter" 
                                                         data-column="@column.Key"
@@ -89,6 +93,26 @@
                                                     <i class="fas fa-times"></i>
                                                 </button>
                                             </div>
+                                        </div>
+                                    }
+                                    else if (isDropdown && dropdownItems != null)
+                                    {
+                                        <div class="position-relative">
+                                            <select class="form-control form-select filter-input filter-select" 
+                                                    data-column="@column.Key" 
+                                                    id="filterInput_@column.Key">
+                                                @foreach (var option in dropdownItems)
+                                                {
+                                                    <option value="@(option.Value ?? "")" selected="@option.Selected">@(option.Text ?? "")</option>
+                                                }
+                                            </select>
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-link text-danger p-0 position-absolute end-0 top-50 translate-middle-y me-2 clear-column-filter" 
+                                                    data-column="@column.Key"
+                                                    style="display: none; border: none; background: none; cursor: pointer; z-index: 10;"
+                                                    title="Clear this filter">
+                                                <i class="fas fa-times"></i>
+                                            </button>
                                         </div>
                                     }
                                     else

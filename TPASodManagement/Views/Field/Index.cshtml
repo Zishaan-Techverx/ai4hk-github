@@ -859,6 +859,8 @@
 
             // If no filters are active, clear everything and reload
             if (Object.keys(activeFilters).length === 0) {
+                // Clear localStorage first so reload doesn't restore old filters
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
                 // Clear filter tags and count
                 updateFilterTags();
                 updateFilterCount();

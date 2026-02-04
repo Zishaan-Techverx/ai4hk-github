@@ -86,7 +86,7 @@
         <thead>
             <tr>
                 <th data-column="FarmName">Farm Name</th>
-                    <th data-column="AreaType">Area Type</th>
+                <th data-column="AreaType">Area Type</th>
                 <th data-column="TotalArea">Total Area</th>
                 <th data-column="OrganicCertified">Organic Certified</th>
                 <th data-column="LicenseNumber">License Number</th>
@@ -106,7 +106,7 @@
             {
                 <tr id="row-@item.FarmId">
                     <td data-column="FarmName">@Html.DisplayFor(modelItem => item.FarmName)</td>
-                        <td data-column="AreaType">@(item.AreaTypeName ?? "N/A")</td>
+                    <td data-column="AreaType">@(item.AreaTypeName ?? "N/A")</td>
                     <td data-column="TotalArea">@Html.DisplayFor(modelItem => item.TotalArea)</td>
                     <td data-column="OrganicCertified"><input type="checkbox" class="form-check-input" disabled @(item.OrganicCertified ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="LicenseNumber">@Html.DisplayFor(modelItem => item.LicenseNumber)</td>
@@ -1058,6 +1058,7 @@
             row.id = `row-${item.farmId}`;
             row.innerHTML = `
                 <td data-column="FarmName">${escapeHtml(item.farmName || '')}</td>
+                <td data-column="AreaType">${escapeHtml(item.areaTypeName || '')}</td>
                 <td data-column="TotalArea">${item.totalArea ? item.totalArea.toFixed(2) : ''}</td>
                 <td data-column="OrganicCertified"><input type="checkbox" class="form-check-input" disabled ${item.organicCertified ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="LicenseNumber">${escapeHtml(item.licenseNumber || '')}</td>
@@ -1068,7 +1069,6 @@
                 <td data-column="SoilType">${escapeHtml(item.soilType || '')}</td>
                 <td data-column="IrrigationType">${escapeHtml(item.irrigationType || '')}</td>
                 <td data-column="ClimateZone">${escapeHtml(item.climateZone || '')}</td>
-                <td data-column="AreaType">${escapeHtml(item.areaTypeName || '')}</td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <a class="btn btn-info" href="@Url.Action("Details", "Farm")/${item.farmId}">Details</a>

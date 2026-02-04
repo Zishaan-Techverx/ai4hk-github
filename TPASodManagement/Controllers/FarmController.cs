@@ -32,9 +32,11 @@ namespace TpaSodManagement.Controllers
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
         {
             // Set filter columns for the partial view
+            // Order matches table columns: FarmName, AreaType, TotalArea, ...
             ViewBag.FilterColumns = new Dictionary<string, string>
             {
                 { "FarmName", "Farm Name" },
+                { "AreaType", "Area Type" },
                 { "TotalArea", "Total Area" },
                 { "OrganicCertified", "Organic Certified" },
                 { "LicenseNumber", "License Number" },
@@ -44,8 +46,7 @@ namespace TpaSodManagement.Controllers
                 { "ElevationMeters", "Elevation Meters" },
                 { "SoilType", "Soil Type" },
                 { "IrrigationType", "Irrigation Type" },
-                { "ClimateZone", "Climate Zone" },
-                { "AreaType", "Area Type" }
+                { "ClimateZone", "Climate Zone" }
             };
             ViewBag.ModuleName = "Farms";
             ViewBag.BooleanColumns = new HashSet<string> { "OrganicCertified" };
