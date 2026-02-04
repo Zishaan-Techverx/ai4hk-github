@@ -9,6 +9,7 @@ namespace TpaSodManagement.ViewModels.Customer
         public int? PaymentTermsDays { get; set; }
         public bool TaxExempt { get; set; }
         public string? Notes { get; set; }
+        public string? Address { get; set; }
         public bool IsActive { get; set; }
         public DateTimeOffset? CreatedDate { get; set; }
         public DateTimeOffset? UpdatedDate { get; set; }

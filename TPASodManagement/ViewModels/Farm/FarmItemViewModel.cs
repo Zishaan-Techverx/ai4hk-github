@@ -4,6 +4,7 @@ namespace TpaSodManagement.ViewModels.Farm
     {
         public long FarmId { get; set; }
         public string FarmName { get; set; } = string.Empty;
+        public string? Address { get; set; }
         public decimal? TotalArea { get; set; }
         public bool OrganicCertified { get; set; }
         public string? LicenseNumber { get; set; }

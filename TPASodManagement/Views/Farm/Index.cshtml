@@ -86,6 +86,7 @@
         <thead>
             <tr>
                 <th data-column="FarmName">Farm Name</th>
+                <th data-column="Address">Address</th>
                 <th data-column="AreaType">Area Type</th>
                 <th data-column="TotalArea">Total Area</th>
                 <th data-column="OrganicCertified">Organic Certified</th>
@@ -106,6 +107,7 @@
             {
                 <tr id="row-@item.FarmId">
                     <td data-column="FarmName">@Html.DisplayFor(modelItem => item.FarmName)</td>
+                    <td data-column="Address">@Html.DisplayFor(modelItem => item.Address)</td>
                     <td data-column="AreaType">@(item.AreaTypeName ?? "N/A")</td>
                     <td data-column="TotalArea">@Html.DisplayFor(modelItem => item.TotalArea)</td>
                     <td data-column="OrganicCertified"><input type="checkbox" class="form-check-input" disabled @(item.OrganicCertified ? "checked" : "") style="accent-color: #0d6efd;"></td>
@@ -1058,6 +1060,7 @@
             row.id = `row-${item.farmId}`;
             row.innerHTML = `
                 <td data-column="FarmName">${escapeHtml(item.farmName || '')}</td>
+                <td data-column="Address">${escapeHtml(item.address || '')}</td>
                 <td data-column="AreaType">${escapeHtml(item.areaTypeName || '')}</td>
                 <td data-column="TotalArea">${item.totalArea ? item.totalArea.toFixed(2) : ''}</td>
                 <td data-column="OrganicCertified"><input type="checkbox" class="form-check-input" disabled ${item.organicCertified ? 'checked' : ''} style="accent-color: #0d6efd;"></td>

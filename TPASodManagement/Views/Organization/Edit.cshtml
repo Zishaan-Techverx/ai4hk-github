@@ -68,6 +68,12 @@
                             </div>
                         </div>
 
+                        <div class="mb-3">
+                            <label asp-for="Address" class="form-label">Address</label>
+                            <textarea asp-for="Address" rows="2" class="form-control" disabled="@disabledAttr" placeholder="Enter address"></textarea>
+                            <span asp-validation-for="Address" class="text-danger"></span>
+                        </div>
+
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="OrganizationCode" class="form-label">Organization Code</label>

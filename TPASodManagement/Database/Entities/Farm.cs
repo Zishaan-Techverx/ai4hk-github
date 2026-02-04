@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using TpaSodManagement.Areas.Identity.Data;
@@ -14,6 +14,8 @@ public partial class Farm : AuditBaseEntity
     public string FarmName { get; set; } = null!;
 
     public long OrganizationId { get; set; }
+
+    public string? Address { get; set; }
 
     public decimal? TotalArea { get; set; }
 

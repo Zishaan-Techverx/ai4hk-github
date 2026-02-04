@@ -11,6 +11,10 @@ namespace TpaSodManagement.ViewModels.Farm
         [Display(Name = "Farm Name")]
         public string FarmName { get; set; } = string.Empty;
 
+        [StringLength(500)]
+        [Display(Name = "Address")]
+        public string? Address { get; set; }
+
         public decimal? TotalArea { get; set; }
 
         public bool OrganicCertified { get; set; }

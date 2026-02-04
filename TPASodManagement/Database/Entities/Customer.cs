@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -23,6 +23,8 @@ public partial class Customer : AuditBaseEntity
     public bool TaxExempt { get; set; }
 
     public string? Notes { get; set; }
+
+    public string? Address { get; set; }
 
     public bool IsActive { get; set; }
 

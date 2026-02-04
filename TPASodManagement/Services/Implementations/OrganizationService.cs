@@ -78,6 +78,7 @@ namespace TpaSodManagement.Services.Implementations
             orgDb.RegistrationNumber = updatedOrg.RegistrationNumber;
             orgDb.EstablishedDate = updatedOrg.EstablishedDate;
             orgDb.Description = updatedOrg.Description;
+            orgDb.Address = updatedOrg.Address;
             orgDb.IsActive = updatedOrg.IsActive;
 
             // Update logo only if a new file is provided
@@ -141,6 +142,12 @@ namespace TpaSodManagement.Services.Implementations
                     {
                         var filterValue = filters["OrganizationCode"].Trim();
                         query = query.Where(o => o.OrganizationCode != null && o.OrganizationCode.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
+                    {
+                        var filterValue = filters["Address"].Trim();
+                        query = query.Where(o => o.Address != null && o.Address.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))

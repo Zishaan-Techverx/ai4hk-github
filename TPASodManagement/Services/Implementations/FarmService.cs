@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Database;
 using TpaSodManagement.Database.Entities;
@@ -52,6 +52,12 @@ namespace TpaSodManagement.Services.Implementations
                     {
                         var filterValue = filters["FarmName"].Trim();
                         query = query.Where(f => f.FarmName != null && f.FarmName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
+                    {
+                        var filterValue = filters["Address"].Trim();
+                        query = query.Where(f => f.Address != null && f.Address.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("TotalArea") && !string.IsNullOrWhiteSpace(filters["TotalArea"]))
@@ -214,6 +220,7 @@ namespace TpaSodManagement.Services.Implementations
 
                 // Update only the properties that are provided
                 existingFarm.FarmName = farm.FarmName;
+                existingFarm.Address = farm.Address;
                 existingFarm.OrganizationId = farm.OrganizationId;
                 existingFarm.TotalArea = farm.TotalArea;
                 existingFarm.AreaTypeId = farm.AreaTypeId;

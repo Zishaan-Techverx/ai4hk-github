@@ -24,6 +24,10 @@ namespace TpaSodManagement.ViewModels.Customer
         [StringLength(500)]
         public string? Notes { get; set; }
 
+        [StringLength(500)]
+        [Display(Name = "Address")]
+        public string? Address { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTimeOffset? CreatedDate { get; set; }

@@ -36,6 +36,7 @@ namespace TpaSodManagement.Controllers
             ViewBag.FilterColumns = new Dictionary<string, string>
             {
                 { "FarmName", "Farm Name" },
+                { "Address", "Address" },
                 { "AreaType", "Area Type" },
                 { "TotalArea", "Total Area" },
                 { "OrganicCertified", "Organic Certified" },
@@ -246,6 +247,7 @@ namespace TpaSodManagement.Controllers
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
                     ("Farm Name", "FarmName"),
+                    ("Address", "Address"),
                     ("Total Area", "TotalArea"),
                     ("Organic Certified", "OrganicCertified"),
                     ("License Number", "LicenseNumber"),
@@ -273,6 +275,7 @@ namespace TpaSodManagement.Controllers
                         var allValues = new List<object>
                         {
                             item.FarmName ?? "",
+                            item.Address ?? "",
                             item.TotalArea?.ToString("N2") ?? "",
                             item.OrganicCertified ? "Yes" : "No",
                             item.LicenseNumber ?? "",
@@ -305,6 +308,7 @@ namespace TpaSodManagement.Controllers
             {
                 FarmId = entity.FarmId,
                 FarmName = entity.FarmName ?? string.Empty,
+                Address = entity.Address,
                 TotalArea = entity.TotalArea,
                 OrganicCertified = entity.OrganicCertified,
                 LicenseNumber = entity.LicenseNumber,
@@ -326,6 +330,7 @@ namespace TpaSodManagement.Controllers
             {
                 FarmId = entity.FarmId,
                 FarmName = entity.FarmName ?? string.Empty,
+                Address = entity.Address,
                 TotalArea = entity.TotalArea,
                 OrganicCertified = entity.OrganicCertified,
                 LicenseNumber = entity.LicenseNumber,
@@ -348,6 +353,7 @@ namespace TpaSodManagement.Controllers
             {
                 FarmId = vm.FarmId,
                 FarmName = vm.FarmName ?? string.Empty,
+                Address = vm.Address,
                 TotalArea = vm.TotalArea,
                 OrganicCertified = vm.OrganicCertified,
                 LicenseNumber = vm.LicenseNumber,

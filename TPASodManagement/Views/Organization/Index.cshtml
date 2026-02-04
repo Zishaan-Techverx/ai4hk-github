@@ -88,6 +88,7 @@
             <tr>
                 <th data-column="OrganizationName">Organization Name</th>
                 <th data-column="OrganizationType">Organization Type</th>
+                <th data-column="Address">Address</th>
                 <th data-column="Logo">Logo</th>
                 <th data-column="Actions" class="no-hide-column">Actions</th>
             </tr>
@@ -98,6 +99,7 @@
                 <tr id="row-@item.OrganizationId">
                     <td data-column="OrganizationName">@Html.DisplayFor(modelItem => item.OrganizationName)</td>
                     <td data-column="OrganizationType">@Html.DisplayFor(modelItem => item.OrganizationTypeName)</td>
+                    <td data-column="Address">@Html.DisplayFor(modelItem => item.Address)</td>
                     <td data-column="Logo">
                         @if (item.HasLogo)
                         {
@@ -1066,6 +1068,7 @@
             row.innerHTML = `
                 <td data-column="OrganizationName">${escapeHtml(item.organizationName || '')}</td>
                 <td data-column="OrganizationType">${escapeHtml(item.organizationTypeName || '')}</td>
+                <td data-column="Address">${escapeHtml(item.address || '')}</td>
                 <td data-column="Logo">${logoHtml}</td>
                 <td>
                     <div class="btn-group btn-group-sm">

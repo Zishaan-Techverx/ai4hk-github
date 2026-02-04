@@ -37,6 +37,7 @@ namespace TpaSodManagement.Controllers
                 { "Organization", "Organization" },
                 { "CustomerType", "Customer Type" },
                 { "Person", "Person" },
+                { "Address", "Address" },
                 { "CustomerCode", "Customer Code" },
                 { "CreditLimit", "Credit Limit" },
                 { "PaymentTermsDays", "Payment Terms Days" },
@@ -242,6 +243,7 @@ namespace TpaSodManagement.Controllers
                     ("Organization", "Organization"),
                     ("Customer Type", "CustomerType"),
                     ("Person", "Person"),
+                    ("Address", "Address"),
                     ("Customer Code", "CustomerCode"),
                     ("Credit Limit", "CreditLimit"),
                     ("Payment Terms Days", "PaymentTermsDays"),
@@ -266,6 +268,7 @@ namespace TpaSodManagement.Controllers
                             item.OrganizationName ?? "",
                             item.CustomerType ?? "",
                             item.PersonFullName ?? "",
+                            item.Address ?? "",
                             item.CustomerCode ?? "",
                             item.CreditLimit?.ToString("N2") ?? "",
                             item.PaymentTermsDays ?? 0,
@@ -298,6 +301,7 @@ namespace TpaSodManagement.Controllers
                 PersonFullName = entity.Person != null
                     ? $"{entity.Person.FirstName} {entity.Person.LastName}".Trim()
                     : null,
+                Address = entity.Address,
                 CustomerCode = entity.CustomerCode,
                 CreditLimit = entity.CreditLimit,
                 PaymentTermsDays = entity.PaymentTermsDays,
@@ -322,6 +326,7 @@ namespace TpaSodManagement.Controllers
                 PaymentTermsDays = entity.PaymentTermsDays,
                 TaxExempt = entity.TaxExempt,
                 Notes = entity.Notes,
+                Address = entity.Address,
                 IsActive = entity.IsActive,
                 CreatedDate = entity.CreatedDate,
                 UpdatedDate = entity.UpdatedDate,
@@ -342,6 +347,7 @@ namespace TpaSodManagement.Controllers
                 PaymentTermsDays = vm.PaymentTermsDays,
                 TaxExempt = vm.TaxExempt,
                 Notes = vm.Notes,
+                Address = vm.Address,
                 IsActive = vm.IsActive,
                 CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow,
                 UpdatedDate = vm.UpdatedDate ?? DateTimeOffset.UtcNow

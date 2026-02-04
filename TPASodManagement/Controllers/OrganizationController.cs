@@ -36,6 +36,7 @@ namespace TpaSodManagement.Controllers
                 {
                     { "OrganizationName", "Organization Name" },
                     { "OrganizationType", "Organization Type" },
+                    { "Address", "Address" },
                     { "OrganizationCode", "Organization Code" },
                     { "IsActive", "Is Active" }
                 };
@@ -65,6 +66,7 @@ namespace TpaSodManagement.Controllers
                     OrganizationName = o.OrganizationName,
                     OrganizationTypeId = o.OrganizationTypeId,
                     OrganizationTypeName = o.OrganizationType != null ? o.OrganizationType.OrganizationTypeName : null,
+                    Address = o.Address,
                     HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
                 })
                 .ToList() ?? new List<OrganizationItemViewModel>();
@@ -100,6 +102,7 @@ namespace TpaSodManagement.Controllers
                     OrganizationName = o.OrganizationName,
                     OrganizationTypeId = o.OrganizationTypeId,
                     OrganizationTypeName = o.OrganizationType != null ? o.OrganizationType.OrganizationTypeName : null,
+                    Address = o.Address,
                     HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
                 }).ToList() ?? new List<OrganizationItemViewModel>();
 
@@ -167,6 +170,7 @@ namespace TpaSodManagement.Controllers
                     {
                         ("Organization Name", "OrganizationName"),
                         ("Organization Type", "OrganizationType"),
+                        ("Address", "Address"),
                         ("Logo", "Logo")
                     };
 
@@ -189,6 +193,7 @@ namespace TpaSodManagement.Controllers
                         {
                                 item.OrganizationName ?? "",
                                 item.OrganizationTypeName ?? "",
+                                item.Address ?? "",
                                 item.HasLogo ? "Yes" : "No"
                         };
                         // Return only visible column values
@@ -395,6 +400,7 @@ namespace TpaSodManagement.Controllers
                 RegistrationNumber = entity.RegistrationNumber,
                 EstablishedDate = entity.EstablishedDate.HasValue ? (DateTimeOffset?)new DateTimeOffset(entity.EstablishedDate.Value.ToDateTime(TimeOnly.MinValue)) : null,
                 Description = entity.Description,
+                Address = entity.Address,
                 IsActive = entity.IsActive,
                 LogoBytes = entity.LogoBytes,
                 HasLogo = entity.LogoBytes != null && entity.LogoBytes.Length > 0,
@@ -414,6 +420,7 @@ namespace TpaSodManagement.Controllers
                 RegistrationNumber = vm.RegistrationNumber,
                 EstablishedDate = vm.EstablishedDate.HasValue ? DateOnly.FromDateTime(vm.EstablishedDate.Value.Date) : null,
                 Description = vm.Description,
+                Address = vm.Address,
                 IsActive = vm.IsActive
             };
         }

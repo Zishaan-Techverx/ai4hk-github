@@ -119,6 +119,12 @@ namespace TpaSodManagement.Services.Implementations
                             (c.Person.FirstName.Contains(filterValue) || c.Person.LastName.Contains(filterValue)));
                     }
 
+                    if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
+                    {
+                        var filterValue = filters["Address"].Trim();
+                        query = query.Where(c => c.Address != null && c.Address.Contains(filterValue));
+                    }
+
                     // Date range filters for CreatedDate
                     if (filters.ContainsKey("CreatedDate_From") && !string.IsNullOrWhiteSpace(filters["CreatedDate_From"]))
                     {
@@ -238,6 +244,7 @@ namespace TpaSodManagement.Services.Implementations
                 existingCustomer.CustomerCode = customer.CustomerCode;
                 existingCustomer.OrganizationId = customer.OrganizationId;
                 existingCustomer.PersonId = customer.PersonId;
+                existingCustomer.Address = customer.Address;
                 existingCustomer.CreditLimit = customer.CreditLimit;
                 existingCustomer.PaymentTermsDays = customer.PaymentTermsDays;
                 existingCustomer.TaxExempt = customer.TaxExempt;
