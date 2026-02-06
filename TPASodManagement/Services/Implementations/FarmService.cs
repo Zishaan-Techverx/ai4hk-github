@@ -25,6 +25,7 @@ namespace TpaSodManagement.Services.Implementations
                 response.Data = await _context.Farms
                     .Include(f => f.AreaType)
                     .Include(f => f.Organization)
+                    .Include(f => f.Address).ThenInclude(a => a!.StateProvince)
                     .ToListAsync();
             }
             catch (System.Exception ex)
@@ -43,6 +44,7 @@ namespace TpaSodManagement.Services.Implementations
                 var query = _context.Farms
                     .Include(f => f.AreaType)
                     .Include(f => f.Organization)
+                    .Include(f => f.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
 
                 // Apply filters
@@ -57,7 +59,11 @@ namespace TpaSodManagement.Services.Implementations
                     if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
                     {
                         var filterValue = filters["Address"].Trim();
-                        query = query.Where(f => f.Address != null && f.Address.Contains(filterValue));
+                        query = query.Where(f => f.Address != null && (
+                            (f.Address.AddressLine1 != null && f.Address.AddressLine1.Contains(filterValue)) ||
+                            (f.Address.AddressLine2 != null && f.Address.AddressLine2.Contains(filterValue)) ||
+                            (f.Address.City != null && f.Address.City.Contains(filterValue)) ||
+                            (f.Address.PostalCode != null && f.Address.PostalCode.Contains(filterValue))));
                     }
 
                     if (filters.ContainsKey("TotalArea") && !string.IsNullOrWhiteSpace(filters["TotalArea"]))
@@ -163,6 +169,7 @@ namespace TpaSodManagement.Services.Implementations
                 var farm = await _context.Farms
                     .Include(f => f.AreaType)
                     .Include(f => f.Organization)
+                    .Include(f => f.Address).ThenInclude(a => a!.StateProvince)
                     .FirstOrDefaultAsync(f => f.FarmId == id);
 
                 if (farm == null)
@@ -220,7 +227,7 @@ namespace TpaSodManagement.Services.Implementations
 
                 // Update only the properties that are provided
                 existingFarm.FarmName = farm.FarmName;
-                existingFarm.Address = farm.Address;
+                existingFarm.AddressId = farm.AddressId;
                 existingFarm.OrganizationId = farm.OrganizationId;
                 existingFarm.TotalArea = farm.TotalArea;
                 existingFarm.AreaTypeId = farm.AreaTypeId;

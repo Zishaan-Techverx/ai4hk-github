@@ -272,12 +272,22 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
 
         builder.Entity<Customer>(entity =>
         {
+            entity.HasOne(c => c.Address)
+                .WithMany()
+                .HasForeignKey(c => c.AddressId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.Property(e => e.DeletedByUserId);
             entity.Property(e => e.DeletedDate);
         });
 
         builder.Entity<Farm>(entity =>
         {
+            entity.HasOne(f => f.Address)
+                .WithMany()
+                .HasForeignKey(f => f.AddressId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.Property(e => e.FarmName)
                 .IsRequired()
                 .HasMaxLength(200);
@@ -293,6 +303,11 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
 
         builder.Entity<Organization>(entity =>
         {
+            entity.HasOne(o => o.Address)
+                .WithMany()
+                .HasForeignKey(o => o.AddressId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
             entity.HasOne(o => o.OrganizationType)
                 .WithMany(ot => ot.Organizations)
                 .HasForeignKey(o => o.OrganizationTypeId)

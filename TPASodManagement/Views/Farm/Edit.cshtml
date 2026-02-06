@@ -51,6 +51,7 @@
                         @Html.AntiForgeryToken()
                         
                         <input type="hidden" asp-for="FarmId" />
+                        <input type="hidden" asp-for="AddressId" />
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -73,11 +74,13 @@
                             </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label asp-for="Address" class="form-label">Address</label>
-                            <textarea asp-for="Address" rows="2" class="form-control" disabled="@disabledAttr" placeholder="Enter address"></textarea>
-                            <span asp-validation-for="Address" class="text-danger"></span>
-                        </div>
+                        @if (isDetailsView && ViewBag.AddressFormatted != null && !string.IsNullOrWhiteSpace(ViewBag.AddressFormatted as string))
+                        {
+                            <div class="mb-3">
+                                <label class="form-label">Address</label>
+                                <p class="form-control-plaintext">@ViewBag.AddressFormatted</p>
+                            </div>
+                        }
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -160,7 +163,7 @@
 
                             @if (!isDetailsView)
                             {
-                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                                <button type="submit" class="btn btn-primary">@(isDetailsView ? "Save Changes" : "Next")</button>
                             }
                             else
                             {

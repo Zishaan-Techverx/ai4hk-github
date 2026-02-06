@@ -1,13 +1,17 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using TpaSodManagement.Database;
+using TpaSodManagement.Database.Seeders;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Farm;
+using TpaSodManagement.ViewModels.Address;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -21,12 +25,14 @@ namespace TpaSodManagement.Controllers
         private readonly IFarmService _farmService;
         private readonly IExportToExcel _exportToExcel;
         private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly ApplicationDbContext _context;
 
-        public FarmController(IFarmService farmService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager)
+        public FarmController(IFarmService farmService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager, ApplicationDbContext context)
         {
             _farmService = farmService;
             _exportToExcel = exportToExcel;
             _userManager = userManager;
+            _context = context;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -92,6 +98,7 @@ namespace TpaSodManagement.Controllers
 
             var vm = MapToEditViewModel(result.Data, isDetailsView: true);
             await PopulateDropdowns(vm, result.Data.OrganizationId, result.Data.AreaTypeId);
+            ViewBag.AddressFormatted = FormatAddress(result.Data.Address);
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Farm Details";
             return View("Edit", vm);
@@ -127,7 +134,7 @@ namespace TpaSodManagement.Controllers
             }
 
             TempData["SuccessMessage"] = "Farm created successfully.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(CreateAddress), new { id = result.Data!.FarmId });
         }
 
         public async Task<IActionResult> Edit(long? id)
@@ -164,7 +171,7 @@ namespace TpaSodManagement.Controllers
             }
 
             TempData["SuccessMessage"] = "Farm updated successfully.";
-            return RedirectToAction(nameof(Index));
+            return RedirectToAction(nameof(EditAddress), new { id = id });
         }
 
         [HttpPost]
@@ -302,13 +309,27 @@ namespace TpaSodManagement.Controllers
             }
         }
 
+        private static string FormatAddress(Address? a)
+        {
+            if (a == null) return string.Empty;
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(a.AddressLine1)) parts.Add(a.AddressLine1);
+            if (!string.IsNullOrWhiteSpace(a.AddressLine2)) parts.Add(a.AddressLine2);
+            var cityState = new List<string>();
+            if (!string.IsNullOrWhiteSpace(a.City)) cityState.Add(a.City);
+            if (a.StateProvince != null && !string.IsNullOrWhiteSpace(a.StateProvince.StateName)) cityState.Add(a.StateProvince.StateName);
+            if (!string.IsNullOrWhiteSpace(a.PostalCode)) cityState.Add(a.PostalCode);
+            if (cityState.Count > 0) parts.Add(string.Join(", ", cityState));
+            return string.Join(", ", parts);
+        }
+
         private static FarmItemViewModel MapToItemViewModel(Farm entity)
         {
             return new FarmItemViewModel
             {
                 FarmId = entity.FarmId,
                 FarmName = entity.FarmName ?? string.Empty,
-                Address = entity.Address,
+                Address = FormatAddress(entity.Address),
                 TotalArea = entity.TotalArea,
                 OrganicCertified = entity.OrganicCertified,
                 LicenseNumber = entity.LicenseNumber,
@@ -330,7 +351,6 @@ namespace TpaSodManagement.Controllers
             {
                 FarmId = entity.FarmId,
                 FarmName = entity.FarmName ?? string.Empty,
-                Address = entity.Address,
                 TotalArea = entity.TotalArea,
                 OrganicCertified = entity.OrganicCertified,
                 LicenseNumber = entity.LicenseNumber,
@@ -343,6 +363,7 @@ namespace TpaSodManagement.Controllers
                 ClimateZone = entity.ClimateZone,
                 AreaTypeId = entity.AreaTypeId,
                 OrganizationId = entity.OrganizationId,
+                AddressId = entity.AddressId,
                 IsDetailsView = isDetailsView
             };
         }
@@ -353,7 +374,7 @@ namespace TpaSodManagement.Controllers
             {
                 FarmId = vm.FarmId,
                 FarmName = vm.FarmName ?? string.Empty,
-                Address = vm.Address,
+                AddressId = vm.AddressId,
                 TotalArea = vm.TotalArea,
                 OrganicCertified = vm.OrganicCertified,
                 LicenseNumber = vm.LicenseNumber,
@@ -383,6 +404,161 @@ namespace TpaSodManagement.Controllers
                 vm.Organizations = Enumerable.Empty<SelectListItem>();
                 TempData["Error"] = dropdowns.Message;
             }
+        }
+
+        private async Task PopulateAddressDropdowns(AddressFormViewModel vm)
+        {
+            vm.AddressTypes = await AddressTypeSeeder.GetAddressTypeSelectListAsync(_context, vm.AddressTypeId);
+            vm.StateProvinces = await _context.StateProvinces
+                .Where(sp => sp.DeletedDate == null)
+                .OrderBy(sp => sp.StateName)
+                .Select(sp => new SelectListItem { Value = sp.StateProvinceId.ToString(), Text = sp.StateName ?? "" })
+                .ToListAsync();
+        }
+
+        public async Task<IActionResult> CreateAddress(long id)
+        {
+            var result = await _farmService.GetByIdAsync(id);
+            if (!result.Success || result.Data == null) return NotFound();
+            var vm = new AddressFormViewModel
+            {
+                ParentEntityName = "Farm",
+                ParentEntityId = id,
+                IsActive = true
+            };
+            await PopulateAddressDropdowns(vm);
+            return View("AddressForm", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAddress(long id, AddressFormViewModel vm)
+        {
+            if (id != vm.ParentEntityId) return NotFound();
+            var result = await _farmService.GetByIdAsync(id);
+            if (!result.Success || result.Data == null) return NotFound();
+            var farm = result.Data;
+
+            if (ModelState.IsValid)
+            {
+                var address = new Address
+                {
+                    AddressLine1 = vm.AddressLine1,
+                    AddressLine2 = vm.AddressLine2,
+                    City = vm.City,
+                    StateProvinceId = vm.StateProvinceId,
+                    PostalCode = vm.PostalCode,
+                    AddressTypeId = vm.AddressTypeId,
+                    Latitude = vm.Latitude,
+                    Longitude = vm.Longitude,
+                    IsPrimary = vm.IsPrimary,
+                    IsVerified = vm.IsVerified,
+                    IsActive = vm.IsActive
+                };
+                _context.Addresses.Add(address);
+                await _context.SaveChangesAsync();
+                farm.AddressId = address.AddressId;
+                _context.Farms.Update(farm);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Farm and address saved successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+            vm.ParentEntityName = "Farm";
+            vm.ParentEntityId = id;
+            await PopulateAddressDropdowns(vm);
+            return View("AddressForm", vm);
+        }
+
+        public async Task<IActionResult> EditAddress(long id)
+        {
+            var result = await _farmService.GetByIdAsync(id);
+            if (!result.Success || result.Data == null) return NotFound();
+            var farm = result.Data;
+            var vm = new AddressFormViewModel
+            {
+                ParentEntityName = "Farm",
+                ParentEntityId = id,
+                IsActive = true
+            };
+            if (farm.AddressId.HasValue && farm.Address != null)
+            {
+                var a = farm.Address;
+                vm.AddressId = a.AddressId;
+                vm.AddressLine1 = a.AddressLine1;
+                vm.AddressLine2 = a.AddressLine2;
+                vm.City = a.City;
+                vm.StateProvinceId = a.StateProvinceId;
+                vm.PostalCode = a.PostalCode;
+                vm.AddressTypeId = a.AddressTypeId;
+                vm.Latitude = a.Latitude;
+                vm.Longitude = a.Longitude;
+                vm.IsPrimary = a.IsPrimary;
+                vm.IsVerified = a.IsVerified;
+                vm.IsActive = a.IsActive;
+            }
+            await PopulateAddressDropdowns(vm);
+            return View("AddressForm", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAddress(long id, AddressFormViewModel vm)
+        {
+            if (id != vm.ParentEntityId) return NotFound();
+            var result = await _farmService.GetByIdAsync(id);
+            if (!result.Success || result.Data == null) return NotFound();
+            var farm = result.Data;
+
+            if (ModelState.IsValid)
+            {
+                Address address;
+                if (vm.AddressId.HasValue)
+                {
+                    address = await _context.Addresses.FindAsync(vm.AddressId.Value);
+                    if (address == null) return NotFound();
+                    address.AddressLine1 = vm.AddressLine1;
+                    address.AddressLine2 = vm.AddressLine2;
+                    address.City = vm.City;
+                    address.StateProvinceId = vm.StateProvinceId;
+                    address.PostalCode = vm.PostalCode;
+                    address.AddressTypeId = vm.AddressTypeId;
+                    address.Latitude = vm.Latitude;
+                    address.Longitude = vm.Longitude;
+                    address.IsPrimary = vm.IsPrimary;
+                    address.IsVerified = vm.IsVerified;
+                    address.IsActive = vm.IsActive;
+                    _context.Addresses.Update(address);
+                }
+                else
+                {
+                    address = new Address
+                    {
+                        AddressLine1 = vm.AddressLine1,
+                        AddressLine2 = vm.AddressLine2,
+                        City = vm.City,
+                        StateProvinceId = vm.StateProvinceId,
+                        PostalCode = vm.PostalCode,
+                        AddressTypeId = vm.AddressTypeId,
+                        Latitude = vm.Latitude,
+                        Longitude = vm.Longitude,
+                        IsPrimary = vm.IsPrimary,
+                        IsVerified = vm.IsVerified,
+                        IsActive = vm.IsActive
+                    };
+                    _context.Addresses.Add(address);
+                    await _context.SaveChangesAsync();
+                }
+                await _context.SaveChangesAsync();
+                farm.AddressId = address.AddressId;
+                _context.Farms.Update(farm);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Address updated successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+            vm.ParentEntityName = "Farm";
+            vm.ParentEntityId = id;
+            await PopulateAddressDropdowns(vm);
+            return View("AddressForm", vm);
         }
     }
 }

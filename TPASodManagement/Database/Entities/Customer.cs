@@ -24,9 +24,11 @@ public partial class Customer : AuditBaseEntity
 
     public string? Notes { get; set; }
 
-    public string? Address { get; set; }
+    public long? AddressId { get; set; }
 
     public bool IsActive { get; set; }
+
+    public virtual Address? Address { get; set; }
 
     public virtual Organization? Organization { get; set; }
 

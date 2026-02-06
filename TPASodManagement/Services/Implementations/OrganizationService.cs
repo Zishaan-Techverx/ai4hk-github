@@ -26,6 +26,7 @@ namespace TpaSodManagement.Services.Implementations
         {
             return await _context.Organizations
                 .Include(o => o.OrganizationType)
+                .Include(o => o.Address).ThenInclude(a => a!.StateProvince)
                 .ToListAsync();
         }
 
@@ -33,6 +34,7 @@ namespace TpaSodManagement.Services.Implementations
         {
             return await _context.Organizations
                 .Include(o => o.OrganizationType)
+                .Include(o => o.Address).ThenInclude(a => a!.StateProvince)
                 .FirstOrDefaultAsync(m => m.OrganizationId == id);
         }
 
@@ -78,7 +80,7 @@ namespace TpaSodManagement.Services.Implementations
             orgDb.RegistrationNumber = updatedOrg.RegistrationNumber;
             orgDb.EstablishedDate = updatedOrg.EstablishedDate;
             orgDb.Description = updatedOrg.Description;
-            orgDb.Address = updatedOrg.Address;
+            orgDb.AddressId = updatedOrg.AddressId;
             orgDb.IsActive = updatedOrg.IsActive;
 
             // Update logo only if a new file is provided
@@ -121,7 +123,10 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<Organization>>();
             try
             {
-                var query = _context.Organizations.Include(o => o.OrganizationType).AsQueryable();
+                var query = _context.Organizations
+                    .Include(o => o.OrganizationType)
+                    .Include(o => o.Address).ThenInclude(a => a!.StateProvince)
+                    .AsQueryable();
 
                 // Apply filters
                 if (filters != null && filters.Count > 0)
@@ -147,7 +152,10 @@ namespace TpaSodManagement.Services.Implementations
                     if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
                     {
                         var filterValue = filters["Address"].Trim();
-                        query = query.Where(o => o.Address != null && o.Address.Contains(filterValue));
+                        query = query.Where(o => o.Address != null &&
+                            ((o.Address.AddressLine1 != null && o.Address.AddressLine1.Contains(filterValue)) ||
+                            (o.Address.City != null && o.Address.City.Contains(filterValue)) ||
+                            (o.Address.PostalCode != null && o.Address.PostalCode.Contains(filterValue))));
                     }
 
                     if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))

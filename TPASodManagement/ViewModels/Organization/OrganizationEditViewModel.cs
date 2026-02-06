@@ -29,10 +29,6 @@ namespace TpaSodManagement.ViewModels.Organization
         [StringLength(500)]
         public string? Description { get; set; }
 
-        [StringLength(500)]
-        [Display(Name = "Address")]
-        public string? Address { get; set; }
-
         public bool IsActive { get; set; } = true;
 
         public IFormFile? LogoFile { get; set; }

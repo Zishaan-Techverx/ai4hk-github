@@ -6,8 +6,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using TpaSodManagement.Database;
+using TpaSodManagement.Database.Seeders;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Organization;
+using TpaSodManagement.ViewModels.Address;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
 using Microsoft.AspNetCore.Identity;
@@ -21,12 +24,14 @@ namespace TpaSodManagement.Controllers
         private readonly IOrganizationService _organizationService;
         private readonly IExportToExcel _exportToExcel;
         private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly ApplicationDbContext _context;
 
-        public OrganizationController(IOrganizationService organizationService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager)
+        public OrganizationController(IOrganizationService organizationService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager, ApplicationDbContext context)
         {
             _organizationService = organizationService;
             _exportToExcel = exportToExcel;
             _userManager = userManager;
+            _context = context;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -65,7 +70,7 @@ namespace TpaSodManagement.Controllers
                     OrganizationName = o.OrganizationName,
                     OrganizationTypeId = o.OrganizationTypeId,
                     OrganizationTypeName = o.OrganizationType != null ? o.OrganizationType.OrganizationTypeName : null,
-                    Address = o.Address,
+                    Address = FormatAddress(o.Address),
                     HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
                 })
                 .ToList() ?? new List<OrganizationItemViewModel>();
@@ -101,7 +106,7 @@ namespace TpaSodManagement.Controllers
                     OrganizationName = o.OrganizationName,
                     OrganizationTypeId = o.OrganizationTypeId,
                     OrganizationTypeName = o.OrganizationType != null ? o.OrganizationType.OrganizationTypeName : null,
-                    Address = o.Address,
+                    Address = FormatAddress(o.Address),
                     HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
                 }).ToList() ?? new List<OrganizationItemViewModel>();
 
@@ -161,6 +166,7 @@ namespace TpaSodManagement.Controllers
                     OrganizationName = o.OrganizationName,
                     OrganizationTypeId = o.OrganizationTypeId,
                     OrganizationTypeName = o.OrganizationType != null ? o.OrganizationType.OrganizationTypeName : null,
+                    Address = FormatAddress(o.Address),
                     HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
                 }).ToList() ?? new List<OrganizationItemViewModel>();
 
@@ -224,6 +230,7 @@ namespace TpaSodManagement.Controllers
             TempData.Remove("SuccessMessage");
             TempData.Remove("ErrorMessage");
             var vm = MapToEditViewModel(organization, isDetailsView: true);
+            ViewBag.AddressFormatted = FormatAddress(organization.Address);
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Organization Details";
             return View("Edit", vm);
@@ -242,8 +249,8 @@ namespace TpaSodManagement.Controllers
             if (ModelState.IsValid)
             {
                 var entity = MapToEntity(organizationVm);
-                await _organizationService.CreateOrganizationAsync(entity, organizationVm.LogoFile);
-                return RedirectToAction(nameof(Index));
+                var org = await _organizationService.CreateOrganizationAsync(entity, organizationVm.LogoFile);
+                return RedirectToAction(nameof(CreateAddress), new { id = org.OrganizationId });
             }
             await PopulateOrganizationTypesDropdown(organizationVm.OrganizationTypeId);
             return View(organizationVm);
@@ -284,7 +291,7 @@ namespace TpaSodManagement.Controllers
                     }
 
                     TempData["SuccessMessage"] = "Organization updated successfully.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(EditAddress), new { id = id });
                 }
                 catch (DbUpdateConcurrencyException)
                 {
@@ -399,7 +406,6 @@ namespace TpaSodManagement.Controllers
                 RegistrationNumber = entity.RegistrationNumber,
                 EstablishedDate = entity.EstablishedDate.HasValue ? (DateTimeOffset?)new DateTimeOffset(entity.EstablishedDate.Value.ToDateTime(TimeOnly.MinValue)) : null,
                 Description = entity.Description,
-                Address = entity.Address,
                 IsActive = entity.IsActive,
                 LogoBytes = entity.LogoBytes,
                 HasLogo = entity.LogoBytes != null && entity.LogoBytes.Length > 0,
@@ -419,9 +425,174 @@ namespace TpaSodManagement.Controllers
                 RegistrationNumber = vm.RegistrationNumber,
                 EstablishedDate = vm.EstablishedDate.HasValue ? DateOnly.FromDateTime(vm.EstablishedDate.Value.Date) : null,
                 Description = vm.Description,
-                Address = vm.Address,
                 IsActive = vm.IsActive
             };
+        }
+
+        private static string FormatAddress(Address? a)
+        {
+            if (a == null) return string.Empty;
+            var parts = new List<string>();
+            if (!string.IsNullOrWhiteSpace(a.AddressLine1)) parts.Add(a.AddressLine1);
+            if (!string.IsNullOrWhiteSpace(a.AddressLine2)) parts.Add(a.AddressLine2);
+            var cityState = new List<string>();
+            if (!string.IsNullOrWhiteSpace(a.City)) cityState.Add(a.City);
+            if (a.StateProvince != null && !string.IsNullOrWhiteSpace(a.StateProvince.StateName)) cityState.Add(a.StateProvince.StateName);
+            if (!string.IsNullOrWhiteSpace(a.PostalCode)) cityState.Add(a.PostalCode);
+            if (cityState.Count > 0) parts.Add(string.Join(", ", cityState));
+            return string.Join(", ", parts);
+        }
+
+        private async Task PopulateAddressDropdowns(AddressFormViewModel vm)
+        {
+            vm.AddressTypes = await AddressTypeSeeder.GetAddressTypeSelectListAsync(_context, vm.AddressTypeId);
+            vm.StateProvinces = await _context.StateProvinces
+                .Where(sp => sp.DeletedDate == null)
+                .OrderBy(sp => sp.StateName)
+                .Select(sp => new SelectListItem { Value = sp.StateProvinceId.ToString(), Text = sp.StateName ?? "" })
+                .ToListAsync();
+        }
+
+        public async Task<IActionResult> CreateAddress(long id)
+        {
+            var org = await _organizationService.GetOrganizationByIdAsync(id);
+            if (org == null) return NotFound();
+            var vm = new AddressFormViewModel
+            {
+                ParentEntityName = "Organization",
+                ParentEntityId = id,
+                IsActive = true
+            };
+            await PopulateAddressDropdowns(vm);
+            return View("AddressForm", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateAddress(long id, AddressFormViewModel vm)
+        {
+            if (id != vm.ParentEntityId) return NotFound();
+            var org = await _organizationService.GetOrganizationByIdAsync(id);
+            if (org == null) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                var address = new Address
+                {
+                    AddressLine1 = vm.AddressLine1,
+                    AddressLine2 = vm.AddressLine2,
+                    City = vm.City,
+                    StateProvinceId = vm.StateProvinceId,
+                    PostalCode = vm.PostalCode,
+                    AddressTypeId = vm.AddressTypeId,
+                    Latitude = vm.Latitude,
+                    Longitude = vm.Longitude,
+                    IsPrimary = vm.IsPrimary,
+                    IsVerified = vm.IsVerified,
+                    IsActive = vm.IsActive
+                };
+                _context.Addresses.Add(address);
+                await _context.SaveChangesAsync();
+                org.AddressId = address.AddressId;
+                _context.Organizations.Update(org);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Organization and address saved successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+            vm.ParentEntityName = "Organization";
+            vm.ParentEntityId = id;
+            await PopulateAddressDropdowns(vm);
+            return View("AddressForm", vm);
+        }
+
+        public async Task<IActionResult> EditAddress(long id)
+        {
+            var org = await _organizationService.GetOrganizationByIdAsync(id);
+            if (org == null) return NotFound();
+            var vm = new AddressFormViewModel
+            {
+                ParentEntityName = "Organization",
+                ParentEntityId = id,
+                IsActive = true
+            };
+            if (org.AddressId.HasValue && org.Address != null)
+            {
+                var a = org.Address;
+                vm.AddressId = a.AddressId;
+                vm.AddressLine1 = a.AddressLine1;
+                vm.AddressLine2 = a.AddressLine2;
+                vm.City = a.City;
+                vm.StateProvinceId = a.StateProvinceId;
+                vm.PostalCode = a.PostalCode;
+                vm.AddressTypeId = a.AddressTypeId;
+                vm.Latitude = a.Latitude;
+                vm.Longitude = a.Longitude;
+                vm.IsPrimary = a.IsPrimary;
+                vm.IsVerified = a.IsVerified;
+                vm.IsActive = a.IsActive;
+            }
+            await PopulateAddressDropdowns(vm);
+            return View("AddressForm", vm);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditAddress(long id, AddressFormViewModel vm)
+        {
+            if (id != vm.ParentEntityId) return NotFound();
+            var org = await _organizationService.GetOrganizationByIdAsync(id);
+            if (org == null) return NotFound();
+
+            if (ModelState.IsValid)
+            {
+                Address address;
+                if (vm.AddressId.HasValue)
+                {
+                    address = await _context.Addresses.FindAsync(vm.AddressId.Value);
+                    if (address == null) return NotFound();
+                    address.AddressLine1 = vm.AddressLine1;
+                    address.AddressLine2 = vm.AddressLine2;
+                    address.City = vm.City;
+                    address.StateProvinceId = vm.StateProvinceId;
+                    address.PostalCode = vm.PostalCode;
+                    address.AddressTypeId = vm.AddressTypeId;
+                    address.Latitude = vm.Latitude;
+                    address.Longitude = vm.Longitude;
+                    address.IsPrimary = vm.IsPrimary;
+                    address.IsVerified = vm.IsVerified;
+                    address.IsActive = vm.IsActive;
+                    _context.Addresses.Update(address);
+                }
+                else
+                {
+                    address = new Address
+                    {
+                        AddressLine1 = vm.AddressLine1,
+                        AddressLine2 = vm.AddressLine2,
+                        City = vm.City,
+                        StateProvinceId = vm.StateProvinceId,
+                        PostalCode = vm.PostalCode,
+                        AddressTypeId = vm.AddressTypeId,
+                        Latitude = vm.Latitude,
+                        Longitude = vm.Longitude,
+                        IsPrimary = vm.IsPrimary,
+                        IsVerified = vm.IsVerified,
+                        IsActive = vm.IsActive
+                    };
+                    _context.Addresses.Add(address);
+                    await _context.SaveChangesAsync();
+                }
+                await _context.SaveChangesAsync();
+                org.AddressId = address.AddressId;
+                _context.Organizations.Update(org);
+                await _context.SaveChangesAsync();
+                TempData["SuccessMessage"] = "Address updated successfully.";
+                return RedirectToAction(nameof(Index));
+            }
+            vm.ParentEntityName = "Organization";
+            vm.ParentEntityId = id;
+            await PopulateAddressDropdowns(vm);
+            return View("AddressForm", vm);
         }
     }
 }

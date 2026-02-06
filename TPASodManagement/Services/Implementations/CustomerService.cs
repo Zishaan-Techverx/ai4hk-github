@@ -25,6 +25,7 @@ namespace TpaSodManagement.Services.Implementations
                 response.Data = await _context.Customers
                     .Include(c => c.Organization)
                     .Include(c => c.Person)
+                    .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
                     .ToListAsync();
             }
             catch (Exception ex)
@@ -43,6 +44,7 @@ namespace TpaSodManagement.Services.Implementations
                 var query = _context.Customers
                     .Include(c => c.Organization)
                     .Include(c => c.Person)
+                    .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
 
                 // Apply filters
@@ -122,7 +124,10 @@ namespace TpaSodManagement.Services.Implementations
                     if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
                     {
                         var filterValue = filters["Address"].Trim();
-                        query = query.Where(c => c.Address != null && c.Address.Contains(filterValue));
+                        query = query.Where(c => c.Address != null &&
+                            ((c.Address.AddressLine1 != null && c.Address.AddressLine1.Contains(filterValue)) ||
+                            (c.Address.City != null && c.Address.City.Contains(filterValue)) ||
+                            (c.Address.PostalCode != null && c.Address.PostalCode.Contains(filterValue))));
                     }
 
                     // Date range filters for CreatedDate
@@ -182,6 +187,7 @@ namespace TpaSodManagement.Services.Implementations
                 var customer = await _context.Customers
                     .Include(c => c.Organization)
                     .Include(c => c.Person)
+                    .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
                     .FirstOrDefaultAsync(c => c.CustomerId == id);
 
                 if (customer == null)
@@ -244,7 +250,7 @@ namespace TpaSodManagement.Services.Implementations
                 existingCustomer.CustomerCode = customer.CustomerCode;
                 existingCustomer.OrganizationId = customer.OrganizationId;
                 existingCustomer.PersonId = customer.PersonId;
-                existingCustomer.Address = customer.Address;
+                existingCustomer.AddressId = customer.AddressId;
                 existingCustomer.CreditLimit = customer.CreditLimit;
                 existingCustomer.PaymentTermsDays = customer.PaymentTermsDays;
                 existingCustomer.TaxExempt = customer.TaxExempt;

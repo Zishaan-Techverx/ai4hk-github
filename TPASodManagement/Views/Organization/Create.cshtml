@@ -57,12 +57,6 @@
                         </div>
 
                         <div class="mb-3">
-                            <label asp-for="Address" class="form-label">Address</label>
-                            <textarea asp-for="Address" rows="2" class="form-control" placeholder="Enter address"></textarea>
-                            <span asp-validation-for="Address" class="text-danger"></span>
-                        </div>
-
-                        <div class="mb-3">
                             <label class="form-label d-block mb-2">Organization Logo</label>
                             <img id="logoPreview" src="#" alt="Logo Preview"
                                  style="display:none; max-width:150px; max-height:150px; border:1px solid #ccc; border-radius:8px; margin-bottom:10px;" />
@@ -72,7 +66,7 @@
 
                         <div class="d-flex justify-content-between mt-3">
                             <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Create</button>
+                            <button type="submit" class="btn btn-primary">Next</button>
                         </div>
                     </form>
                 </div>

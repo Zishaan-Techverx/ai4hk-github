@@ -15,9 +15,11 @@ public partial class Farm : AuditBaseEntity
 
     public long OrganizationId { get; set; }
 
-    public string? Address { get; set; }
+    public long? AddressId { get; set; }
 
     public decimal? TotalArea { get; set; }
+
+    public virtual Address? Address { get; set; }
 
     public int? AreaTypeId { get; set; }
 
