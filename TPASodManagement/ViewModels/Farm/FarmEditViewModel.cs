@@ -42,6 +42,8 @@ namespace TpaSodManagement.ViewModels.Farm
 
         public long? AddressId { get; set; }
 
+        public bool IsActive { get; set; } = true;
+
         public IEnumerable<SelectListItem> AreaTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Organizations { get; set; } = Enumerable.Empty<SelectListItem>();
 

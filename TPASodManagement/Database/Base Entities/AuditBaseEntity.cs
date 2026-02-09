@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 namespace TpaSodManagement.Database.Base_Entities
 {
@@ -15,5 +15,7 @@ namespace TpaSodManagement.Database.Base_Entities
         public DateTimeOffset? DeletedDate { get; set; }
         
         public long? DeletedByUserId { get; set; }
+
+        public bool IsActive { get; set; } = true;
     }
 }

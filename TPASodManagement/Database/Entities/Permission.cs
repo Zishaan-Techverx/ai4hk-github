@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Database.Base_Entities;
 
 namespace TpaSodManagement.Database.Entities
@@ -16,7 +16,6 @@ namespace TpaSodManagement.Database.Entities
         public int Id { get; set; }
         public long RoleId { get; set; }
         public int PermissionId { get; set; }
-        public bool IsActive { get; set; }
 
         // Navigation properties
         public IdentityRole<long> Role { get; set; }

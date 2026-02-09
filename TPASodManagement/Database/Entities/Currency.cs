@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -15,8 +15,6 @@ public partial class Currency : AuditBaseEntity
     public string? CurrencySymbol { get; set; }
 
     public byte DecimalPlaces { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 

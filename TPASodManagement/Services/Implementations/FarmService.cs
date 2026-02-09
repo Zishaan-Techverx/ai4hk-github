@@ -149,6 +149,16 @@ namespace TpaSodManagement.Services.Implementations
                         var filterValue = filters["AreaType"].Trim();
                         query = query.Where(f => f.AreaType != null && f.AreaType.AreaTypeName.Contains(filterValue));
                     }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out bool isActiveValue))
+                            query = query.Where(f => f.IsActive == isActiveValue);
+                        else if (filters["IsActive"].ToLower() == "true" || filters["IsActive"].ToLower() == "yes" || filters["IsActive"].ToLower() == "1")
+                            query = query.Where(f => f.IsActive == true);
+                        else if (filters["IsActive"].ToLower() == "false" || filters["IsActive"].ToLower() == "no" || filters["IsActive"].ToLower() == "0")
+                            query = query.Where(f => f.IsActive == false);
+                    }
                 }
 
                 response.Data = await query.OrderBy(f => f.FarmId).ToListAsync();

@@ -3,7 +3,7 @@ namespace TpaSodManagement.ViewModels.Customer
     public class CustomerItemViewModel
     {
         public long CustomerId { get; set; }
-        public string? CustomerType { get; set; }
+        public string? CustomerTypeName { get; set; }
         public string? CustomerCode { get; set; }
         public decimal? CreditLimit { get; set; }
         public int? PaymentTermsDays { get; set; }

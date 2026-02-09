@@ -93,6 +93,13 @@
                         </div>
 
                         <div class="mb-3">
+                            <label class="form-label me-3 mb-0">Is Active</label>
+                            <div class="form-check form-switch d-inline-block">
+                                <input asp-for="IsActive" type="checkbox" class="form-check-input" checked />
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
                             <label asp-for="CertificationDetails" class="form-label">Certification Details</label>
                             <textarea asp-for="CertificationDetails" rows="3" class="form-control"></textarea>
                             <span asp-validation-for="CertificationDetails" class="text-danger"></span>
@@ -140,7 +147,7 @@
 
                         <div class="d-flex justify-content-between mt-3">
                             <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Next</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
                         </div>
                     </form>
                 </div>

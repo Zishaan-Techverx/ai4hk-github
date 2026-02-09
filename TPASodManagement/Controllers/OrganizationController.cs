@@ -42,10 +42,11 @@ namespace TpaSodManagement.Controllers
                     { "OrganizationName", "Organization Name" },
                     { "OrganizationType", "Organization Type" },
                     { "Address", "Address" },
-                    { "OrganizationCode", "Organization Code" }
+                    { "OrganizationCode", "Organization Code" },
+                    { "IsActive", "Is Active" }
                 };
             ViewBag.ModuleName = "Organizations";
-            ViewBag.BooleanColumns = new HashSet<string>();
+            ViewBag.BooleanColumns = new HashSet<string> { "IsActive" };
 
             var organizationTypes = await _organizationService.GetAllOrganizationTypesAsync();
             var organizationTypeOptions = new List<SelectListItem>
@@ -69,9 +70,10 @@ namespace TpaSodManagement.Controllers
                     OrganizationId = o.OrganizationId,
                     OrganizationName = o.OrganizationName,
                     OrganizationTypeId = o.OrganizationTypeId,
-                    OrganizationTypeName = o.OrganizationType != null ? o.OrganizationType.OrganizationTypeName : null,
+                    OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
-                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
+                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0,
+                    IsActive = o.IsActive
                 })
                 .ToList() ?? new List<OrganizationItemViewModel>();
 
@@ -105,9 +107,10 @@ namespace TpaSodManagement.Controllers
                     OrganizationId = o.OrganizationId,
                     OrganizationName = o.OrganizationName,
                     OrganizationTypeId = o.OrganizationTypeId,
-                    OrganizationTypeName = o.OrganizationType != null ? o.OrganizationType.OrganizationTypeName : null,
+                    OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
-                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
+                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0,
+                    IsActive = o.IsActive
                 }).ToList() ?? new List<OrganizationItemViewModel>();
 
                 return Json(new { success = true, data = vm });
@@ -165,9 +168,10 @@ namespace TpaSodManagement.Controllers
                     OrganizationId = o.OrganizationId,
                     OrganizationName = o.OrganizationName,
                     OrganizationTypeId = o.OrganizationTypeId,
-                    OrganizationTypeName = o.OrganizationType != null ? o.OrganizationType.OrganizationTypeName : null,
+                    OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
-                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0
+                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0,
+                    IsActive = o.IsActive
                 }).ToList() ?? new List<OrganizationItemViewModel>();
 
                 // Define all column headers with their corresponding property names (matching table columns)
@@ -176,7 +180,8 @@ namespace TpaSodManagement.Controllers
                         ("Organization Name", "OrganizationName"),
                         ("Organization Type", "OrganizationType"),
                         ("Address", "Address"),
-                        ("Logo", "Logo")
+                        ("Logo", "Logo"),
+                        ("Is Active", "IsActive")
                     };
 
                 // Filter out hidden columns
@@ -199,7 +204,8 @@ namespace TpaSodManagement.Controllers
                                 item.OrganizationName ?? "",
                                 item.OrganizationTypeName ?? "",
                                 item.Address ?? "",
-                                item.HasLogo ? "Yes" : "No"
+                                item.HasLogo ? "Yes" : "No",
+                                item.IsActive ? "Yes" : "No"
                         };
                         // Return only visible column values
                         return columnIndices.Select(idx => allValues[idx]).ToList();

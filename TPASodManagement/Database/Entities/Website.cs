@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Base_Entities;
@@ -19,7 +19,5 @@ public partial class Website : AuditBaseEntity
 
     public bool IsPrimary { get; set; }
 
-    public bool IsActive { get; set; }
-    
     public virtual ICollection<TpaSodManagementUser> TpaUsers { get; set; } = new List<TpaSodManagementUser>();
 }

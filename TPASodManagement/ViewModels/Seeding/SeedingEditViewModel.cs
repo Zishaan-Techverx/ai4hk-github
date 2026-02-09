@@ -39,6 +39,8 @@ namespace TpaSodManagement.ViewModels.Seeding
         public string? SoilMoisture { get; set; }
         public string? Notes { get; set; }
 
+        public bool IsActive { get; set; } = true;
+
         public DateTimeOffset? CreatedDate { get; set; }
 
         public IEnumerable<SelectListItem> AreaTypes { get; set; } = Enumerable.Empty<SelectListItem>();

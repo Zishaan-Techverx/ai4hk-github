@@ -154,6 +154,7 @@ using (var scope = app.Services.CreateScope())
     await context.Database.MigrateAsync();
     await TpaSodManagement.Database.Seeders.OrganizationTypeSeeder.SeedAsync(context, userManager);
     await TpaSodManagement.Database.Seeders.AddressTypeSeeder.SeedAsync(context);
+    await TpaSodManagement.Database.Seeders.CustomerTypeSeeder.SeedAsync(context);
 }
 
 // Configure middleware...

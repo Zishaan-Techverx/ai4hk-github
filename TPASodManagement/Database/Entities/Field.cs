@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -31,8 +31,6 @@ public partial class Field : AuditBaseEntity
     public string? BoundaryCoordinates { get; set; }
 
     public string? Notes { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual AreaType AreaType { get; set; } = null!;
 

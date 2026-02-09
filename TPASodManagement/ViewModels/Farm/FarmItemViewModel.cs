@@ -17,6 +17,7 @@ namespace TpaSodManagement.ViewModels.Farm
         public string? ClimateZone { get; set; }
         public string? AreaTypeName { get; set; }
         public string? OrganizationName { get; set; }
+        public bool IsActive { get; set; }
     }
 }
 

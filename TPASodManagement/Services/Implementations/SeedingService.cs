@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -134,6 +134,16 @@ namespace TpaSodManagement.Services.Implementations
                     {
                         var filterValue = filters["UserName"].Trim();
                         query = query.Where(s => s.User != null && s.User.UserName != null && s.User.UserName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out bool isActiveValue))
+                            query = query.Where(s => s.IsActive == isActiveValue);
+                        else if (filters["IsActive"].ToLower() == "true" || filters["IsActive"].ToLower() == "yes" || filters["IsActive"].ToLower() == "1")
+                            query = query.Where(s => s.IsActive == true);
+                        else if (filters["IsActive"].ToLower() == "false" || filters["IsActive"].ToLower() == "no" || filters["IsActive"].ToLower() == "0")
+                            query = query.Where(s => s.IsActive == false);
                     }
 
                     // Date range filters for SeedingDate (DateOnly)

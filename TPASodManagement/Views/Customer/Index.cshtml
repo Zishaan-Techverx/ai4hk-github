@@ -87,7 +87,7 @@
         <thead>
             <tr>
                 <th data-column="Organization">Organization</th>
-                <th data-column="CustomerType">Customer Type</th>
+                                <th data-column="CustomerTypeName">Customer Type</th>
                 <th data-column="Person">Person</th>
                 <th data-column="Address">Address</th>
                 <th data-column="CustomerCode">Customer Code</th>
@@ -106,7 +106,7 @@
             {
                 <tr id="row-@item.CustomerId">
                     <td data-column="Organization">@(item.OrganizationName ?? "N/A")</td>
-                    <td data-column="CustomerType">@Html.DisplayFor(modelItem => item.CustomerType)</td>
+                                    <td data-column="CustomerTypeName">@Html.DisplayFor(modelItem => item.CustomerTypeName)</td>
                     <td data-column="Person">
                         @if (!string.IsNullOrEmpty(item.PersonFullName))
                         {
@@ -1213,7 +1213,7 @@
             row.id = `row-${item.customerId}`;
             row.innerHTML = `
                 <td data-column="Organization">${escapeHtml(item.organizationName || '')}</td>
-                <td data-column="CustomerType">${escapeHtml(item.customerType || '')}</td>
+                <td data-column="CustomerTypeName">${escapeHtml(item.customerTypeName || '')}</td>
                 <td data-column="Person">${escapeHtml(item.personFullName || '')}</td>
                 <td data-column="Address">${escapeHtml(item.address || '')}</td>
                 <td data-column="CustomerCode">${escapeHtml(item.customerCode || '')}</td>

@@ -25,6 +25,7 @@ namespace TpaSodManagement.ViewModels.Sale
         public string? StatusName { get; set; }
         public string? UpdatedByUserName { get; set; }
         public string? UserName { get; set; }
+        public bool IsActive { get; set; }
     }
 }
 

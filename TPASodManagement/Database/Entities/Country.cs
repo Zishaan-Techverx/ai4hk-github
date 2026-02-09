@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -15,8 +15,6 @@ public partial class Country : AuditBaseEntity
     public string? CurrencyCode { get; set; }
 
     public string? PhonePrefix { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual ICollection<StateProvince> StateProvinces { get; set; } = new List<StateProvince>();
 }

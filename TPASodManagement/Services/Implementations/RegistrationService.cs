@@ -151,11 +151,14 @@ namespace TpaSodManagement.Services.Implementations
             string? postalCode = null)
         {
             var defaultAddressType = await _context.AddressTypes
-                .FirstOrDefaultAsync(at => at.IsActive);
+                .Where(at => at.DeletedDate == null && at.IsActive)
+                .FirstOrDefaultAsync();
 
             if (defaultAddressType == null)
             {
-                defaultAddressType = await _context.AddressTypes.FirstOrDefaultAsync();
+                defaultAddressType = await _context.AddressTypes
+                    .Where(at => at.DeletedDate == null)
+                    .FirstOrDefaultAsync();
             }
 
             // Find or Create StateProvince ONLY if state parameter is provided

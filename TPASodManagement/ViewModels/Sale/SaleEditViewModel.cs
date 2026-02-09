@@ -63,6 +63,8 @@ namespace TpaSodManagement.ViewModels.Sale
         public int? CurrencyId { get; set; }
         public long? UpdatedByUserId { get; set; }
 
+        public bool IsActive { get; set; } = true;
+
         public DateTimeOffset? CreatedDate { get; set; }
         public DateTimeOffset? UpdatedDate { get; set; }
 

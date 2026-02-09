@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Base_Entities;
@@ -26,8 +26,6 @@ public partial class Product : AuditBaseEntity
     public int? CertificateTypeId { get; set; }
 
     public string? Description { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual CertificateType? CertificateType { get; set; }
 

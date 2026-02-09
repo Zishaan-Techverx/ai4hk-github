@@ -24,6 +24,7 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
     public virtual DbSet<Country> Countries { get; set; }
     public virtual DbSet<Currency> Currencies { get; set; }
     public virtual DbSet<Customer> Customers { get; set; }
+    public virtual DbSet<CustomerType> CustomerTypes { get; set; }
     public virtual DbSet<Farm> Farms { get; set; }
     public virtual DbSet<Field> Fields { get; set; }
     public virtual DbSet<Organization> Organizations { get; set; }
@@ -277,6 +278,20 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
                 .HasForeignKey(c => c.AddressId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(c => c.CustomerType)
+                .WithMany(ct => ct.Customers)
+                .HasForeignKey(c => c.CustomerTypeId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<CustomerType>(entity =>
+        {
+            entity.ToTable("CustomerType");
+            entity.HasKey(e => e.CustomerTypeId);
+            entity.Property(e => e.CustomerTypeName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.DeletedByUserId);
             entity.Property(e => e.DeletedDate);
         });

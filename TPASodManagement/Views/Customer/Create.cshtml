@@ -42,9 +42,11 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="CustomerType" class="form-label">Customer Type <span class="text-danger">*</span></label>
-                                <input asp-for="CustomerType" class="form-control" required />
-                                <span asp-validation-for="CustomerType" class="text-danger"></span>
+                                <label asp-for="CustomerTypeId" class="form-label">Customer Type <span class="text-danger">*</span></label>
+                                <select asp-for="CustomerTypeId" class="form-select" asp-items="Model.CustomerTypes" required>
+                                    <option value="">-- Select Customer Type --</option>
+                                </select>
+                                <span asp-validation-for="CustomerTypeId" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">
@@ -108,7 +110,7 @@
 
                         <div class="d-flex justify-content-between mt-3">
                             <a asp-action="Index" class="btn btn-secondary">Cancel</a>
-                            <button type="submit" class="btn btn-primary">Next</button>
+                            <button type="submit" class="btn btn-primary">Save</button>
                         </div>
                     </form>
                 </div>

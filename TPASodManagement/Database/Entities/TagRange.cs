@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -19,8 +19,6 @@ public partial class TagRange : AuditBaseEntity
     public string? TagSuffix { get; set; }
 
     public int TotalTags { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual ICollection<SaleLineItem> SaleLineItems { get; set; } = new List<SaleLineItem>();
 

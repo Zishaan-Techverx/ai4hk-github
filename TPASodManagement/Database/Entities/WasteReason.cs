@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -15,8 +15,6 @@ public partial class WasteReason : AuditBaseEntity
     public string ReasonCategory { get; set; } = null!;
 
     public string? Description { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual ICollection<Waste> Wastes { get; set; } = new List<Waste>();
 }

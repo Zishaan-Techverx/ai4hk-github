@@ -48,10 +48,11 @@ namespace TpaSodManagement.Controllers
                 { "CreditLimit", "Credit Limit" },
                 { "PaymentTermsDays", "Payment Terms Days" },
                 { "TaxExempt", "Tax Exempt" },
-                { "Notes", "Notes" }
+                { "Notes", "Notes" },
+                { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Customers";
-            ViewBag.BooleanColumns = new HashSet<string> { "TaxExempt" };
+            ViewBag.BooleanColumns = new HashSet<string> { "TaxExempt", "IsActive" };
             ViewBag.DateColumns = new HashSet<string>();
 
             var result = await _customerService.GetAllAsync();
@@ -246,7 +247,7 @@ namespace TpaSodManagement.Controllers
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
                     ("Organization", "Organization"),
-                    ("Customer Type", "CustomerType"),
+                    ("Customer Type", "CustomerTypeName"),
                     ("Person", "Person"),
                     ("Address", "Address"),
                     ("Customer Code", "CustomerCode"),
@@ -271,7 +272,7 @@ namespace TpaSodManagement.Controllers
                         var allValues = new List<object>
                         {
                             item.OrganizationName ?? "",
-                            item.CustomerType ?? "",
+                            item.CustomerTypeName ?? "",
                             item.PersonFullName ?? "",
                             item.Address ?? "",
                             item.CustomerCode ?? "",
@@ -302,7 +303,7 @@ namespace TpaSodManagement.Controllers
             {
                 CustomerId = entity.CustomerId,
                 OrganizationName = entity.Organization?.OrganizationName,
-                CustomerType = entity.CustomerType,
+                CustomerTypeName = entity.CustomerTypeName,
                 PersonFullName = entity.Person != null
                     ? $"{entity.Person.FirstName} {entity.Person.LastName}".Trim()
                     : null,
@@ -324,7 +325,7 @@ namespace TpaSodManagement.Controllers
             {
                 CustomerId = entity.CustomerId,
                 OrganizationId = entity.OrganizationId,
-                CustomerType = entity.CustomerType,
+                CustomerTypeId = entity.CustomerTypeId,
                 PersonId = entity.PersonId,
                 CustomerCode = entity.CustomerCode,
                 CreditLimit = entity.CreditLimit,
@@ -344,7 +345,7 @@ namespace TpaSodManagement.Controllers
             {
                 CustomerId = vm.CustomerId,
                 OrganizationId = vm.OrganizationId,
-                CustomerType = vm.CustomerType,
+                CustomerTypeId = vm.CustomerTypeId,
                 PersonId = vm.PersonId,
                 CustomerCode = vm.CustomerCode,
                 CreditLimit = vm.CreditLimit,
@@ -530,15 +531,17 @@ namespace TpaSodManagement.Controllers
         private async Task PopulateDropdowns(CustomerEditViewModel vm)
         {
             var viewData = await _customerService.GetCreateViewDataAsync();
-            if (viewData.Success && viewData.Data.Organizations != null && viewData.Data.People != null)
+            if (viewData.Success && viewData.Data.Organizations != null && viewData.Data.People != null && viewData.Data.CustomerTypes != null)
             {
                 vm.Organizations = viewData.Data.Organizations;
                 vm.People = viewData.Data.People;
+                vm.CustomerTypes = viewData.Data.CustomerTypes;
             }
             else
             {
                 vm.Organizations = Enumerable.Empty<SelectListItem>();
                 vm.People = Enumerable.Empty<SelectListItem>();
+                vm.CustomerTypes = Enumerable.Empty<SelectListItem>();
                 TempData["Error"] = viewData.Message;
             }
         }

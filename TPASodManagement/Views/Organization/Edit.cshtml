@@ -60,8 +60,8 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationTypeId" class="form-label">Organization Type</label>
-                                <select asp-for="OrganizationTypeId" class="form-select" asp-items="ViewBag.OrganizationTypes" disabled="@disabledAttr">
+                                <label asp-for="OrganizationTypeId" class="form-label">Organization Type <span class="text-danger">*</span></label>
+                                <select asp-for="OrganizationTypeId" class="form-select" asp-items="ViewBag.OrganizationTypes" disabled="@disabledAttr" required>
                                     <option value="">-- Select Organization Type --</option>
                                 </select>
                                 <span asp-validation-for="OrganizationTypeId" class="text-danger"></span>
@@ -146,7 +146,7 @@
 
                             @if (!isDetailsView)
                             {
-                                <button type="submit" class="btn btn-primary">@(isDetailsView ? "Save Changes" : "Next")</button>
+                                <button type="submit" class="btn btn-primary">@(isDetailsView ? "Save Changes" : "Save")</button>
                             }
                             else
                             {

@@ -12,6 +12,7 @@ namespace TpaSodManagement.ViewModels.Organization
         [Display(Name = "Organization Name")]
         public string? OrganizationName { get; set; }
 
+        [Required(ErrorMessage = "Organization Type is required")]
         [Display(Name = "Organization Type")]
         public long? OrganizationTypeId { get; set; }
 

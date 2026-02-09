@@ -1164,6 +1164,7 @@
         updatePagination();
         document.querySelector('#dataTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+    window.changeFilteredPage = changeFilteredPage;
 
     function updateTable(data) {
         const tbody = document.querySelector('#dataTable tbody');

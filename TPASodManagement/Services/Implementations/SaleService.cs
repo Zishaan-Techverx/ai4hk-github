@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
@@ -176,6 +176,16 @@ namespace TpaSodManagement.Services.Implementations
                     {
                         var filterValue = filters["UserName"].Trim();
                         query = query.Where(s => s.User != null && s.User.UserName != null && s.User.UserName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("IsActive") && !string.IsNullOrWhiteSpace(filters["IsActive"]))
+                    {
+                        if (bool.TryParse(filters["IsActive"], out bool isActiveValue))
+                            query = query.Where(s => s.IsActive == isActiveValue);
+                        else if (filters["IsActive"].ToLower() == "true" || filters["IsActive"].ToLower() == "yes" || filters["IsActive"].ToLower() == "1")
+                            query = query.Where(s => s.IsActive == true);
+                        else if (filters["IsActive"].ToLower() == "false" || filters["IsActive"].ToLower() == "no" || filters["IsActive"].ToLower() == "0")
+                            query = query.Where(s => s.IsActive == false);
                     }
 
                     // Date range filters for SaleDate (DateOnly)
@@ -473,61 +483,11 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(c => c.CustomerId)
                     .ToListAsync();
 
-                // Create SelectList for Customers with display name
+                // Create SelectList for Customers with display name (use Person/Organization to decide)
                 var customerItems = customers.Select(c =>
                 {
                     string displayName;
-                    
-                    // Case-insensitive CustomerType check
-                    var customerType = c.CustomerType?.ToUpper() ?? "";
-                    
-                    if ((customerType == "PERSON" || customerType == "P") && c.Person != null)
-                    {
-                        // Person customer - show FirstName LastName
-                        var firstName = c.Person.FirstName?.Trim() ?? "";
-                        var lastName = c.Person.LastName?.Trim() ?? "";
-                        
-                        if (!string.IsNullOrEmpty(firstName) && !string.IsNullOrEmpty(lastName))
-                        {
-                            displayName = $"{firstName} {lastName}";
-                        }
-                        else if (!string.IsNullOrEmpty(firstName))
-                        {
-                            displayName = firstName;
-                        }
-                        else if (!string.IsNullOrEmpty(lastName))
-                        {
-                            displayName = lastName;
-                        }
-                        else
-                        {
-                            // If name not available, use CustomerCode or CustomerId
-                            displayName = !string.IsNullOrEmpty(c.CustomerCode)
-                                ? c.CustomerCode
-                                : $"Customer #{c.CustomerId}";
-                        }
-                    }
-                    else if ((customerType == "ORG" || customerType == "ORGANIZATION" || customerType == "O") && c.Organization != null)
-                    {
-                        // Organization customer - show OrganizationName
-                        var orgName = c.Organization.OrganizationName?.Trim() ?? "";
-                        
-                        if (!string.IsNullOrEmpty(orgName))
-                        {
-                            displayName = orgName;
-                        }
-                        else
-                        {
-                            // If name not available, use CustomerCode or CustomerId
-                            displayName = !string.IsNullOrEmpty(c.CustomerCode)
-                                ? c.CustomerCode
-                                : $"Customer #{c.CustomerId}";
-                        }
-                    }
-                    else
-                    {
-                        // Try to get name from Person or Organization even if CustomerType doesn't match
-                        if (c.Person != null)
+                    if (c.Person != null)
                         {
                             var firstName = c.Person.FirstName?.Trim() ?? "";
                             var lastName = c.Person.LastName?.Trim() ?? "";
@@ -573,7 +533,6 @@ namespace TpaSodManagement.Services.Implementations
                                 ? c.CustomerCode
                                 : $"Customer #{c.CustomerId}";
                         }
-                    }
 
                     return new SelectListItem
                     {

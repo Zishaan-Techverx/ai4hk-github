@@ -265,7 +265,8 @@ namespace TpaSodManagement.Controllers
                     ("Soil Type", "SoilType"),
                     ("Irrigation Type", "IrrigationType"),
                     ("Climate Zone", "ClimateZone"),
-                    ("Area Type", "AreaType")
+                    ("Area Type", "AreaType"),
+                    ("Is Active", "IsActive")
                 };
 
                 var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
@@ -293,7 +294,8 @@ namespace TpaSodManagement.Controllers
                             item.SoilType ?? "",
                             item.IrrigationType ?? "",
                             item.ClimateZone ?? "",
-                            item.AreaTypeName ?? ""
+                            item.AreaTypeName ?? "",
+                            item.IsActive ? "Yes" : "No"
                         };
                         return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
@@ -334,6 +336,7 @@ namespace TpaSodManagement.Controllers
                 OrganicCertified = entity.OrganicCertified,
                 LicenseNumber = entity.LicenseNumber,
                 CertificationDetails = entity.CertificationDetails,
+                IsActive = entity.IsActive,
                 Latitude = entity.Latitude,
                 Longitude = entity.Longitude,
                 ElevationMeters = entity.ElevationMeters,
@@ -364,6 +367,7 @@ namespace TpaSodManagement.Controllers
                 AreaTypeId = entity.AreaTypeId,
                 OrganizationId = entity.OrganizationId,
                 AddressId = entity.AddressId,
+                IsActive = entity.IsActive,
                 IsDetailsView = isDetailsView
             };
         }
@@ -386,7 +390,8 @@ namespace TpaSodManagement.Controllers
                 IrrigationType = vm.IrrigationType,
                 ClimateZone = vm.ClimateZone,
                 AreaTypeId = vm.AreaTypeId.HasValue ? (int?)vm.AreaTypeId.Value : null,
-                OrganizationId = vm.OrganizationId ?? 0
+                OrganizationId = vm.OrganizationId ?? 0,
+                IsActive = vm.IsActive
             };
         }
 

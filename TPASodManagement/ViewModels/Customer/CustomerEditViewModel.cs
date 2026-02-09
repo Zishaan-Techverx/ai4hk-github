@@ -8,9 +8,8 @@ namespace TpaSodManagement.ViewModels.Customer
         public long CustomerId { get; set; }
 
         [Required(ErrorMessage = "Customer Type is required")]
-        [StringLength(100)]
         [Display(Name = "Customer Type")]
-        public string? CustomerType { get; set; }
+        public long? CustomerTypeId { get; set; }
 
         [StringLength(50)]
         public string? CustomerCode { get; set; }
@@ -32,6 +31,7 @@ namespace TpaSodManagement.ViewModels.Customer
         public long? OrganizationId { get; set; }
         public long? PersonId { get; set; }
 
+        public IEnumerable<SelectListItem> CustomerTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Organizations { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> People { get; set; } = Enumerable.Empty<SelectListItem>();
 

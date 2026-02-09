@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -17,8 +17,6 @@ public partial class AreaType : AuditBaseEntity
     public decimal ConversionToSquareMeters { get; set; }
 
     public string? Description { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual ICollection<Farm> Farms { get; set; } = new List<Farm>();
 

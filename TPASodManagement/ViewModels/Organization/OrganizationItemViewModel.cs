@@ -8,6 +8,7 @@ namespace TpaSodManagement.ViewModels.Organization
         public string? OrganizationTypeName { get; set; }
         public string? Address { get; set; }
         public bool HasLogo { get; set; }
+        public bool IsActive { get; set; }
     }
 }
 

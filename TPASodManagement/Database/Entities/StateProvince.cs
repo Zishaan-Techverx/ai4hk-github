@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -13,8 +13,6 @@ public partial class StateProvince : AuditBaseEntity
     public string StateCode { get; set; } = null!;
 
     public string StateName { get; set; } = null!;
-
-    public bool IsActive { get; set; }
 
     public virtual ICollection<Address> Addresses { get; set; } = new List<Address>();
 

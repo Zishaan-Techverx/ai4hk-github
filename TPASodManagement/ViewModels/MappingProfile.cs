@@ -1,4 +1,4 @@
-﻿using AutoMapper;
+using AutoMapper;
 using FarmEntity = TpaSodManagement.Database.Entities.Farm;
 using CustomerEntity = TpaSodManagement.Database.Entities.Customer;
 using SaleEntity = TpaSodManagement.Database.Entities.Sale;
@@ -22,9 +22,10 @@ public class MappingProfile : Profile
             .ForMember(dest => dest.OrganizationName, opt => opt.MapFrom(src => src.Organization.OrganizationName));
 
         CreateMap<SaleEntity, SaleViewModel>()
-            .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src => src.Customer.CustomerType == "PERSON" 
-                 ? src.Customer.Person.FirstName + " " + src.Customer.Person.LastName 
-                 : src.Customer.Organization.OrganizationName))
+            .ForMember(dest => dest.CustomerName, opt => opt.MapFrom(src =>
+                 src.Customer.Person != null
+                     ? (src.Customer.Person.FirstName + " " + src.Customer.Person.LastName).Trim()
+                     : (src.Customer.Organization != null ? src.Customer.Organization.OrganizationName : "")))
             .ForMember(dest => dest.SaleTypeName, opt => opt.MapFrom(src => src.SaleType.SaleTypeName))
             .ForMember(dest => dest.CurrencyCode, opt => opt.MapFrom(src => src.Currency.CurrencyCode))
             .ForMember(dest => dest.LineItems, opt => opt.MapFrom(src => src.SaleLineItems));

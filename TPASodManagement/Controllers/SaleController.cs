@@ -291,7 +291,8 @@ namespace TpaSodManagement.Controllers
                     ("Sale Type", "SaleType"),
                     ("Status", "Status"),
                     ("Updated By User", "UpdatedByUser"),
-                    ("User", "User")
+                    ("User", "User"),
+                    ("Is Active", "IsActive")
                 };
 
                 var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
@@ -324,7 +325,8 @@ namespace TpaSodManagement.Controllers
                             item.SaleTypeName ?? "N/A",
                             item.StatusName ?? "N/A",
                             item.UpdatedByUserName ?? "N/A",
-                            item.UserName ?? "N/A"
+                            item.UserName ?? "N/A",
+                            item.IsActive ? "Yes" : "No"
                         };
                         return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
@@ -368,7 +370,8 @@ namespace TpaSodManagement.Controllers
                 SaleTypeName = entity.SaleType?.SaleTypeName,
                 StatusName = entity.Status?.StatusName,
                 UpdatedByUserName = entity.UpdatedByUser?.UserName,
-                UserName = entity.User?.UserName
+                UserName = entity.User?.UserName,
+                IsActive = entity.IsActive
             };
         }
 
@@ -426,7 +429,8 @@ namespace TpaSodManagement.Controllers
                 CurrencyId = vm.CurrencyId ?? 0,
                 UpdatedByUserId = vm.UpdatedByUserId ?? 0,
                 CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow,
-                UpdatedDate = vm.UpdatedDate ?? DateTimeOffset.UtcNow
+                UpdatedDate = vm.UpdatedDate ?? DateTimeOffset.UtcNow,
+                IsActive = vm.IsActive
             };
         }
 

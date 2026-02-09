@@ -8,7 +8,9 @@ public partial class Customer : AuditBaseEntity
 {
     public long CustomerId { get; set; }
 
-    public string CustomerType { get; set; } = null!;
+    public long? CustomerTypeId { get; set; }
+
+    public string? CustomerTypeName { get; set; }
 
     public long? PersonId { get; set; }
 
@@ -26,9 +28,9 @@ public partial class Customer : AuditBaseEntity
 
     public long? AddressId { get; set; }
 
-    public bool IsActive { get; set; }
-
     public virtual Address? Address { get; set; }
+
+    public virtual CustomerType? CustomerType { get; set; }
 
     public virtual Organization? Organization { get; set; }
 

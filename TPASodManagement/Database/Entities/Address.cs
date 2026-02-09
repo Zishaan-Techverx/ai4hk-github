@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Base_Entities;
@@ -34,8 +34,6 @@ public partial class Address : AuditBaseEntity
     public bool IsVerified { get; set; }
 
     public DateTimeOffset? VerificationDate { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual AddressType AddressType { get; set; } = null!;
 

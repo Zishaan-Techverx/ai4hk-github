@@ -45,10 +45,16 @@ namespace TpaSodManagement.Controllers
             _exportToExcel = exportToExcel;
         }
 
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
         {
             try
             {
+                // Set ViewBag pagination defaults (used on error/empty paths)
+                ViewBag.PageNumber = pageNumber;
+                ViewBag.TotalPages = 1;
+                ViewBag.TotalCount = 0;
+                ViewBag.PageSize = pageSize;
+
                 // Get current logged-in user
                 var currentUser = await _userManager.GetUserAsync(User);
                 if (currentUser == null)
@@ -60,24 +66,32 @@ namespace TpaSodManagement.Controllers
                 // Check if current user is SuperAdmin
                 var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
                 bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
-                
+
                 // If SuperAdmin, show all users (pass null to get all organizations)
                 // Otherwise, filter by current user's organization
                 long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
-                
+
                 // Get users filtered by organization (or all if SuperAdmin)
                 var users = await _userService.GetAllUsersAsync(organizationFilter);
-                var viewModel = new List<UserItemViewModel>();
+                var allUsers = users?.ToList() ?? new List<TpaSodManagementUser>();
+                var totalCount = allUsers.Count;
+                var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
 
-                foreach (var user in users)
+                // Apply pagination (same as Currency module)
+                var paginatedUsers = allUsers
+                    .Skip((pageNumber - 1) * pageSize)
+                    .Take(pageSize)
+                    .ToList();
+
+                var viewModel = new List<UserItemViewModel>();
+                foreach (var user in paginatedUsers)
                 {
                     var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
                     var address = await _registrationService.GetUserAddressAsync(user.Id.ToString());
-
                     viewModel.Add(MapToItemViewModel(user, person, address));
                 }
 
-                // Set ViewBag properties for filter partial
+                // Set ViewBag properties for filter partial and pagination
                 ViewBag.FilterColumns = new Dictionary<string, string>
                 {
                     { "UserName", "User Name" },
@@ -91,6 +105,10 @@ namespace TpaSodManagement.Controllers
                 };
                 ViewBag.ModuleName = "Users";
                 ViewBag.BooleanColumns = new HashSet<string>();
+                ViewBag.PageNumber = pageNumber;
+                ViewBag.TotalPages = totalPages;
+                ViewBag.TotalCount = totalCount;
+                ViewBag.PageSize = pageSize;
 
                 return View(viewModel);
             }
@@ -98,6 +116,10 @@ namespace TpaSodManagement.Controllers
             {
                 _logger.LogError(ex, "Error loading users");
                 TempData["ErrorMessage"] = "An error occurred while loading users.";
+                ViewBag.PageNumber = 1;
+                ViewBag.TotalPages = 1;
+                ViewBag.TotalCount = 0;
+                ViewBag.PageSize = 10;
                 return View(new List<UserItemViewModel>());
             }
         }
@@ -679,7 +701,7 @@ namespace TpaSodManagement.Controllers
             vm.Organizations = new SelectList(organizations, "OrganizationId", "OrganizationName", vm.OrganizationId);
 
             var addressTypes = await _context.AddressTypes
-                .Where(at => at.IsActive)
+                .Where(at => at.DeletedDate == null && at.IsActive)
                 .OrderBy(at => at.AddressTypeName)
                 .ToListAsync();
             vm.AddressTypes = new SelectList(addressTypes, "AddressTypeId", "AddressTypeName", vm.AddressTypeId);

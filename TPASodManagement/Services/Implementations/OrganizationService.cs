@@ -19,7 +19,10 @@ namespace TpaSodManagement.Services.Implementations
 
         public async Task<List<OrganizationType>> GetAllOrganizationTypesAsync()
         {
-            return await _context.OrganizationTypes.OrderBy(ot => ot.OrganizationTypeName).ToListAsync();
+            return await _context.OrganizationTypes
+                .Where(ot => ot.DeletedDate == null && ot.IsActive)
+                .OrderBy(ot => ot.OrganizationTypeName)
+                .ToListAsync();
         }
 
         public async Task<List<Organization>> GetAllOrganizationsAsync()

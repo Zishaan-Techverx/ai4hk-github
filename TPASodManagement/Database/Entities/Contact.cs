@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TpaSodManagement.Database.Entities;
@@ -20,8 +20,6 @@ public partial class Contact
     public bool IsVerified { get; set; }
 
     public DateTimeOffset? VerificationDate { get; set; }
-
-    public bool IsActive { get; set; }
 
     public DateTimeOffset CreatedDate { get; set; }
 

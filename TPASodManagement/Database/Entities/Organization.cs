@@ -29,8 +29,6 @@ public partial class Organization : AuditBaseEntity
 
     public long? AddressId { get; set; }
 
-    public bool IsActive { get; set; }
-
     public virtual Address? Address { get; set; }
 
     public byte[]? LogoBytes { get; set; }

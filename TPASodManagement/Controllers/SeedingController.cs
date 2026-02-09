@@ -254,7 +254,8 @@ namespace TpaSodManagement.Controllers
                     ("Farm", "Farm"),
                     ("Field", "Field"),
                     ("Tag Range", "TagRange"),
-                    ("User", "User")
+                    ("User", "User"),
+                    ("Is Active", "IsActive")
                 };
 
                 var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
@@ -282,7 +283,8 @@ namespace TpaSodManagement.Controllers
                             item.FarmDisplay ?? $"Farm #{item.FarmId}",
                             item.FieldName ?? "N/A",
                             item.TagRangeCode ?? $"TagRange #{item.TagRangeId}",
-                            item.UserName ?? "N/A"
+                            item.UserName ?? "N/A",
+                            item.IsActive ? "Yes" : "No"
                         };
                         return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
@@ -320,7 +322,8 @@ namespace TpaSodManagement.Controllers
                 FieldName = entity.Field?.FieldName,
                 TagRangeId = entity.TagRangeId,
                 TagRangeCode = entity.TagRange?.TagRangeCode,
-                UserName = entity.User?.UserName
+                UserName = entity.User?.UserName,
+                IsActive = entity.IsActive
             };
         }
 
@@ -343,6 +346,7 @@ namespace TpaSodManagement.Controllers
                 SoilMoisture = entity.SoilMoisture,
                 Notes = entity.Notes,
                 CreatedDate = entity.CreatedDate,
+                IsActive = entity.IsActive,
                 IsDetailsView = isDetailsView
             };
         }
@@ -366,7 +370,8 @@ namespace TpaSodManagement.Controllers
                 SoilTemperature = vm.SoilTemperature ?? 0,
                 SoilMoisture = vm.SoilMoisture,
                 Notes = vm.Notes,
-                CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow
+                CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow,
+                IsActive = vm.IsActive
             };
         }
 

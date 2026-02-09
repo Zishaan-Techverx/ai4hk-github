@@ -21,6 +21,7 @@ namespace TpaSodManagement.ViewModels.Seeding
         public string? TagRangeCode { get; set; }
         public long? TagRangeId { get; set; }
         public string? UserName { get; set; }
+        public bool IsActive { get; set; }
     }
 }
 

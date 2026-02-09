@@ -23,6 +23,7 @@ namespace TpaSodManagement.Services.Implementations
             try
             {
                 response.Data = await _context.Customers
+                    .Include(c => c.CustomerType)
                     .Include(c => c.Organization)
                     .Include(c => c.Person)
                     .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
@@ -42,6 +43,7 @@ namespace TpaSodManagement.Services.Implementations
             try
             {
                 var query = _context.Customers
+                    .Include(c => c.CustomerType)
                     .Include(c => c.Organization)
                     .Include(c => c.Person)
                     .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
@@ -53,7 +55,8 @@ namespace TpaSodManagement.Services.Implementations
                     if (filters.ContainsKey("CustomerType") && !string.IsNullOrWhiteSpace(filters["CustomerType"]))
                     {
                         var filterValue = filters["CustomerType"].Trim();
-                        query = query.Where(c => c.CustomerType != null && c.CustomerType.Contains(filterValue));
+                        query = query.Where(c => (c.CustomerTypeName != null && c.CustomerTypeName.Contains(filterValue)) ||
+                            (c.CustomerType != null && c.CustomerType.CustomerTypeName != null && c.CustomerType.CustomerTypeName.Contains(filterValue)));
                     }
 
                     if (filters.ContainsKey("CustomerCode") && !string.IsNullOrWhiteSpace(filters["CustomerCode"]))
@@ -185,6 +188,7 @@ namespace TpaSodManagement.Services.Implementations
             try
             {
                 var customer = await _context.Customers
+                    .Include(c => c.CustomerType)
                     .Include(c => c.Organization)
                     .Include(c => c.Person)
                     .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
@@ -213,6 +217,12 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Customer>();
             try
             {
+                if (customer.CustomerTypeId.HasValue && string.IsNullOrEmpty(customer.CustomerTypeName))
+                {
+                    var ct = await _context.CustomerTypes.FindAsync(customer.CustomerTypeId.Value);
+                    if (ct != null)
+                        customer.CustomerTypeName = ct.CustomerTypeName;
+                }
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
                 customer.CreatedDate = DateTimeOffset.UtcNow;
                 customer.CreatedByUserId = currentUserId;
@@ -246,7 +256,14 @@ namespace TpaSodManagement.Services.Implementations
 
                 // Update only the properties that should be updated
                 // Preserve CreatedByUserId and CreatedDate
-                existingCustomer.CustomerType = customer.CustomerType;
+                existingCustomer.CustomerTypeId = customer.CustomerTypeId;
+                if (customer.CustomerTypeId.HasValue)
+                {
+                    var ct = await _context.CustomerTypes.FindAsync(customer.CustomerTypeId.Value);
+                    existingCustomer.CustomerTypeName = ct?.CustomerTypeName ?? customer.CustomerTypeName;
+                }
+                else
+                    existingCustomer.CustomerTypeName = customer.CustomerTypeName;
                 existingCustomer.CustomerCode = customer.CustomerCode;
                 existingCustomer.OrganizationId = customer.OrganizationId;
                 existingCustomer.PersonId = customer.PersonId;
@@ -312,45 +329,56 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<(SelectList Organizations, SelectList People)>> GetCreateViewDataAsync()
+        public async Task<ServiceResponse<(SelectList Organizations, SelectList People, SelectList CustomerTypes)>> GetCreateViewDataAsync()
         {
-            var response = new ServiceResponse<(SelectList Organizations, SelectList People)>();
+            var response = new ServiceResponse<(SelectList Organizations, SelectList People, SelectList CustomerTypes)>();
             try
             {
                 var orgs = await _context.Organizations
+                    .Where(o => o.DeletedDate == null)
                     .OrderBy(o => o.OrganizationName)
                     .ToListAsync();
-            
+
                 var people = await _context.People
+                    .Where(p => p.DeletedDate == null)
                     .OrderBy(p => p.FirstName)
                     .ThenBy(p => p.LastName)
                     .ToListAsync();
-            
-                // Create SelectList for Organizations
+
+                var customerTypes = await _context.CustomerTypes
+                    .Where(ct => ct.DeletedDate == null && ct.IsActive)
+                    .OrderBy(ct => ct.CustomerTypeName)
+                    .ToListAsync();
+
                 var orgItems = orgs.Select(o => new SelectListItem
                 {
                     Value = o.OrganizationId.ToString(),
                     Text = o.OrganizationName
                 }).ToList();
-            
-                // Create SelectList for People with display name (FirstName LastName)
+
                 var peopleItems = people.Select(p =>
                 {
                     var fullName = $"{p.FirstName} {p.LastName}".Trim();
-                    var displayName = string.IsNullOrEmpty(fullName) 
-                        ? $"Person #{p.PersonId}" 
+                    var displayName = string.IsNullOrEmpty(fullName)
+                        ? $"Person #{p.PersonId}"
                         : fullName;
-                        
                     return new SelectListItem
                     {
-                        Value = p.PersonId.ToString(), // Backend par PersonId jayega
-                        Text = displayName // Dropdown mein name show hoga
+                        Value = p.PersonId.ToString(),
+                        Text = displayName
                     };
                 }).ToList();
-            
+
+                var customerTypeItems = customerTypes.Select(ct => new SelectListItem
+                {
+                    Value = ct.CustomerTypeId.ToString(),
+                    Text = ct.CustomerTypeName ?? ""
+                }).ToList();
+
                 response.Data = (
                     new SelectList(orgItems, "Value", "Text"),
-                    new SelectList(peopleItems, "Value", "Text")
+                    new SelectList(peopleItems, "Value", "Text"),
+                    new SelectList(customerTypeItems, "Value", "Text")
                 );
             }
             catch (Exception ex)

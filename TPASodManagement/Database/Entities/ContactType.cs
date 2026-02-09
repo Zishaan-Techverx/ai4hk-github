@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TpaSodManagement.Database.Entities;
@@ -12,8 +12,6 @@ public partial class ContactType
     public string ContactTypeName { get; set; } = null!;
 
     public string? ValidationPattern { get; set; }
-
-    public bool IsActive { get; set; }
 
     public DateTimeOffset CreatedDate { get; set; }
 

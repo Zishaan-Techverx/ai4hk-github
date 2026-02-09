@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -19,8 +19,6 @@ public partial class Status : AuditBaseEntity
     public bool IsFinalStatus { get; set; }
 
     public string? Description { get; set; }
-
-    public bool IsActive { get; set; }
 
     public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
