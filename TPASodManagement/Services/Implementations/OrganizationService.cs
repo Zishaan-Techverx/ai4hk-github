@@ -121,6 +121,27 @@ namespace TpaSodManagement.Services.Implementations
             return await _context.Organizations.AnyAsync(e => e.OrganizationId == id);
         }
 
+        /// <summary>
+        /// Checks the database for any existing organization (non-deleted) with the same name and same organization type.
+        /// Used for Create/Edit validation so duplicate name+type is rejected.
+        /// </summary>
+        public async Task<bool> ExistsDuplicateNameAndTypeAsync(string organizationName, long? organizationTypeId, long? excludeOrganizationId = null)
+        {
+            if (string.IsNullOrWhiteSpace(organizationName))
+                return false;
+
+            var nameLower = organizationName.Trim().ToLower();
+            // Query database only (AsNoTracking), compare against all organizations in DB (global filter already excludes soft-deleted)
+            var query = _context.Organizations
+                .AsNoTracking()
+                .Where(o => o.OrganizationName != null && o.OrganizationName.ToLower() == nameLower && o.OrganizationTypeId == organizationTypeId);
+
+            if (excludeOrganizationId.HasValue)
+                query = query.Where(o => o.OrganizationId != excludeOrganizationId.Value);
+
+            return await query.AnyAsync();
+        }
+
         public async Task<ServiceResponse<List<Organization>>> GetFilteredAsync(Dictionary<string, string> filters)
         {
             var response = new ServiceResponse<List<Organization>>();

@@ -254,6 +254,13 @@ namespace TpaSodManagement.Controllers
         {
             if (ModelState.IsValid)
             {
+                var isDuplicate = await _organizationService.ExistsDuplicateNameAndTypeAsync(organizationVm.OrganizationName!, organizationVm.OrganizationTypeId, null);
+                if (isDuplicate)
+                {
+                    ModelState.AddModelError("", "An organization with this name already exists for the selected organization type. Please use a different name or select a different organization type.");
+                    await PopulateOrganizationTypesDropdown(organizationVm.OrganizationTypeId);
+                    return View(organizationVm);
+                }
                 var entity = MapToEntity(organizationVm);
                 var org = await _organizationService.CreateOrganizationAsync(entity, organizationVm.LogoFile);
                 return RedirectToAction(nameof(CreateAddress), new { id = org.OrganizationId });
@@ -285,6 +292,13 @@ namespace TpaSodManagement.Controllers
 
             if (ModelState.IsValid)
             {
+                var isDuplicate = await _organizationService.ExistsDuplicateNameAndTypeAsync(updatedOrgVm.OrganizationName!, updatedOrgVm.OrganizationTypeId, id);
+                if (isDuplicate)
+                {
+                    ModelState.AddModelError("", "An organization with this name already exists for the selected organization type. Please use a different name or select a different organization type.");
+                    await PopulateOrganizationTypesDropdown(updatedOrgVm.OrganizationTypeId);
+                    return View(updatedOrgVm);
+                }
                 try
                 {
                     var entity = MapToEntity(updatedOrgVm);

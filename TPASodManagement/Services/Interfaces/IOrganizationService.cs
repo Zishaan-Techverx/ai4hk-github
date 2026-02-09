@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http;
 using System.Collections.Generic;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services;
@@ -15,6 +15,10 @@ namespace TpaSodManagement.Services.Interfaces
         Task<Organization> UpdateOrganizationAsync(long id, Organization updatedOrg, IFormFile logoFile);
         Task<bool> DeleteOrganizationAsync(long id, long? deletedByUserId);
         Task<bool> OrganizationExistsAsync(long id);
+        /// <summary>
+        /// Returns true if another organization exists with the same name and same organization type (excludeOrganizationId excluded when editing).
+        /// </summary>
+        Task<bool> ExistsDuplicateNameAndTypeAsync(string organizationName, long? organizationTypeId, long? excludeOrganizationId = null);
         Task<ServiceResponse<List<Organization>>> GetFilteredAsync(Dictionary<string, string> filters);
     }
 }
