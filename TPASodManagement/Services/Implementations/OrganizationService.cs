@@ -122,8 +122,8 @@ namespace TpaSodManagement.Services.Implementations
         }
 
         /// <summary>
-        /// Checks the database for any existing organization (non-deleted) with the same name and same organization type.
-        /// Used for Create/Edit validation so duplicate name+type is rejected.
+        /// Queries the database for any existing organization (non-deleted) with the same name and same organization type.
+        /// Used for Create/Edit validation so duplicate name+type is rejected. Edit: pass excludeOrganizationId so current record is excluded.
         /// </summary>
         public async Task<bool> ExistsDuplicateNameAndTypeAsync(string organizationName, long? organizationTypeId, long? excludeOrganizationId = null)
         {
@@ -131,10 +131,14 @@ namespace TpaSodManagement.Services.Implementations
                 return false;
 
             var nameLower = organizationName.Trim().ToLower();
-            // Query database only (AsNoTracking), compare against all organizations in DB (global filter already excludes soft-deleted)
+            // Query database table directly (IgnoreQueryFilters + AsNoTracking), filter non-deleted, then match name+type
             var query = _context.Organizations
+                .IgnoreQueryFilters()
                 .AsNoTracking()
-                .Where(o => o.OrganizationName != null && o.OrganizationName.ToLower() == nameLower && o.OrganizationTypeId == organizationTypeId);
+                .Where(o => o.DeletedDate == null
+                    && o.OrganizationName != null
+                    && o.OrganizationName.ToLower() == nameLower
+                    && o.OrganizationTypeId == organizationTypeId);
 
             if (excludeOrganizationId.HasValue)
                 query = query.Where(o => o.OrganizationId != excludeOrganizationId.Value);
