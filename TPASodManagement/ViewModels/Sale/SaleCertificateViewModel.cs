@@ -28,4 +28,7 @@ public class SaleCertificateViewModel
 
     /// <summary>Filename only for mapping (HGT, RTF, or RTFHGT).</summary>
     public string CertificateImageFileName { get; set; } = string.Empty;
+
+    /// <summary>Indicates if a certificate template/image exists for this sale.</summary>
+    public bool HasCertificateTemplate { get; set; }
 }

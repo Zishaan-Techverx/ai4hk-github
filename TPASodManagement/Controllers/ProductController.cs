@@ -274,11 +274,11 @@ namespace TpaSodManagement.Controllers
                     ("Standard Price", "StandardPrice"),
                     ("Requires Certificate", "RequiresCertificate"),
                     ("Description", "Description"),
-                    ("Is Active", "IsActive"),
                     ("Certificate Type", "CertificateType"),
                     ("Created By User", "CreatedByUser"),
                     ("Currency", "Currency"),
-                    ("Product Category", "ProductCategory")
+                    ("Product Category", "ProductCategory"),
+                    ("Is Active", "IsActive")
                 };
 
                 var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
@@ -300,11 +300,11 @@ namespace TpaSodManagement.Controllers
                             item.StandardPrice?.ToString("N2") ?? "",
                             item.RequiresCertificate ? "Yes" : "No",
                             item.Description ?? "",
-                            item.IsActive ? "Active" : "Inactive",
                             item.CertificateTypeName ?? "N/A",
                             item.CreatedByUserName ?? "N/A",
                             item.CurrencyCode ?? "N/A",
-                            item.ProductCategoryName ?? "N/A"
+                            item.ProductCategoryName ?? "N/A",
+                            item.IsActive ? "Active" : "Inactive"
                         };
                         return columnIndices.Select(idx => allValues[idx]).ToList();
                     }
@@ -331,12 +331,12 @@ namespace TpaSodManagement.Controllers
                 StandardPrice = entity.StandardPrice,
                 RequiresCertificate = entity.RequiresCertificate,
                 Description = entity.Description,
-                IsActive = entity.IsActive,
                 CreatedDate = entity.CreatedDate,
                 CertificateTypeName = entity.CertificateType?.CertificateTypeName,
                 CreatedByUserName = entity.CreatedByUser?.UserName,
                 CurrencyCode = entity.Currency?.CurrencyCode,
-                ProductCategoryName = entity.ProductCategory?.CategoryName
+                ProductCategoryName = entity.ProductCategory?.CategoryName,
+                IsActive = entity.IsActive
             };
         }
 
@@ -351,13 +351,13 @@ namespace TpaSodManagement.Controllers
                 StandardPrice = entity.StandardPrice,
                 RequiresCertificate = entity.RequiresCertificate,
                 Description = entity.Description,
-                IsActive = entity.IsActive,
                 CertificateTypeId = entity.CertificateTypeId,
                 CreatedByUserId = entity.CreatedByUserId,
                 CurrencyId = entity.CurrencyId,
                 ProductCategoryId = entity.ProductCategoryId,
                 CreatedDate = entity.CreatedDate,
-                IsDetailsView = isDetailsView
+                IsDetailsView = isDetailsView,
+                IsActive = entity.IsActive
             };
         }
 
@@ -372,12 +372,12 @@ namespace TpaSodManagement.Controllers
                 StandardPrice = vm.StandardPrice,
                 RequiresCertificate = vm.RequiresCertificate,
                 Description = vm.Description,
-                IsActive = vm.IsActive,
                 CertificateTypeId = vm.CertificateTypeId,
                 CreatedByUserId = vm.CreatedByUserId ?? 0,
                 CurrencyId = vm.CurrencyId ?? 0,
                 ProductCategoryId = vm.ProductCategoryId ?? 0,
-                CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow
+                CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow,
+                IsActive = vm.IsActive
             };
         }
 

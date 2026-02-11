@@ -72,11 +72,11 @@
                 <th data-column="StandardPrice">Standard Price</th>
                 <th data-column="RequiresCertificate">Requires Certificate</th>
                 <th data-column="Description">Description</th>
-                <th data-column="IsActive">IsActive</th>
                 <th data-column="CertificateType">Certificate Type</th>
                 <th data-column="CreatedByUser">Created By User</th>
                 <th data-column="Currency">Currency</th>
                 <th data-column="ProductCategory">Product Category</th>
+                    <th data-column="IsActive">IsActive</th>
                 <th data-column="Actions" class="no-hide-column">Actions</th>
             </tr>
         </thead>
@@ -90,11 +90,11 @@
                     <td data-column="StandardPrice">@Html.DisplayFor(modelItem => item.StandardPrice)</td>
                     <td data-column="RequiresCertificate"><input type="checkbox" class="form-check-input" disabled @(item.RequiresCertificate ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="Description">@Html.DisplayFor(modelItem => item.Description)</td>
-                    <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="CertificateType">@(item.CertificateTypeName ?? "N/A")</td>
                     <td data-column="CreatedByUser">@(item.CreatedByUserName ?? "N/A")</td>
                     <td data-column="Currency">@(item.CurrencyCode ?? "N/A")</td>
                     <td data-column="ProductCategory">@(item.ProductCategoryName ?? "N/A")</td>
+                        <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="Actions">
                         <div class="btn-group btn-group-sm">
                             @if (User.HasPermission("Product.Detail"))
@@ -1182,11 +1182,11 @@
                 <td data-column="StandardPrice">${item.standardPrice || ''}</td>
                 <td data-column="RequiresCertificate"><input type="checkbox" class="form-check-input" disabled ${item.requiresCertificate ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Description">${escapeHtml(item.description || '')}</td>
-                <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="CertificateType">${escapeHtml(item.certificateTypeName || 'N/A')}</td>
                 <td data-column="CreatedByUser">${escapeHtml(item.createdByUserName || 'N/A')}</td>
                 <td data-column="Currency">${escapeHtml(item.currencyCode || 'N/A')}</td>
                 <td data-column="ProductCategory">${escapeHtml(item.productCategoryName || 'N/A')}</td>
+                <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <a class="btn btn-info" href="@Url.Action("Details", "Product")/${item.productId}">Details</a>

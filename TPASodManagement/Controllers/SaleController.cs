@@ -134,12 +134,19 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null) return NotFound();
 
             var vm = MapToCertificateViewModel(result.Data);
+            if (!vm.HasCertificateTemplate)
+            {
+                TempData["ErrorMessage"] = "No certificate template is configured for the selected organization's farm.";
+                return RedirectToAction(nameof(Certificate), new { id });
+            }
+
             var certDir = Path.Combine(_env.WebRootPath, "Public Data", "Certificates");
             var filePath = Path.Combine(certDir, vm.CertificateImageFileName);
             if (!System.IO.File.Exists(filePath))
             {
                 _logger.LogWarning("Certificate image not found: {Path}", filePath);
-                return NotFound();
+                TempData["ErrorMessage"] = "Certificate template file is missing. Please contact support.";
+                return RedirectToAction(nameof(Certificate), new { id });
             }
 
             var imageBytes = await System.IO.File.ReadAllBytesAsync(filePath);
@@ -490,15 +497,16 @@ namespace TpaSodManagement.Controllers
             const string certRtf = "RTF Sod Certificate.jpg";
             const string certHgt = "HGT Sod Certificate.jpg";
             const string certRtfHgt = "RTF+HGT Sod Certificate.jpg";
-            const string defaultCert = certRtf;
 
-            var certFile = normalizedOrgIdentifier.Contains("RTFHGT")
+            string? certFile = normalizedOrgIdentifier.Contains("RTFHGT")
                 ? certRtfHgt
                 : normalizedOrgIdentifier.Contains("HGT")
                     ? certHgt
                     : normalizedOrgIdentifier.Contains("RTF")
                         ? certRtf
-                        : defaultCert;
+                        : null;
+            var hasCertificateTemplate = !string.IsNullOrEmpty(certFile);
+            var certPath = hasCertificateTemplate ? $"Public Data/Certificates/{certFile}" : string.Empty;
 
             return new SaleCertificateViewModel
             {
@@ -510,8 +518,9 @@ namespace TpaSodManagement.Controllers
                 AreaSold = sale.TotalAmount.ToString("N2"),
                 InvoiceNumbers = sale.InvoiceNumber ?? "—",
                 Customer = customerName,
-                CertificateImagePath = $"Public Data/Certificates/{certFile}",
-                CertificateImageFileName = certFile
+                CertificateImagePath = certPath,
+                CertificateImageFileName = certFile ?? string.Empty,
+                HasCertificateTemplate = hasCertificateTemplate
             };
         }
 
