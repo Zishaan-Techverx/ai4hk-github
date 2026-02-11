@@ -116,15 +116,8 @@
                                     <td data-column="StateName">@Html.DisplayFor(modelItem => user.StateName)</td>
                                     <td data-column="PostalCode">@Html.DisplayFor(modelItem => user.PostalCode)</td>
                                     <td data-column="IsActive">
-                                            @if (user.IsActive)
-                                            {
-                                                <span class="badge bg-success">Active</span>
-                                            }
-                                            else
-                                            {
-                                                <span class="badge bg-danger">Inactive</span>
-                                            }
-                                        </td>
+                                        <input type="checkbox" class="form-check-input is-active-checkbox" disabled @(user.IsActive ? "checked" : "") />
+                                    </td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
                                                 <!-- DETAILS BUTTON -->
@@ -1302,7 +1295,9 @@
                 <td data-column="City">${escapeHtml(item.city || '')}</td>
                 <td data-column="StateName">${escapeHtml(item.stateName || '')}</td>
                 <td data-column="PostalCode">${escapeHtml(item.postalCode || '')}</td>
-                <td data-column="IsActive">${item.isActive ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'}</td>
+                <td data-column="IsActive">
+                    <input type="checkbox" class="form-check-input is-active-checkbox" disabled ${item.isActive ? 'checked' : ''} />
+                </td>
                 <td>
                     <div class="btn-group btn-group-sm">
                         <a class="btn btn-info" href="@Url.Action("Details", "User")/${item.id}">Details</a>

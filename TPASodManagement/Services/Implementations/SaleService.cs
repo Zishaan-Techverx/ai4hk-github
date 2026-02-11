@@ -487,13 +487,26 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(f => f.FarmId)
                     .ToListAsync();
 
-                // Create SelectList for Farms with display name (LicenseNumber or Farm ID with Organization)
-                var farmItems = farms.Select(f => new SelectListItem
+                // Create SelectList for Farms with display name (Farm Name preferred)
+                var farmItems = farms.Select(f =>
                 {
-                    Value = f.FarmId.ToString(),
-                    Text = !string.IsNullOrEmpty(f.LicenseNumber)
-                        ? $"{f.LicenseNumber} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
-                        : $"Farm #{f.FarmId} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
+                    var farmName = f.FarmName?.Trim();
+                    var license = f.LicenseNumber?.Trim();
+                    var orgName = f.Organization?.OrganizationName?.Trim();
+
+                    var primaryLabel = !string.IsNullOrEmpty(farmName)
+                        ? farmName
+                        : !string.IsNullOrEmpty(license)
+                            ? license
+                            : $"Farm #{f.FarmId}";
+
+                    var suffix = !string.IsNullOrEmpty(orgName) ? $" ({orgName})" : string.Empty;
+
+                    return new SelectListItem
+                    {
+                        Value = f.FarmId.ToString(),
+                        Text = primaryLabel + suffix
+                    };
                 }).ToList();
 
                 // Currencies fetch karein
