@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TpaSodManagement.Database.Entities;
@@ -10,6 +10,8 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<List<Sale>>> GetAllAsync();
         Task<ServiceResponse<List<Sale>>> GetFilteredAsync(Dictionary<string, string> filters);
         Task<ServiceResponse<Sale>> GetByIdAsync(long id);
+        /// <summary>Loads sale with Farm (Address, Organization), Customer (Person, Organization) for certificate.</summary>
+        Task<ServiceResponse<Sale>> GetByIdForCertificateAsync(long id);
         Task<ServiceResponse<Sale>> CreateAsync(Sale sale);
         Task<ServiceResponse<Sale>> UpdateAsync(Sale sale);
         Task<ServiceResponse<bool>> DeleteAsync(long id, long? deletedByUserId);

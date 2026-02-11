@@ -1,0 +1,76 @@
+@model TpaSodManagement.ViewModels.Sale.SaleCertificateViewModel
+
+@{
+    ViewData["Title"] = "Certificate - Sale " + (Model.SaleNumber ?? Model.SaleId.ToString());
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <a asp-action="Index" class="btn btn-secondary"><i class="bi bi-arrow-left"></i> Back</a>
+        <a asp-action="DownloadCertificate" asp-route-id="@Model.SaleId" class="btn btn-primary" download>
+            Download Certificate
+        </a>
+    </div>
+
+    <div class="row">
+        <div class="col-md-5">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Certificate Information</h5>
+                </div>
+                <div class="card-body">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4 text-muted">Licensed Grower</dt>
+                        <dd class="col-sm-8">@Model.LicensedGrower</dd>
+
+                        <dt class="col-sm-4 text-muted">Farm Address</dt>
+                        <dd class="col-sm-8">@Model.FarmAddress</dd>
+
+                        <dt class="col-sm-4 text-muted">Date Certificate Issued</dt>
+                        <dd class="col-sm-8">@Model.DateCertificateIssued</dd>
+
+                        <dt class="col-sm-4 text-muted">Area Sold</dt>
+                        <dd class="col-sm-8">@Model.AreaSold</dd>
+
+                        <dt class="col-sm-4 text-muted">Invoice Number(s)</dt>
+                        <dd class="col-sm-8">@Model.InvoiceNumbers</dd>
+
+                        <dt class="col-sm-4 text-muted">Customer</dt>
+                        <dd class="col-sm-8">@Model.Customer</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-7">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Certificate Preview</h5>
+                </div>
+                <div class="card-body p-2 position-relative">
+                    <div class="position-relative" style="max-width: 100%;">
+                        <img src="@Url.Content("~/" + Model.CertificateImagePath)" 
+                             alt="Certificate" 
+                             class="img-fluid border" 
+                             style="width: 100%; display: block;" />
+                        <div class="position-absolute top-0 start-0 end-0 bottom-0 w-100 h-100" style="pointer-events: none;">
+                            @* 1. LICENSED GROWER: directly BELOW blue band, centered beneath heading; regular, small font *@
+                            <div class="text-dark text-center small" style="position: absolute; left: 18%; top: 33.5%; right: 5%; font-size: 1rem;">@Model.LicensedGrower</div>
+                            @* 1b. FARM ADDRESS: below Licensed Grower *@
+                            <div class="text-dark text-center small" style="position: absolute; left: 18%; top: 38%; right: 5%; font-size: 1rem;">@Model.FarmAddress</div>
+                            @* 2. DATE CERTIFICATE ISSUED: value to the right of colon (HGT SOD SALE section) *@
+                            <div class="small text-dark" style="position: absolute; left: 50%; top: 47.8%; right: 12%; font-size: 1rem;">@Model.DateCertificateIssued</div>
+                            @* 3. AREA SOLD: value to the right of colon *@
+                            <div class="small text-dark" style="position: absolute; left: 50%; top: 52%; right: 12%; font-size: 1rem;">@Model.AreaSold</div>
+                            @* 4. INVOICE NUMBER(S): value below/same line to the right of INV- *@
+                            <div class="small text-dark" style="position: absolute; left: 50%; top: 55.8%; right: 12%; font-size: 1rem;">@Model.InvoiceNumbers</div>
+                            @* 5. CUSTOMER: directly BELOW the word "CUSTOMER", left-aligned (BUYER INFORMATION) *@
+                            <div class="text-dark small" style="position: absolute; left: 48%; top: 64%; right: 12%; font-size: 1rem;">@Model.Customer</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

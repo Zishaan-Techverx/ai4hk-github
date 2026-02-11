@@ -304,6 +304,39 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
+        public async Task<ServiceResponse<Sale>> GetByIdForCertificateAsync(long id)
+        {
+            var response = new ServiceResponse<Sale>();
+            try
+            {
+                var sale = await _context.Sales
+                    .Include(s => s.Currency)
+                    .Include(s => s.Customer).ThenInclude(c => c.Person)
+                    .Include(s => s.Customer).ThenInclude(c => c.Organization)
+                    .Include(s => s.Farm).ThenInclude(f => f.Address).ThenInclude(a => a!.StateProvince)
+                    .Include(s => s.Farm).ThenInclude(f => f.Organization).ThenInclude(o => o!.OrganizationType)
+                    .Include(s => s.SaleType)
+                    .Include(s => s.Status)
+                    .FirstOrDefaultAsync(s => s.SaleId == id);
+
+                if (sale == null)
+                {
+                    response.Success = false;
+                    response.Message = "Sale not found";
+                }
+                else
+                {
+                    response.Data = sale;
+                }
+            }
+            catch (Exception ex)
+            {
+                response.Success = false;
+                response.Message = $"Error fetching sale for certificate: {ex.Message}";
+            }
+            return response;
+        }
+
         public async Task<ServiceResponse<Sale>> CreateAsync(Sale sale)
         {
             var response = new ServiceResponse<Sale>();

@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System;
@@ -7,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
+using System.Text;
 using TpaSodManagement.Services.Interfaces;
 using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
@@ -22,18 +24,21 @@ namespace TpaSodManagement.Controllers
         private readonly ISaleService _saleService;
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ILogger<SaleController> _logger;
-        private readonly IExportToExcel _exportToExcel; 
+        private readonly IExportToExcel _exportToExcel;
+        private readonly IWebHostEnvironment _env;
 
         public SaleController(
             ISaleService saleService,
             UserManager<TpaSodManagementUser> userManager,
             ILogger<SaleController> logger,
-            IExportToExcel exportToExcel)
+            IExportToExcel exportToExcel,
+            IWebHostEnvironment env)
         {
             _saleService = saleService;
             _userManager = userManager;
             _logger = logger;
             _exportToExcel = exportToExcel;
+            _env = env;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -107,6 +112,41 @@ namespace TpaSodManagement.Controllers
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Sale Details";
             return View("Edit", vm);
+        }
+
+        public async Task<IActionResult> Certificate(long? id)
+        {
+            if (id == null) return NotFound();
+
+            var result = await _saleService.GetByIdForCertificateAsync(id.Value);
+            if (!result.Success || result.Data == null) return NotFound();
+
+            var vm = MapToCertificateViewModel(result.Data);
+            return View(vm);
+        }
+
+        /// <summary>Returns the certificate as PDF (same data and placement as preview) for download.</summary>
+        public async Task<IActionResult> DownloadCertificate(long? id)
+        {
+            if (id == null) return NotFound();
+
+            var result = await _saleService.GetByIdForCertificateAsync(id.Value);
+            if (!result.Success || result.Data == null) return NotFound();
+
+            var vm = MapToCertificateViewModel(result.Data);
+            var certDir = Path.Combine(_env.WebRootPath, "Public Data", "Certificates");
+            var filePath = Path.Combine(certDir, vm.CertificateImageFileName);
+            if (!System.IO.File.Exists(filePath))
+            {
+                _logger.LogWarning("Certificate image not found: {Path}", filePath);
+                return NotFound();
+            }
+
+            var imageBytes = await System.IO.File.ReadAllBytesAsync(filePath);
+            var pdfBytes = CertificatePdfGenerator.Generate(vm, imageBytes);
+
+            var downloadName = $"Certificate_Sale_{(vm.SaleNumber != null ? vm.SaleNumber.Replace(" ", "_") : id?.ToString() ?? "Certificate")}.pdf";
+            return File(pdfBytes, "application/pdf", downloadName);
         }
 
         public async Task<IActionResult> Create()
@@ -402,6 +442,92 @@ namespace TpaSodManagement.Controllers
                 UpdatedDate = entity.UpdatedDate,
                 IsDetailsView = isDetailsView
             };
+        }
+
+        private static SaleCertificateViewModel MapToCertificateViewModel(Sale sale)
+        {
+            var farm = sale.Farm;
+            var customer = sale.Customer;
+            var orgTypeName = farm?.Organization?.OrganizationType?.OrganizationTypeName
+                ?? farm?.Organization?.OrganizationTypeName
+                ?? string.Empty;
+            var orgName = farm?.Organization?.OrganizationName ?? string.Empty;
+            var orgIdentifier = !string.IsNullOrWhiteSpace(orgName) ? orgName : orgTypeName;
+            var normalizedOrgIdentifier = NormalizeCertificateIdentifier(orgIdentifier);
+
+            // Licensed grower: farm name only
+            var licensedGrower = !string.IsNullOrWhiteSpace(farm?.FarmName) ? farm.FarmName.Trim() : "—";
+
+            // Farm address: full address separately
+            var farmAddressParts = new List<string>();
+            if (farm?.Address != null)
+            {
+                var a = farm.Address;
+                var line1 = a.AddressLine1?.Trim();
+                if (!string.IsNullOrEmpty(line1)) farmAddressParts.Add(line1);
+                if (!string.IsNullOrWhiteSpace(a.AddressLine2)) farmAddressParts.Add(a.AddressLine2.Trim());
+                var cityStateZip = new List<string>();
+                if (!string.IsNullOrWhiteSpace(a.City)) cityStateZip.Add(a.City.Trim());
+                if (a.StateProvince?.StateName != null) cityStateZip.Add(a.StateProvince.StateName.Trim());
+                if (!string.IsNullOrWhiteSpace(a.PostalCode)) cityStateZip.Add(a.PostalCode.Trim());
+                if (cityStateZip.Count > 0) farmAddressParts.Add(string.Join(", ", cityStateZip));
+            }
+            var farmAddress = farmAddressParts.Count > 0 ? string.Join(", ", farmAddressParts) : "—";
+
+            // Customer: FirstName MiddleName LastName or Organization name
+            string customerName = "—";
+            if (customer?.Person != null)
+            {
+                var p = customer.Person;
+                customerName = string.Join(" ", new[] { p.FirstName?.Trim(), p.MiddleName?.Trim(), p.LastName?.Trim() }.Where(s => !string.IsNullOrEmpty(s))).Trim();
+            }
+            else if (customer?.Organization != null && !string.IsNullOrWhiteSpace(customer.Organization.OrganizationName))
+            {
+                customerName = customer.Organization.OrganizationName.Trim();
+            }
+
+            // Certificate image: choose by organization (name preferred) or type (HGT, RTF, RTFHGT)
+            const string certRtf = "RTF Sod Certificate.jpg";
+            const string certHgt = "HGT Sod Certificate.jpg";
+            const string certRtfHgt = "RTF+HGT Sod Certificate.jpg";
+            const string defaultCert = certRtf;
+
+            var certFile = normalizedOrgIdentifier.Contains("RTFHGT")
+                ? certRtfHgt
+                : normalizedOrgIdentifier.Contains("HGT")
+                    ? certHgt
+                    : normalizedOrgIdentifier.Contains("RTF")
+                        ? certRtf
+                        : defaultCert;
+
+            return new SaleCertificateViewModel
+            {
+                SaleId = sale.SaleId,
+                SaleNumber = sale.SaleNumber ?? "",
+                LicensedGrower = licensedGrower,
+                FarmAddress = farmAddress,
+                DateCertificateIssued = sale.SaleDate.ToString("MMMM d, yyyy"),
+                AreaSold = sale.TotalAmount.ToString("N2"),
+                InvoiceNumbers = sale.InvoiceNumber ?? "—",
+                Customer = customerName,
+                CertificateImagePath = $"Public Data/Certificates/{certFile}",
+                CertificateImageFileName = certFile
+            };
+        }
+
+        private static string NormalizeCertificateIdentifier(string value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+                return string.Empty;
+
+            var sb = new StringBuilder(value.Length);
+            foreach (var ch in value)
+            {
+                if (char.IsLetterOrDigit(ch))
+                    sb.Append(char.ToUpperInvariant(ch));
+            }
+
+            return sb.ToString();
         }
 
         private static Sale MapToEntity(SaleEditViewModel vm)

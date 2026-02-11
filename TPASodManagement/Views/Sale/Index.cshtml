@@ -115,6 +115,9 @@
                             <div class="btn-group btn-group-sm">
                                 @if (User.HasPermission("Sale.Detail"))
                                 {
+                                    <a class="btn btn-secondary" asp-action="Certificate" asp-route-id="@item.SaleId" title="Download Certificate">
+                                        Download Certificate
+                                    </a>
                                     <a class="btn btn-info" asp-action="Details" asp-route-id="@item.SaleId">
                                         Details
                                     </a>
@@ -1133,6 +1136,7 @@
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Actions">
                     <div class="btn-group btn-group-sm">
+                        <a class="btn btn-secondary" href="@Url.Action("Certificate", "Sale")/${item.saleId}" title="Download Certificate">Download Certificate</a>
                         <a class="btn btn-info" href="@Url.Action("Details", "Sale")/${item.saleId}">Details</a>
                         <a class="btn btn-warning" href="@Url.Action("Edit", "Sale")/${item.saleId}">Edit</a>
                         <a href="#" class="btn btn-danger delete-btn" data-id="${item.saleId}" data-name="${escapeHtml(item.saleNumber || `Sale #${item.saleId}`)}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
