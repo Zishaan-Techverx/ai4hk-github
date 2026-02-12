@@ -7,7 +7,9 @@
     var columnNames = ViewBag.FilterColumns as Dictionary<string, string> ?? new Dictionary<string, string>();
     var moduleName = ViewBag.ModuleName as string ?? "Module";
     // Get boolean columns (columns that should use toggle instead of input)
-    var booleanColumns = ViewBag.BooleanColumns as HashSet<string> ?? new HashSet<string> { "IsActive", "TaxExempt" };
+    var booleanColumns = ViewBag.BooleanColumns as HashSet<string> ?? new HashSet<string> { "TaxExempt" };
+    // Get tri-state columns (e.g. IsActive: 0=Inactive, 1=All, 2=Active) - rendered as 3-state slider like listing bottom
+    var triStateColumns = ViewBag.TriStateColumns as HashSet<string> ?? new HashSet<string> { "IsActive" };
     // Get date columns (columns that should use date range filters)
     var dateColumns = ViewBag.DateColumns as HashSet<string> ?? new HashSet<string>();
     // Get dropdown columns (column key -> list of SelectListItem for filter dropdown)
@@ -36,17 +38,26 @@
                 <div class="row g-3" id="filterContainer">
                     @foreach (var column in columnNames)
                     {
-                        var isBoolean = booleanColumns.Contains(column.Key);
+                        var isTriState = triStateColumns.Contains(column.Key);
+                        var isBoolean = !isTriState && booleanColumns.Contains(column.Key);
                         var isDate = dateColumns.Contains(column.Key);
                         var isDropdown = dropdownFilterColumns.ContainsKey(column.Key);
                         var dropdownItems = isDropdown ? dropdownFilterColumns[column.Key] : null;
-                        <div class="col-12 filter-item" data-column="@column.Key" data-is-boolean="@isBoolean.ToString().ToLower()" data-is-date="@isDate.ToString().ToLower()" data-is-dropdown="@isDropdown.ToString().ToLower()">
+                        <div class="col-12 filter-item" data-column="@column.Key" data-is-boolean="@isBoolean.ToString().ToLower()" data-is-tristate="@isTriState.ToString().ToLower()" data-is-date="@isDate.ToString().ToLower()" data-is-dropdown="@isDropdown.ToString().ToLower()">
                             <div class="d-flex align-items-center gap-3">
                                 <label class="form-label mb-0 text-nowrap" style="width: 240px; font-weight: 500; flex-shrink: 0;">
                                     @column.Value:
                                 </label>
                                 <div class="flex-grow-1 position-relative" style="min-width: 0;">
-                                    @if (isBoolean)
+                                    @if (isTriState)
+                                    {
+                                        <div class="isactive-tristate-wrapper filter-tristate-wrapper" id="filterTriStateWrapper_@column.Key">
+                                            <span class="tristate-label">InActive</span>
+                                            <input type="range" class="filter-tristate isactive-tristate" data-column="@column.Key" id="filterTriState_@column.Key" min="0" max="2" step="1" value="1" title="Inactive | All | Active" aria-label="Filter by active status" />
+                                            <span class="tristate-label">Active</span>
+                                        </div>
+                                    }
+                                    else if (isBoolean)
                                     {
                                         <div class="d-flex align-items-center gap-2">
                                             <label class="form-check-label mb-0">No</label>
@@ -200,5 +211,82 @@
     .modal-body::-webkit-scrollbar-thumb:hover {
         background-color: #a0aec0;
     }
+
+    .filter-tristate-wrapper.isactive-tristate--active .isactive-tristate {
+        background-color: #007bff;
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        box-shadow: 0 0 0 1px rgba(0, 123, 255, 0.5);
+    }
+
+    /* 3-state IsActive slider in modal - match listing below */
+    .filter-tristate-wrapper.isactive-tristate-wrapper {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .filter-tristate-wrapper .tristate-label {
+        font-size: 0.875rem;
+        color: #495057;
+        font-weight: 400;
+        font-family: inherit;
+    }
+    .filter-tristate-wrapper .filter-tristate.isactive-tristate {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 2.75em;
+        height: 1.1em;
+        border-radius: 2em;
+        background-color: #dee2e6;
+        border: 1px solid #ced4da;
+        outline: none;
+        vertical-align: middle;
+        transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    }
+    .filter-tristate-wrapper .filter-tristate.isactive-tristate::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 0.9em;
+        height: 0.9em;
+        border-radius: 50%;
+        background-color: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+        margin-top: -0.05em;
+        transition: box-shadow 0.15s ease-in-out;
+    }
+    .filter-tristate-wrapper .filter-tristate.isactive-tristate::-moz-range-thumb {
+        width: 0.9em;
+        height: 0.9em;
+        border-radius: 50%;
+        background-color: #fff;
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+        cursor: pointer;
+    }
+    .filter-tristate-wrapper .filter-tristate.isactive-tristate:focus {
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
 </style>
+<script>
+    (function() {
+        function initFilterModalTriStates() {
+            document.querySelectorAll('.filter-tristate').forEach(function(el) {
+                var w = el.closest('.filter-tristate-wrapper');
+                function updateTrack() {
+                    if (w) w.classList.toggle('isactive-tristate--active', el.value === '2');
+                }
+                updateTrack();
+                el.removeEventListener('input', updateTrack);
+                el.removeEventListener('change', updateTrack);
+                el.addEventListener('input', updateTrack);
+                el.addEventListener('change', updateTrack);
+            });
+            if (typeof window.syncFilterModalIsActive === 'function') window.syncFilterModalIsActive();
+            if (typeof window.updateIsActiveTriStateTrackClass === 'function') window.updateIsActiveTriStateTrackClass();
+        }
+        document.addEventListener('DOMContentLoaded', initFilterModalTriStates);
+        document.getElementById('filterModal')?.addEventListener('shown.bs.modal', initFilterModalTriStates);
+    })();
+</script>
 

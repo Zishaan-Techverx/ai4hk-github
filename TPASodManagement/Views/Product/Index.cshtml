@@ -791,8 +791,11 @@
                 });
                 var tri = document.getElementById('isActiveTriState');
                 if (tri) tri.value = 1;
+                var modalTri = document.getElementById('filterTriState_IsActive');
+                if (modalTri) modalTri.value = 1;
                 activeFilters = {};
                 localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
+                updateFilterCount();
             });
         }
 
@@ -824,6 +827,8 @@
                 });
                 var tri = document.getElementById('isActiveTriState');
                 if (tri) tri.value = 1;
+                var modalTri = document.getElementById('filterTriState_IsActive');
+                if (modalTri) modalTri.value = 1;
                 activeFilters = {};
                 localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
                 isFiltered = false;
@@ -857,15 +862,24 @@
         }
 
         // Is Active tri-state: init from storage and on change re-apply filters
+        function syncIsActiveTriStateFromFilters() {
+            var triVal = activeFilters.IsActive === 'false' ? 0 : (activeFilters.IsActive === 'true' ? 2 : 1);
+            var mt = document.getElementById('filterTriState_IsActive'), bt = document.getElementById('isActiveTriState');
+            if (mt) mt.value = triVal;
+            if (bt) bt.value = triVal;
+            if (typeof window.updateIsActiveTriStateTrackClass === 'function') window.updateIsActiveTriStateTrackClass();
+        }
+        window.syncFilterModalIsActive = syncIsActiveTriStateFromFilters;
+        syncIsActiveTriStateFromFilters();
         const isActiveTriState = document.getElementById('isActiveTriState');
         if (isActiveTriState) {
-            var isActiveVal = activeFilters.IsActive;
-            isActiveTriState.value = isActiveVal === 'false' ? 0 : (isActiveVal === 'true' ? 2 : 1);
             isActiveTriState.addEventListener('change', async function() {
                 var v = parseInt(this.value, 10);
                 if (v === 0) activeFilters.IsActive = 'false';
                 else if (v === 2) activeFilters.IsActive = 'true';
                 else delete activeFilters.IsActive;
+                var m = document.getElementById('filterTriState_IsActive');
+                if (m) m.value = this.value;
                 localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
                 isFiltered = Object.keys(activeFilters).length > 0;
                 if (!isFiltered) {
@@ -915,6 +929,10 @@
                 if (filterToggle && (value === 'true' || value === 'false')) {
                     filterToggle.checked = (value === 'true');
                 }
+                const filterTri = document.getElementById(`filterTriState_${baseCol}`);
+                if (filterTri && (baseCol === 'IsActive')) {
+                    filterTri.value = value === 'false' ? 0 : (value === 'true' ? 2 : 1);
+                }
             }
         });
     }
@@ -962,13 +980,17 @@
                 }
             });
 
-            // Merge Is Active tri-state (bottom-right) into activeFilters
-            const isActiveTriStateEl = document.getElementById('isActiveTriState');
-            if (isActiveTriStateEl) {
-                var v = parseInt(isActiveTriStateEl.value, 10);
+            // Merge Is Active tri-state (modal or bottom) into activeFilters and sync both
+            var triEl = document.getElementById('filterTriState_IsActive') || document.getElementById('isActiveTriState');
+            if (triEl) {
+                var v = parseInt(triEl.value, 10);
                 if (v === 0) activeFilters.IsActive = 'false';
                 else if (v === 2) activeFilters.IsActive = 'true';
                 else delete activeFilters.IsActive;
+                var mt = document.getElementById('filterTriState_IsActive'), bt = document.getElementById('isActiveTriState');
+                if (mt) mt.value = triEl.value;
+                if (bt) bt.value = triEl.value;
+                if (typeof window.updateIsActiveTriStateTrackClass === 'function') window.updateIsActiveTriStateTrackClass();
             }
 
             // If no filters are active, clear everything and reload

@@ -47,10 +47,12 @@ namespace TpaSodManagement.Controllers
                 { "FarmLicenseNumber", "Farm" },
                 { "FieldName", "Field" },
                 { "TagRangeCode", "Tag Range" },
-                { "UserName", "User" }
+                { "UserName", "User" },
+                { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Seedings";
             ViewBag.BooleanColumns = new HashSet<string>();
+            ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
             ViewBag.DateColumns = new HashSet<string> { "SeedingDate" };
 
             var result = await _seedingService.GetAllAsync();

@@ -33,10 +33,12 @@ namespace TpaSodManagement.Controllers
                 { "AreaTypeName", "Area Type Name" },
                 { "UnitAbbreviation", "Unit Abbreviation" },
                 { "UnitSystem", "Unit System" },
-                { "ConversionToSquareMeters", "Conversion To Square Meters" }
+                { "ConversionToSquareMeters", "Conversion To Square Meters" },
+                { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Area Types";
             ViewBag.BooleanColumns = new HashSet<string>();
+            ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
 
             var result = await _areaTypeService.GetAllAsync();
             if (!result.Success)

@@ -46,10 +46,12 @@ namespace TpaSodManagement.Controllers
                 { "CertificateTypeName", "Certificate Type" },
                 { "CreatedByUserName", "Created By User" },
                 { "CurrencyCode", "Currency" },
-                { "ProductCategoryName", "Product Category" }
+                { "ProductCategoryName", "Product Category" },
+                { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Products";
             ViewBag.BooleanColumns = new HashSet<string> { "RequiresCertificate" };
+            ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
             ViewBag.DateColumns = new HashSet<string>();
 
             var result = await _productService.GetAllAsync();

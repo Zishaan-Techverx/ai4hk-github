@@ -53,10 +53,12 @@ namespace TpaSodManagement.Controllers
                 { "ElevationMeters", "Elevation Meters" },
                 { "SoilType", "Soil Type" },
                 { "IrrigationType", "Irrigation Type" },
-                { "ClimateZone", "Climate Zone" }
+                { "ClimateZone", "Climate Zone" },
+                { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Farms";
             ViewBag.BooleanColumns = new HashSet<string> { "OrganicCertified" };
+            ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
 
             var result = await _farmService.GetAllAsync();
             if (!result.Success)

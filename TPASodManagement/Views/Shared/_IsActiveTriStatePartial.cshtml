@@ -66,17 +66,17 @@
 <script>
     (function() {
         function updateTrackClass() {
-            var el = document.getElementById('isActiveTriState');
-            if (!el) return;
-            var w = el.closest('.isactive-tristate-wrapper');
-            if (w) w.classList.toggle('isactive-tristate--active', el.value === '2');
+            document.querySelectorAll('.isactive-tristate').forEach(function(el) {
+                var w = el.closest('.isactive-tristate-wrapper');
+                if (w) w.classList.toggle('isactive-tristate--active', el.value === '2');
+            });
         }
         document.addEventListener('DOMContentLoaded', function() {
-            var el = document.getElementById('isActiveTriState');
-            if (!el) return;
-            updateTrackClass();
-            el.addEventListener('input', updateTrackClass);
-            el.addEventListener('change', updateTrackClass);
+            document.querySelectorAll('.isactive-tristate').forEach(function(el) {
+                updateTrackClass();
+                el.addEventListener('input', updateTrackClass);
+                el.addEventListener('change', updateTrackClass);
+            });
         });
         window.updateIsActiveTriStateTrackClass = updateTrackClass;
     })();

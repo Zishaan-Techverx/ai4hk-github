@@ -36,10 +36,12 @@ namespace TpaSodManagement.Controllers
                 { "CurrencyCode", "Currency Code" },
                 { "CurrencyName", "Currency Name" },
                 { "CurrencySymbol", "Currency Symbol" },
-                { "DecimalPlaces", "Decimal Places" }
+                { "DecimalPlaces", "Decimal Places" },
+                { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Currencies";
             ViewBag.BooleanColumns = new HashSet<string>();
+            ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
 
             var result = await _currencyService.GetAllAsync();
             if (!result.Success)

@@ -36,10 +36,12 @@ namespace TpaSodManagement.Controllers
             {
                 { "CategoryCode", "Category Code" },
                 { "CategoryName", "Category Name" },
-                { "Description", "Description" }
+                { "Description", "Description" },
+                { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Product Categories";
             ViewBag.BooleanColumns = new HashSet<string>();
+            ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
 
             var result = await _productCategoryService.GetAllAsync();
             if (!result.Success)

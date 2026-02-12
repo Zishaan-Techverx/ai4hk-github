@@ -101,10 +101,12 @@ namespace TpaSodManagement.Controllers
                     { "PhoneNumber", "Phone Number" },
                     { "City", "City" },
                     { "StateName", "State" },
-                    { "PostalCode", "Postal Code" }
+                    { "PostalCode", "Postal Code" },
+                    { "IsActive", "Is Active" }
                 };
                 ViewBag.ModuleName = "Users";
                 ViewBag.BooleanColumns = new HashSet<string>();
+                ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
                 ViewBag.PageNumber = pageNumber;
                 ViewBag.TotalPages = totalPages;
                 ViewBag.TotalCount = totalCount;

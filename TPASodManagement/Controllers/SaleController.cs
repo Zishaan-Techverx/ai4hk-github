@@ -63,10 +63,12 @@ namespace TpaSodManagement.Controllers
                 { "SaleTypeName", "Sale Type" },
                 { "StatusName", "Status" },
                 { "UpdatedByUserName", "Updated By User" },
-                { "UserName", "User" }
+                { "UserName", "User" },
+                { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Sales";
             ViewBag.BooleanColumns = new HashSet<string>();
+            ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
             ViewBag.DateColumns = new HashSet<string> { "SaleDate", "DueDate" };
 
             var result = await _saleService.GetAllAsync();

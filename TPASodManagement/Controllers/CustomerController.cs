@@ -52,7 +52,8 @@ namespace TpaSodManagement.Controllers
                 { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Customers";
-            ViewBag.BooleanColumns = new HashSet<string> { "TaxExempt", "IsActive" };
+            ViewBag.BooleanColumns = new HashSet<string> { "TaxExempt" };
+            ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
             ViewBag.DateColumns = new HashSet<string>();
 
             var result = await _customerService.GetAllAsync();
