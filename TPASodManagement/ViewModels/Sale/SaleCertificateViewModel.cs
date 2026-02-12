@@ -23,6 +23,9 @@ public class SaleCertificateViewModel
     /// <summary>Customer name (FirstName MiddleName LastName or Organization name).</summary>
     public string Customer { get; set; } = string.Empty;
 
+    /// <summary>Customer address (full address) for certificate.</summary>
+    public string CustomerAddress { get; set; } = string.Empty;
+
     /// <summary>Relative path to certificate image in wwwroot (e.g. Public Data/Certificates/RTF Sod Certificate 2026_page-0001.jpg).</summary>
     public string CertificateImagePath { get; set; } = string.Empty;
 

@@ -95,6 +95,14 @@ public static class CertificatePdfGenerator
                         .Text(vm.Customer)
                         .FontSize(fontSize)
                         .FontColor(Colors.Black);
+
+                    // 5b. CUSTOMER ADDRESS: left 48%, top 68% (below Customer name)
+                    layers.Layer()
+                        .PaddingLeft(LeftPt(42f))
+                        .PaddingTop(TopPt(68f))
+                        .Text(vm.CustomerAddress)
+                        .FontSize(fontSize)
+                        .FontColor(Colors.Black);
                 });
             });
         });

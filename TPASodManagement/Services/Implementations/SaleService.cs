@@ -311,8 +311,9 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var sale = await _context.Sales
                     .Include(s => s.Currency)
-                    .Include(s => s.Customer).ThenInclude(c => c.Person)
-                    .Include(s => s.Customer).ThenInclude(c => c.Organization)
+                    .Include(s => s.Customer).ThenInclude(c => c!.Person)
+                    .Include(s => s.Customer).ThenInclude(c => c!.Organization)
+                    .Include(s => s.Customer).ThenInclude(c => c!.Address).ThenInclude(a => a!.StateProvince)
                     .Include(s => s.Farm).ThenInclude(f => f.Address).ThenInclude(a => a!.StateProvince)
                     .Include(s => s.Farm).ThenInclude(f => f.Organization).ThenInclude(o => o!.OrganizationType)
                     .Include(s => s.SaleType)

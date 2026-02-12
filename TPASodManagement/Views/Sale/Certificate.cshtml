@@ -59,6 +59,9 @@
 
                         <dt class="col-sm-4 text-muted">Customer</dt>
                         <dd class="col-sm-8">@Model.Customer</dd>
+
+                        <dt class="col-sm-4 text-muted">Customer Address</dt>
+                        <dd class="col-sm-8">@Model.CustomerAddress</dd>
                     </dl>
                 </div>
             </div>
@@ -89,6 +92,8 @@
                                 <div class="small text-dark" style="position: absolute; left: 50%; top: 55.8%; right: 12%; font-size: 1rem;">@Model.InvoiceNumbers</div>
                                 @* 5. CUSTOMER: directly BELOW the word "CUSTOMER", left-aligned (BUYER INFORMATION) *@
                                 <div class="text-dark small" style="position: absolute; left: 48%; top: 64%; right: 12%; font-size: 1rem;">@Model.Customer</div>
+                                @* 5b. CUSTOMER ADDRESS: below Customer name *@
+                                <div class="text-dark small" style="position: absolute; left: 42%; top: 68%; right: 12%; font-size: 1rem;">@Model.CustomerAddress</div>
                             </div>
                         </div>
                     }

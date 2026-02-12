@@ -493,6 +493,22 @@ namespace TpaSodManagement.Controllers
                 customerName = customer.Organization.OrganizationName.Trim();
             }
 
+            // Customer address: from Customer.Address (not Person/Organization)
+            var customerAddressParts = new List<string>();
+            if (customer?.Address != null)
+            {
+                var a = customer.Address;
+                var line1 = a.AddressLine1?.Trim();
+                if (!string.IsNullOrEmpty(line1)) customerAddressParts.Add(line1);
+                if (!string.IsNullOrWhiteSpace(a.AddressLine2)) customerAddressParts.Add(a.AddressLine2.Trim());
+                var cityStateZip = new List<string>();
+                if (!string.IsNullOrWhiteSpace(a.City)) cityStateZip.Add(a.City.Trim());
+                if (a.StateProvince?.StateName != null) cityStateZip.Add(a.StateProvince.StateName.Trim());
+                if (!string.IsNullOrWhiteSpace(a.PostalCode)) cityStateZip.Add(a.PostalCode.Trim());
+                if (cityStateZip.Count > 0) customerAddressParts.Add(string.Join(", ", cityStateZip));
+            }
+            var customerAddress = customerAddressParts.Count > 0 ? string.Join(", ", customerAddressParts) : "—";
+
             // Certificate image: choose by organization (name preferred) or type (HGT, RTF, RTFHGT)
             const string certRtf = "RTF Sod Certificate.jpg";
             const string certHgt = "HGT Sod Certificate.jpg";
@@ -518,6 +534,7 @@ namespace TpaSodManagement.Controllers
                 AreaSold = sale.TotalAmount.ToString("N2"),
                 InvoiceNumbers = sale.InvoiceNumber ?? "—",
                 Customer = customerName,
+                CustomerAddress = customerAddress,
                 CertificateImagePath = certPath,
                 CertificateImageFileName = certFile ?? string.Empty,
                 HasCertificateTemplate = hasCertificateTemplate
