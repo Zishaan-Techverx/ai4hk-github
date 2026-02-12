@@ -386,11 +386,13 @@ namespace TpaSodManagement.Controllers
         {
             var result = await _customerService.GetByIdAsync(id);
             if (!result.Success || result.Data == null) return NotFound();
-            var customer = result.Data;
+            var customerTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Customer");
             var vm = new AddressFormViewModel
             {
                 ParentEntityName = "Customer",
                 ParentEntityId = id,
+                AddressTypeId = customerTypeId ?? 0,
+                IsAddressTypeReadOnly = true,
                 IsActive = true
             };
             await PopulateAddressDropdowns(vm);
@@ -408,6 +410,7 @@ namespace TpaSodManagement.Controllers
 
             if (ModelState.IsValid)
             {
+                var customerTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Customer");
                 var address = new Address
                 {
                     AddressLine1 = vm.AddressLine1,
@@ -415,7 +418,7 @@ namespace TpaSodManagement.Controllers
                     City = vm.City,
                     StateProvinceId = vm.StateProvinceId,
                     PostalCode = vm.PostalCode,
-                    AddressTypeId = vm.AddressTypeId,
+                    AddressTypeId = customerTypeId ?? vm.AddressTypeId,
                     Latitude = vm.Latitude,
                     Longitude = vm.Longitude,
                     IsPrimary = vm.IsPrimary,
@@ -432,6 +435,8 @@ namespace TpaSodManagement.Controllers
             }
             vm.ParentEntityName = "Customer";
             vm.ParentEntityId = id;
+            vm.IsAddressTypeReadOnly = true;
+            vm.AddressTypeId = (await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Customer")) ?? vm.AddressTypeId;
             await PopulateAddressDropdowns(vm);
             return View("AddressForm", vm);
         }
@@ -441,10 +446,13 @@ namespace TpaSodManagement.Controllers
             var result = await _customerService.GetByIdAsync(id);
             if (!result.Success || result.Data == null) return NotFound();
             var customer = result.Data;
+            var customerTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Customer");
             var vm = new AddressFormViewModel
             {
                 ParentEntityName = "Customer",
                 ParentEntityId = id,
+                AddressTypeId = customerTypeId ?? 0,
+                IsAddressTypeReadOnly = true,
                 IsActive = true
             };
             if (customer.AddressId.HasValue && customer.Address != null)
@@ -456,7 +464,7 @@ namespace TpaSodManagement.Controllers
                 vm.City = a.City;
                 vm.StateProvinceId = a.StateProvinceId;
                 vm.PostalCode = a.PostalCode;
-                vm.AddressTypeId = a.AddressTypeId;
+                vm.AddressTypeId = customerTypeId ?? a.AddressTypeId;
                 vm.Latitude = a.Latitude;
                 vm.Longitude = a.Longitude;
                 vm.IsPrimary = a.IsPrimary;
@@ -483,12 +491,13 @@ namespace TpaSodManagement.Controllers
                 {
                     address = await _context.Addresses.FindAsync(vm.AddressId.Value);
                     if (address == null) return NotFound();
+                    var customerTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Customer");
                     address.AddressLine1 = vm.AddressLine1;
                     address.AddressLine2 = vm.AddressLine2;
                     address.City = vm.City;
                     address.StateProvinceId = vm.StateProvinceId;
                     address.PostalCode = vm.PostalCode;
-                    address.AddressTypeId = vm.AddressTypeId;
+                    address.AddressTypeId = customerTypeId ?? vm.AddressTypeId;
                     address.Latitude = vm.Latitude;
                     address.Longitude = vm.Longitude;
                     address.IsPrimary = vm.IsPrimary;
@@ -498,6 +507,7 @@ namespace TpaSodManagement.Controllers
                 }
                 else
                 {
+                    var customerTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Customer");
                     address = new Address
                     {
                         AddressLine1 = vm.AddressLine1,
@@ -505,7 +515,7 @@ namespace TpaSodManagement.Controllers
                         City = vm.City,
                         StateProvinceId = vm.StateProvinceId,
                         PostalCode = vm.PostalCode,
-                        AddressTypeId = vm.AddressTypeId,
+                        AddressTypeId = customerTypeId ?? vm.AddressTypeId,
                         Latitude = vm.Latitude,
                         Longitude = vm.Longitude,
                         IsPrimary = vm.IsPrimary,
@@ -524,6 +534,8 @@ namespace TpaSodManagement.Controllers
             }
             vm.ParentEntityName = "Customer";
             vm.ParentEntityId = id;
+            vm.IsAddressTypeReadOnly = true;
+            vm.AddressTypeId = (await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Customer")) ?? vm.AddressTypeId;
             await PopulateAddressDropdowns(vm);
             return View("AddressForm", vm);
         }

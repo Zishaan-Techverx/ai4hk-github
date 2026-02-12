@@ -30,6 +30,21 @@ public static class AddressTypeSeeder
     }
 
     /// <summary>
+    /// Returns the AddressTypeId for the given type name (Farm, Customer, or Organization), or null if not found.
+    /// </summary>
+    public static async Task<int?> GetAddressTypeIdByNameAsync(ApplicationDbContext context, string addressTypeName)
+    {
+        if (string.IsNullOrWhiteSpace(addressTypeName))
+            return null;
+        var at = await context.AddressTypes
+            .AsNoTracking()
+            .Where(x => x.DeletedDate == null && x.IsActive && x.AddressTypeName == addressTypeName)
+            .Select(x => x.AddressTypeId)
+            .FirstOrDefaultAsync();
+        return at == 0 ? null : at;
+    }
+
+    /// <summary>
     /// Returns SelectListItems for the address type dropdown in Farm, Customer, Organization address forms.
     /// </summary>
     public static async Task<List<SelectListItem>> GetAddressTypeSelectListAsync(ApplicationDbContext context, int? selectedId = null)

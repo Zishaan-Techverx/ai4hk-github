@@ -59,5 +59,8 @@ namespace TpaSodManagement.ViewModels.Address
 
         public IEnumerable<SelectListItem> AddressTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> StateProvinces { get; set; } = Enumerable.Empty<SelectListItem>();
+
+        /// <summary>When true, Address Type dropdown is read-only (Farm/Customer/Organization flow).</summary>
+        public bool IsAddressTypeReadOnly { get; set; }
     }
 }

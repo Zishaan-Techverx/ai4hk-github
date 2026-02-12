@@ -50,9 +50,19 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="AddressTypeId" class="form-label">Address Type <span class="text-danger">*</span></label>
-                                <select asp-for="AddressTypeId" class="form-select" asp-items="Model.AddressTypes" required>
-                                    <option value="">-- Select Address Type --</option>
-                                </select>
+                                @if (Model.IsAddressTypeReadOnly)
+                                {
+                                    <select asp-for="AddressTypeId" class="form-select" asp-items="Model.AddressTypes" disabled>
+                                        <option value="">-- Select Address Type --</option>
+                                    </select>
+                                    <input type="hidden" asp-for="AddressTypeId" />
+                                }
+                                else
+                                {
+                                    <select asp-for="AddressTypeId" class="form-select" asp-items="Model.AddressTypes" required>
+                                        <option value="">-- Select Address Type --</option>
+                                    </select>
+                                }
                                 <span asp-validation-for="AddressTypeId" class="text-danger"></span>
                             </div>
 

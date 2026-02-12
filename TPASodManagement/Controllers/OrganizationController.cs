@@ -477,10 +477,13 @@ namespace TpaSodManagement.Controllers
         {
             var org = await _organizationService.GetOrganizationByIdAsync(id);
             if (org == null) return NotFound();
+            var orgTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Organization");
             var vm = new AddressFormViewModel
             {
                 ParentEntityName = "Organization",
                 ParentEntityId = id,
+                AddressTypeId = orgTypeId ?? 0,
+                IsAddressTypeReadOnly = true,
                 IsActive = true
             };
             await PopulateAddressDropdowns(vm);
@@ -497,6 +500,7 @@ namespace TpaSodManagement.Controllers
 
             if (ModelState.IsValid)
             {
+                var orgTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Organization");
                 var address = new Address
                 {
                     AddressLine1 = vm.AddressLine1,
@@ -504,7 +508,7 @@ namespace TpaSodManagement.Controllers
                     City = vm.City,
                     StateProvinceId = vm.StateProvinceId,
                     PostalCode = vm.PostalCode,
-                    AddressTypeId = vm.AddressTypeId,
+                    AddressTypeId = orgTypeId ?? vm.AddressTypeId,
                     Latitude = vm.Latitude,
                     Longitude = vm.Longitude,
                     IsPrimary = vm.IsPrimary,
@@ -521,6 +525,8 @@ namespace TpaSodManagement.Controllers
             }
             vm.ParentEntityName = "Organization";
             vm.ParentEntityId = id;
+            vm.IsAddressTypeReadOnly = true;
+            vm.AddressTypeId = (await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Organization")) ?? vm.AddressTypeId;
             await PopulateAddressDropdowns(vm);
             return View("AddressForm", vm);
         }
@@ -529,10 +535,13 @@ namespace TpaSodManagement.Controllers
         {
             var org = await _organizationService.GetOrganizationByIdAsync(id);
             if (org == null) return NotFound();
+            var orgTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Organization");
             var vm = new AddressFormViewModel
             {
                 ParentEntityName = "Organization",
                 ParentEntityId = id,
+                AddressTypeId = orgTypeId ?? 0,
+                IsAddressTypeReadOnly = true,
                 IsActive = true
             };
             if (org.AddressId.HasValue && org.Address != null)
@@ -544,7 +553,7 @@ namespace TpaSodManagement.Controllers
                 vm.City = a.City;
                 vm.StateProvinceId = a.StateProvinceId;
                 vm.PostalCode = a.PostalCode;
-                vm.AddressTypeId = a.AddressTypeId;
+                vm.AddressTypeId = orgTypeId ?? a.AddressTypeId;
                 vm.Latitude = a.Latitude;
                 vm.Longitude = a.Longitude;
                 vm.IsPrimary = a.IsPrimary;
@@ -570,12 +579,13 @@ namespace TpaSodManagement.Controllers
                 {
                     address = await _context.Addresses.FindAsync(vm.AddressId.Value);
                     if (address == null) return NotFound();
+                    var orgTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Organization");
                     address.AddressLine1 = vm.AddressLine1;
                     address.AddressLine2 = vm.AddressLine2;
                     address.City = vm.City;
                     address.StateProvinceId = vm.StateProvinceId;
                     address.PostalCode = vm.PostalCode;
-                    address.AddressTypeId = vm.AddressTypeId;
+                    address.AddressTypeId = orgTypeId ?? vm.AddressTypeId;
                     address.Latitude = vm.Latitude;
                     address.Longitude = vm.Longitude;
                     address.IsPrimary = vm.IsPrimary;
@@ -585,6 +595,7 @@ namespace TpaSodManagement.Controllers
                 }
                 else
                 {
+                    var orgTypeId = await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Organization");
                     address = new Address
                     {
                         AddressLine1 = vm.AddressLine1,
@@ -592,7 +603,7 @@ namespace TpaSodManagement.Controllers
                         City = vm.City,
                         StateProvinceId = vm.StateProvinceId,
                         PostalCode = vm.PostalCode,
-                        AddressTypeId = vm.AddressTypeId,
+                        AddressTypeId = orgTypeId ?? vm.AddressTypeId,
                         Latitude = vm.Latitude,
                         Longitude = vm.Longitude,
                         IsPrimary = vm.IsPrimary,
@@ -611,6 +622,8 @@ namespace TpaSodManagement.Controllers
             }
             vm.ParentEntityName = "Organization";
             vm.ParentEntityId = id;
+            vm.IsAddressTypeReadOnly = true;
+            vm.AddressTypeId = (await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Organization")) ?? vm.AddressTypeId;
             await PopulateAddressDropdowns(vm);
             return View("AddressForm", vm);
         }
