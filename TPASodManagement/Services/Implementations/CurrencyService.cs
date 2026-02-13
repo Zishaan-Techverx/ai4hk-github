@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Database;
+using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
@@ -45,19 +46,19 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     if (filters.ContainsKey("CurrencyCode") && !string.IsNullOrWhiteSpace(filters["CurrencyCode"]))
                     {
-                        var filterValue = filters["CurrencyCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CurrencyCode"]);
                         query = query.Where(c => c.CurrencyCode.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("CurrencyName") && !string.IsNullOrWhiteSpace(filters["CurrencyName"]))
                     {
-                        var filterValue = filters["CurrencyName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CurrencyName"]);
                         query = query.Where(c => c.CurrencyName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("CurrencySymbol") && !string.IsNullOrWhiteSpace(filters["CurrencySymbol"]))
                     {
-                        var filterValue = filters["CurrencySymbol"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CurrencySymbol"]);
                         query = query.Where(c => c.CurrencySymbol != null && c.CurrencySymbol.Contains(filterValue));
                     }
 

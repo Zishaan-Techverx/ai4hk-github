@@ -30,6 +30,7 @@ namespace TpaSodManagement.ViewModels.Customer
 
         public long? OrganizationId { get; set; }
         public long? PersonId { get; set; }
+        public long? AddressId { get; set; }
 
         public IEnumerable<SelectListItem> CustomerTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Organizations { get; set; } = Enumerable.Empty<SelectListItem>();

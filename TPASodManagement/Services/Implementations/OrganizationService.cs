@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Database;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -161,25 +162,25 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     if (filters.ContainsKey("OrganizationName") && !string.IsNullOrWhiteSpace(filters["OrganizationName"]))
                     {
-                        var filterValue = filters["OrganizationName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["OrganizationName"]);
                         query = query.Where(o => o.OrganizationName != null && o.OrganizationName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("OrganizationType") && !string.IsNullOrWhiteSpace(filters["OrganizationType"]))
                     {
-                        var filterValue = filters["OrganizationType"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["OrganizationType"]);
                         query = query.Where(o => o.OrganizationType != null && o.OrganizationType.OrganizationTypeName != null && o.OrganizationType.OrganizationTypeName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("OrganizationCode") && !string.IsNullOrWhiteSpace(filters["OrganizationCode"]))
                     {
-                        var filterValue = filters["OrganizationCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["OrganizationCode"]);
                         query = query.Where(o => o.OrganizationCode != null && o.OrganizationCode.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
                     {
-                        var filterValue = filters["Address"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Address"]);
                         query = query.Where(o => o.Address != null &&
                             ((o.Address.AddressLine1 != null && o.Address.AddressLine1.Contains(filterValue)) ||
                             (o.Address.City != null && o.Address.City.Contains(filterValue)) ||

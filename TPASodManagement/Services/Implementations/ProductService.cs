@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Database;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -58,19 +59,19 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     if (filters.ContainsKey("ProductCode") && !string.IsNullOrWhiteSpace(filters["ProductCode"]))
                     {
-                        var filterValue = filters["ProductCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["ProductCode"]);
                         query = query.Where(p => p.ProductCode != null && p.ProductCode.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("ProductName") && !string.IsNullOrWhiteSpace(filters["ProductName"]))
                     {
-                        var filterValue = filters["ProductName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["ProductName"]);
                         query = query.Where(p => p.ProductName != null && p.ProductName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("UnitOfMeasure") && !string.IsNullOrWhiteSpace(filters["UnitOfMeasure"]))
                     {
-                        var filterValue = filters["UnitOfMeasure"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["UnitOfMeasure"]);
                         query = query.Where(p => p.UnitOfMeasure != null && p.UnitOfMeasure.Contains(filterValue));
                     }
 
@@ -92,7 +93,7 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("Description") && !string.IsNullOrWhiteSpace(filters["Description"]))
                     {
-                        var filterValue = filters["Description"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Description"]);
                         query = query.Where(p => p.Description != null && p.Description.Contains(filterValue));
                     }
 
@@ -106,25 +107,25 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("CertificateTypeName") && !string.IsNullOrWhiteSpace(filters["CertificateTypeName"]))
                     {
-                        var filterValue = filters["CertificateTypeName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CertificateTypeName"]);
                         query = query.Where(p => p.CertificateType != null && p.CertificateType.CertificateTypeName != null && p.CertificateType.CertificateTypeName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("CreatedByUserName") && !string.IsNullOrWhiteSpace(filters["CreatedByUserName"]))
                     {
-                        var filterValue = filters["CreatedByUserName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CreatedByUserName"]);
                         query = query.Where(p => p.CreatedByUser != null && p.CreatedByUser.UserName != null && p.CreatedByUser.UserName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("CurrencyCode") && !string.IsNullOrWhiteSpace(filters["CurrencyCode"]))
                     {
-                        var filterValue = filters["CurrencyCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CurrencyCode"]);
                         query = query.Where(p => p.Currency != null && p.Currency.CurrencyCode != null && p.Currency.CurrencyCode.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("ProductCategoryName") && !string.IsNullOrWhiteSpace(filters["ProductCategoryName"]))
                     {
-                        var filterValue = filters["ProductCategoryName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["ProductCategoryName"]);
                         query = query.Where(p => p.ProductCategory != null && p.ProductCategory.CategoryName != null && p.ProductCategory.CategoryName.Contains(filterValue));
                     }
 

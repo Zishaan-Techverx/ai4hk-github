@@ -4,6 +4,7 @@ using TpaSodManagement.Database;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.Services;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Services.Implementations;
 
@@ -306,7 +307,7 @@ public class NotificationService : INotificationService
                 // Search filter - searches in both Title and Message
                 if (filters.ContainsKey("Search") && !string.IsNullOrWhiteSpace(filters["Search"]))
                 {
-                    var searchValue = filters["Search"].Trim();
+                    var searchValue = FilterHelper.NormalizeSearchText(filters["Search"]);
                     query = query.Where(n => (n.Title != null && n.Title.Contains(searchValue)) || 
                                              (n.Message != null && n.Message.Contains(searchValue)));
                 }
@@ -379,7 +380,7 @@ public class NotificationService : INotificationService
                 // Search filter - searches in both Title and Message
                 if (filters.ContainsKey("Search") && !string.IsNullOrWhiteSpace(filters["Search"]))
                 {
-                    var searchValue = filters["Search"].Trim();
+                    var searchValue = FilterHelper.NormalizeSearchText(filters["Search"]);
                     query = query.Where(nu => (nu.Notification.Title != null && nu.Notification.Title.Contains(searchValue)) || 
                                              (nu.Notification.Message != null && nu.Notification.Message.Contains(searchValue)));
                 }

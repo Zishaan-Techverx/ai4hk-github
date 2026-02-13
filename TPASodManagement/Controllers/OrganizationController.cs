@@ -428,6 +428,7 @@ namespace TpaSodManagement.Controllers
                 EstablishedDate = entity.EstablishedDate.HasValue ? (DateTimeOffset?)new DateTimeOffset(entity.EstablishedDate.Value.ToDateTime(TimeOnly.MinValue)) : null,
                 Description = entity.Description,
                 IsActive = entity.IsActive,
+                AddressId = entity.AddressId,
                 LogoBytes = entity.LogoBytes,
                 HasLogo = entity.LogoBytes != null && entity.LogoBytes.Length > 0,
                 IsDetailsView = isDetailsView
@@ -446,7 +447,8 @@ namespace TpaSodManagement.Controllers
                 RegistrationNumber = vm.RegistrationNumber,
                 EstablishedDate = vm.EstablishedDate.HasValue ? DateOnly.FromDateTime(vm.EstablishedDate.Value.Date) : null,
                 Description = vm.Description,
-                IsActive = vm.IsActive
+                IsActive = vm.IsActive,
+                AddressId = vm.AddressId
             };
         }
 

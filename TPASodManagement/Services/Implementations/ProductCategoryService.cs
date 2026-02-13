@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Database;
+using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
@@ -45,19 +46,19 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     if (filters.ContainsKey("CategoryCode") && !string.IsNullOrWhiteSpace(filters["CategoryCode"]))
                     {
-                        var filterValue = filters["CategoryCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CategoryCode"]);
                         query = query.Where(pc => pc.CategoryCode != null && pc.CategoryCode.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("CategoryName") && !string.IsNullOrWhiteSpace(filters["CategoryName"]))
                     {
-                        var filterValue = filters["CategoryName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CategoryName"]);
                         query = query.Where(pc => pc.CategoryName != null && pc.CategoryName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("Description") && !string.IsNullOrWhiteSpace(filters["Description"]))
                     {
-                        var filterValue = filters["Description"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Description"]);
                         query = query.Where(pc => pc.Description != null && pc.Description.Contains(filterValue));
                     }
 

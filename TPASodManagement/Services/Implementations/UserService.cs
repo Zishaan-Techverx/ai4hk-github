@@ -5,6 +5,7 @@ using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.Services;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Database;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -452,7 +453,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by UserName
                     if (filters.ContainsKey("UserName") && !string.IsNullOrWhiteSpace(filters["UserName"]))
                     {
-                        var filterValue = filters["UserName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["UserName"]);
                         filteredUsers = filteredUsers
                             .Where(u => u.UserName != null && u.UserName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
                             .ToList();
@@ -461,7 +462,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by Email
                     if (filters.ContainsKey("Email") && !string.IsNullOrWhiteSpace(filters["Email"]))
                     {
-                        var filterValue = filters["Email"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Email"]);
                         filteredUsers = filteredUsers
                             .Where(u => u.Email != null && u.Email.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
                             .ToList();
@@ -470,7 +471,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by PhoneNumber
                     if (filters.ContainsKey("PhoneNumber") && !string.IsNullOrWhiteSpace(filters["PhoneNumber"]))
                     {
-                        var filterValue = filters["PhoneNumber"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["PhoneNumber"]);
                         filteredUsers = filteredUsers
                             .Where(u => u.PhoneNumber != null && u.PhoneNumber.Contains(filterValue))
                             .ToList();
@@ -496,7 +497,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by OrganizationName
                     if (filters.ContainsKey("OrganizationName") && !string.IsNullOrWhiteSpace(filters["OrganizationName"]))
                     {
-                        var filterValue = filters["OrganizationName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["OrganizationName"]);
                         filteredUsers = filteredUsers
                             .Where(u => u.Organization != null && u.Organization.OrganizationName != null && 
                                        u.Organization.OrganizationName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
@@ -506,7 +507,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by FirstName (from Person)
                     if (filters.ContainsKey("FirstName") && !string.IsNullOrWhiteSpace(filters["FirstName"]))
                     {
-                        var filterValue = filters["FirstName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FirstName"]);
                         var userIdsWithFirstName = new List<long>();
                         foreach (var user in filteredUsers)
                         {
@@ -523,7 +524,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by LastName (from Person)
                     if (filters.ContainsKey("LastName") && !string.IsNullOrWhiteSpace(filters["LastName"]))
                     {
-                        var filterValue = filters["LastName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["LastName"]);
                         var userIdsWithLastName = new List<long>();
                         foreach (var user in filteredUsers)
                         {
@@ -540,7 +541,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by City (from Address)
                     if (filters.ContainsKey("City") && !string.IsNullOrWhiteSpace(filters["City"]))
                     {
-                        var filterValue = filters["City"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["City"]);
                         var userIdsWithCity = new List<long>();
                         foreach (var user in filteredUsers)
                         {
@@ -557,7 +558,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by StateName (from Address)
                     if (filters.ContainsKey("StateName") && !string.IsNullOrWhiteSpace(filters["StateName"]))
                     {
-                        var filterValue = filters["StateName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["StateName"]);
                         var userIdsWithState = new List<long>();
                         foreach (var user in filteredUsers)
                         {
@@ -574,7 +575,7 @@ namespace TpaSodManagement.Services.Implementations
                     // Filter by PostalCode (from Address)
                     if (filters.ContainsKey("PostalCode") && !string.IsNullOrWhiteSpace(filters["PostalCode"]))
                     {
-                        var filterValue = filters["PostalCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["PostalCode"]);
                         var userIdsWithPostalCode = new List<long>();
                         foreach (var user in filteredUsers)
                         {

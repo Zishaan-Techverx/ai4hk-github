@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Database;
+using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
 
@@ -52,13 +53,13 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
                     {
-                        var filterValue = filters["FarmName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmName"]);
                         query = query.Where(f => f.FarmName != null && f.FarmName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
                     {
-                        var filterValue = filters["Address"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Address"]);
                         query = query.Where(f => f.Address != null && (
                             (f.Address.AddressLine1 != null && f.Address.AddressLine1.Contains(filterValue)) ||
                             (f.Address.AddressLine2 != null && f.Address.AddressLine2.Contains(filterValue)) ||
@@ -92,13 +93,13 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("LicenseNumber") && !string.IsNullOrWhiteSpace(filters["LicenseNumber"]))
                     {
-                        var filterValue = filters["LicenseNumber"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["LicenseNumber"]);
                         query = query.Where(f => f.LicenseNumber != null && f.LicenseNumber.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("CertificationDetails") && !string.IsNullOrWhiteSpace(filters["CertificationDetails"]))
                     {
-                        var filterValue = filters["CertificationDetails"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CertificationDetails"]);
                         query = query.Where(f => f.CertificationDetails != null && f.CertificationDetails.Contains(filterValue));
                     }
 
@@ -128,25 +129,25 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("SoilType") && !string.IsNullOrWhiteSpace(filters["SoilType"]))
                     {
-                        var filterValue = filters["SoilType"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["SoilType"]);
                         query = query.Where(f => f.SoilType != null && f.SoilType.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("IrrigationType") && !string.IsNullOrWhiteSpace(filters["IrrigationType"]))
                     {
-                        var filterValue = filters["IrrigationType"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["IrrigationType"]);
                         query = query.Where(f => f.IrrigationType != null && f.IrrigationType.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("ClimateZone") && !string.IsNullOrWhiteSpace(filters["ClimateZone"]))
                     {
-                        var filterValue = filters["ClimateZone"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["ClimateZone"]);
                         query = query.Where(f => f.ClimateZone != null && f.ClimateZone.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("AreaType") && !string.IsNullOrWhiteSpace(filters["AreaType"]))
                     {
-                        var filterValue = filters["AreaType"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["AreaType"]);
                         query = query.Where(f => f.AreaType != null && f.AreaType.AreaTypeName.Contains(filterValue));
                     }
 

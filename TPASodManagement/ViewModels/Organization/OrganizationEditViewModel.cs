@@ -32,6 +32,8 @@ namespace TpaSodManagement.ViewModels.Organization
 
         public bool IsActive { get; set; } = true;
 
+        public long? AddressId { get; set; }
+
         public IFormFile? LogoFile { get; set; }
         public byte[]? LogoBytes { get; set; }
         public bool HasLogo { get; set; }

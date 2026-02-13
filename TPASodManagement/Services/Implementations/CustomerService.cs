@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
+using TpaSodManagement.Utilities;
 using TpaSodManagement.Database;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
@@ -54,14 +55,14 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     if (filters.ContainsKey("CustomerType") && !string.IsNullOrWhiteSpace(filters["CustomerType"]))
                     {
-                        var filterValue = filters["CustomerType"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CustomerType"]);
                         query = query.Where(c => (c.CustomerTypeName != null && c.CustomerTypeName.Contains(filterValue)) ||
                             (c.CustomerType != null && c.CustomerType.CustomerTypeName != null && c.CustomerType.CustomerTypeName.Contains(filterValue)));
                     }
 
                     if (filters.ContainsKey("CustomerCode") && !string.IsNullOrWhiteSpace(filters["CustomerCode"]))
                     {
-                        var filterValue = filters["CustomerCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CustomerCode"]);
                         query = query.Where(c => c.CustomerCode != null && c.CustomerCode.Contains(filterValue));
                     }
 
@@ -91,7 +92,7 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("Notes") && !string.IsNullOrWhiteSpace(filters["Notes"]))
                     {
-                        var filterValue = filters["Notes"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Notes"]);
                         query = query.Where(c => c.Notes != null && c.Notes.Contains(filterValue));
                     }
 
@@ -113,20 +114,20 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("Organization") && !string.IsNullOrWhiteSpace(filters["Organization"]))
                     {
-                        var filterValue = filters["Organization"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Organization"]);
                         query = query.Where(c => c.Organization != null && c.Organization.OrganizationName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("Person") && !string.IsNullOrWhiteSpace(filters["Person"]))
                     {
-                        var filterValue = filters["Person"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Person"]);
                         query = query.Where(c => c.Person != null && 
                             (c.Person.FirstName.Contains(filterValue) || c.Person.LastName.Contains(filterValue)));
                     }
 
                     if (filters.ContainsKey("Address") && !string.IsNullOrWhiteSpace(filters["Address"]))
                     {
-                        var filterValue = filters["Address"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Address"]);
                         query = query.Where(c => c.Address != null &&
                             ((c.Address.AddressLine1 != null && c.Address.AddressLine1.Contains(filterValue)) ||
                             (c.Address.City != null && c.Address.City.Contains(filterValue)) ||

@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Database;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -68,7 +69,7 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("SeedingMethod") && !string.IsNullOrWhiteSpace(filters["SeedingMethod"]))
                     {
-                        var filterValue = filters["SeedingMethod"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["SeedingMethod"]);
                         query = query.Where(s => s.SeedingMethod != null && s.SeedingMethod.Contains(filterValue));
                     }
 
@@ -82,7 +83,7 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("WeatherConditions") && !string.IsNullOrWhiteSpace(filters["WeatherConditions"]))
                     {
-                        var filterValue = filters["WeatherConditions"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["WeatherConditions"]);
                         query = query.Where(s => s.WeatherConditions != null && s.WeatherConditions.Contains(filterValue));
                     }
 
@@ -96,43 +97,43 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("SoilMoisture") && !string.IsNullOrWhiteSpace(filters["SoilMoisture"]))
                     {
-                        var filterValue = filters["SoilMoisture"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["SoilMoisture"]);
                         query = query.Where(s => s.SoilMoisture != null && s.SoilMoisture.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("Notes") && !string.IsNullOrWhiteSpace(filters["Notes"]))
                     {
-                        var filterValue = filters["Notes"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Notes"]);
                         query = query.Where(s => s.Notes != null && s.Notes.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("AreaTypeName") && !string.IsNullOrWhiteSpace(filters["AreaTypeName"]))
                     {
-                        var filterValue = filters["AreaTypeName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["AreaTypeName"]);
                         query = query.Where(s => s.AreaType != null && s.AreaType.AreaTypeName != null && s.AreaType.AreaTypeName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("FarmLicenseNumber") && !string.IsNullOrWhiteSpace(filters["FarmLicenseNumber"]))
                     {
-                        var filterValue = filters["FarmLicenseNumber"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmLicenseNumber"]);
                         query = query.Where(s => s.Farm != null && s.Farm.LicenseNumber != null && s.Farm.LicenseNumber.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("FieldName") && !string.IsNullOrWhiteSpace(filters["FieldName"]))
                     {
-                        var filterValue = filters["FieldName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FieldName"]);
                         query = query.Where(s => s.Field != null && s.Field.FieldName != null && s.Field.FieldName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("TagRangeCode") && !string.IsNullOrWhiteSpace(filters["TagRangeCode"]))
                     {
-                        var filterValue = filters["TagRangeCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["TagRangeCode"]);
                         query = query.Where(s => s.TagRange != null && s.TagRange.TagRangeCode != null && s.TagRange.TagRangeCode.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("UserName") && !string.IsNullOrWhiteSpace(filters["UserName"]))
                     {
-                        var filterValue = filters["UserName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["UserName"]);
                         query = query.Where(s => s.User != null && s.User.UserName != null && s.User.UserName.Contains(filterValue));
                     }
 

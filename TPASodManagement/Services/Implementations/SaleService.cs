@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Database;
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -70,19 +71,19 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     if (filters.ContainsKey("SaleNumber") && !string.IsNullOrWhiteSpace(filters["SaleNumber"]))
                     {
-                        var filterValue = filters["SaleNumber"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["SaleNumber"]);
                         query = query.Where(s => s.SaleNumber != null && s.SaleNumber.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("InvoiceNumber") && !string.IsNullOrWhiteSpace(filters["InvoiceNumber"]))
                     {
-                        var filterValue = filters["InvoiceNumber"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["InvoiceNumber"]);
                         query = query.Where(s => s.InvoiceNumber != null && s.InvoiceNumber.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("PurchaseOrderNumber") && !string.IsNullOrWhiteSpace(filters["PurchaseOrderNumber"]))
                     {
-                        var filterValue = filters["PurchaseOrderNumber"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["PurchaseOrderNumber"]);
                         query = query.Where(s => s.PurchaseOrderNumber != null && s.PurchaseOrderNumber.Contains(filterValue));
                     }
 
@@ -128,19 +129,19 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("Notes") && !string.IsNullOrWhiteSpace(filters["Notes"]))
                     {
-                        var filterValue = filters["Notes"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["Notes"]);
                         query = query.Where(s => s.Notes != null && s.Notes.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("CurrencyName") && !string.IsNullOrWhiteSpace(filters["CurrencyName"]))
                     {
-                        var filterValue = filters["CurrencyName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CurrencyName"]);
                         query = query.Where(s => s.Currency != null && s.Currency.CurrencyName != null && s.Currency.CurrencyName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("CustomerDisplay") && !string.IsNullOrWhiteSpace(filters["CustomerDisplay"]))
                     {
-                        var filterValue = filters["CustomerDisplay"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["CustomerDisplay"]);
                         query = query.Where(s => (s.Customer != null && s.Customer.Person != null && 
                             (s.Customer.Person.FirstName != null && s.Customer.Person.FirstName.Contains(filterValue) ||
                              s.Customer.Person.LastName != null && s.Customer.Person.LastName.Contains(filterValue))) ||
@@ -150,31 +151,31 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("FarmLicenseNumber") && !string.IsNullOrWhiteSpace(filters["FarmLicenseNumber"]))
                     {
-                        var filterValue = filters["FarmLicenseNumber"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmLicenseNumber"]);
                         query = query.Where(s => s.Farm != null && s.Farm.LicenseNumber != null && s.Farm.LicenseNumber.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("SaleTypeName") && !string.IsNullOrWhiteSpace(filters["SaleTypeName"]))
                     {
-                        var filterValue = filters["SaleTypeName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["SaleTypeName"]);
                         query = query.Where(s => s.SaleType != null && s.SaleType.SaleTypeName != null && s.SaleType.SaleTypeName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("StatusName") && !string.IsNullOrWhiteSpace(filters["StatusName"]))
                     {
-                        var filterValue = filters["StatusName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["StatusName"]);
                         query = query.Where(s => s.Status != null && s.Status.StatusName != null && s.Status.StatusName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("UpdatedByUserName") && !string.IsNullOrWhiteSpace(filters["UpdatedByUserName"]))
                     {
-                        var filterValue = filters["UpdatedByUserName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["UpdatedByUserName"]);
                         query = query.Where(s => s.UpdatedByUser != null && s.UpdatedByUser.UserName != null && s.UpdatedByUser.UserName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("UserName") && !string.IsNullOrWhiteSpace(filters["UserName"]))
                     {
-                        var filterValue = filters["UserName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["UserName"]);
                         query = query.Where(s => s.User != null && s.User.UserName != null && s.User.UserName.Contains(filterValue));
                     }
 

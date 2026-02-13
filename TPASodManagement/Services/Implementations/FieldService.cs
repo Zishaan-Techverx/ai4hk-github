@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Database;
-
+using TpaSodManagement.Utilities;
 
 namespace TpaSodManagement.Services.Implementations
 {
@@ -58,13 +58,13 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     if (filters.ContainsKey("FieldName") && !string.IsNullOrWhiteSpace(filters["FieldName"]))
                     {
-                        var filterValue = filters["FieldName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FieldName"]);
                         query = query.Where(f => f.FieldName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("FieldCode") && !string.IsNullOrWhiteSpace(filters["FieldCode"]))
                     {
-                        var filterValue = filters["FieldCode"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FieldCode"]);
                         query = query.Where(f => f.FieldCode != null && f.FieldCode.Contains(filterValue));
                     }
 
@@ -78,19 +78,19 @@ namespace TpaSodManagement.Services.Implementations
 
                     if (filters.ContainsKey("AreaTypeName") && !string.IsNullOrWhiteSpace(filters["AreaTypeName"]))
                     {
-                        var filterValue = filters["AreaTypeName"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["AreaTypeName"]);
                         query = query.Where(f => f.AreaType != null && f.AreaType.AreaTypeName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("FarmLicenseNumber") && !string.IsNullOrWhiteSpace(filters["FarmLicenseNumber"]))
                     {
-                        var filterValue = filters["FarmLicenseNumber"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmLicenseNumber"]);
                         query = query.Where(f => f.Farm != null && f.Farm.LicenseNumber != null && f.Farm.LicenseNumber.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("SoilType") && !string.IsNullOrWhiteSpace(filters["SoilType"]))
                     {
-                        var filterValue = filters["SoilType"].Trim();
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["SoilType"]);
                         query = query.Where(f => f.SoilType != null && f.SoilType.Contains(filterValue));
                     }
 
