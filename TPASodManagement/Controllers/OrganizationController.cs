@@ -56,7 +56,7 @@ namespace TpaSodManagement.Controllers
             };
             organizationTypeOptions.AddRange(organizationTypes.Select(ot => new SelectListItem
             {
-                Value = ot.OrganizationTypeName ?? "",
+                Value = ot.OrganizationTypeId.ToString(),
                 Text = ot.OrganizationTypeName ?? ""
             }));
             ViewBag.DropdownFilterColumns = new Dictionary<string, IEnumerable<SelectListItem>>

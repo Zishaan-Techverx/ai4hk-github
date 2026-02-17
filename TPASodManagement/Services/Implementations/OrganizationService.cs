@@ -166,10 +166,9 @@ namespace TpaSodManagement.Services.Implementations
                         query = query.Where(o => o.OrganizationName != null && o.OrganizationName.Contains(filterValue));
                     }
 
-                    if (filters.ContainsKey("OrganizationType") && !string.IsNullOrWhiteSpace(filters["OrganizationType"]))
+                    if (filters.ContainsKey("OrganizationType") && !string.IsNullOrWhiteSpace(filters["OrganizationType"]) && long.TryParse(filters["OrganizationType"].Trim(), out var organizationTypeId))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["OrganizationType"]);
-                        query = query.Where(o => o.OrganizationType != null && o.OrganizationType.OrganizationTypeName != null && o.OrganizationType.OrganizationTypeName.Contains(filterValue));
+                        query = query.Where(o => o.OrganizationTypeId == organizationTypeId);
                     }
 
                     if (filters.ContainsKey("OrganizationCode") && !string.IsNullOrWhiteSpace(filters["OrganizationCode"]))

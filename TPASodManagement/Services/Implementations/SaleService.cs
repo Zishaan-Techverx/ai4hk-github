@@ -149,10 +149,10 @@ namespace TpaSodManagement.Services.Implementations
                             (s.Customer != null && s.Customer.CustomerCode != null && s.Customer.CustomerCode.Contains(filterValue)));
                     }
 
-                    if (filters.ContainsKey("FarmLicenseNumber") && !string.IsNullOrWhiteSpace(filters["FarmLicenseNumber"]))
+                    if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmLicenseNumber"]);
-                        query = query.Where(s => s.Farm != null && s.Farm.LicenseNumber != null && s.Farm.LicenseNumber.Contains(filterValue));
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmName"]);
+                        query = query.Where(s => s.Farm != null && s.Farm.FarmName != null && s.Farm.FarmName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("SaleTypeName") && !string.IsNullOrWhiteSpace(filters["SaleTypeName"]))

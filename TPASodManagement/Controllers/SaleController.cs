@@ -59,7 +59,7 @@ namespace TpaSodManagement.Controllers
                 { "Notes", "Notes" },
                 { "CurrencyName", "Currency" },
                 { "CustomerDisplay", "Customer" },
-                { "FarmLicenseNumber", "Farm" },
+                { "FarmName", "Farm" },
                 { "SaleTypeName", "Sale Type" },
                 { "StatusName", "Status" },
                 { "UpdatedByUserName", "Updated By User" },

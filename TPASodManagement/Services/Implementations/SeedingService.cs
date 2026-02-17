@@ -113,10 +113,10 @@ namespace TpaSodManagement.Services.Implementations
                         query = query.Where(s => s.AreaType != null && s.AreaType.AreaTypeName != null && s.AreaType.AreaTypeName.Contains(filterValue));
                     }
 
-                    if (filters.ContainsKey("FarmLicenseNumber") && !string.IsNullOrWhiteSpace(filters["FarmLicenseNumber"]))
+                    if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmLicenseNumber"]);
-                        query = query.Where(s => s.Farm != null && s.Farm.LicenseNumber != null && s.Farm.LicenseNumber.Contains(filterValue));
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmName"]);
+                        query = query.Where(s => s.Farm != null && s.Farm.FarmName != null && s.Farm.FarmName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("FieldName") && !string.IsNullOrWhiteSpace(filters["FieldName"]))
