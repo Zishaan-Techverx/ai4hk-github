@@ -37,16 +37,16 @@ namespace TpaSodManagement.Controllers
             // Set filter columns for the partial view
             ViewBag.FilterColumns = new Dictionary<string, string>
             {
-                { "ProductCode", "Product Code" },
                 { "ProductName", "Product Name" },
+                { "ProductCategoryName", "Product Category" },
+                { "ProductCode", "Product Code" },
+                { "RequiresCertificate", "Requires Certificate" },
                 { "UnitOfMeasure", "Unit Of Measure" },
                 { "StandardPrice", "Standard Price" },
-                { "RequiresCertificate", "Requires Certificate" },
-                { "Description", "Description" },
                 { "CertificateTypeName", "Certificate Type" },
                 { "CreatedByUserName", "Created By User" },
                 { "CurrencyCode", "Currency" },
-                { "ProductCategoryName", "Product Category" },
+                { "Description", "Description" },
                 { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Products";
@@ -270,16 +270,16 @@ namespace TpaSodManagement.Controllers
 
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    ("Product Code", "ProductCode"),
                     ("Product Name", "ProductName"),
+                    ("Product Category", "ProductCategory"),
+                    ("Product Code", "ProductCode"),
+                    ("Requires Certificate", "RequiresCertificate"),
                     ("Unit Of Measure", "UnitOfMeasure"),
                     ("Standard Price", "StandardPrice"),
-                    ("Requires Certificate", "RequiresCertificate"),
-                    ("Description", "Description"),
                     ("Certificate Type", "CertificateType"),
                     ("Created By User", "CreatedByUser"),
                     ("Currency", "Currency"),
-                    ("Product Category", "ProductCategory"),
+                    ("Description", "Description"),
                     ("Is Active", "IsActive")
                 };
 
@@ -296,16 +296,16 @@ namespace TpaSodManagement.Controllers
                     {
                         var allValues = new List<object>
                         {
-                            item.ProductCode ?? "",
                             item.ProductName ?? "",
+                            item.ProductCategoryName ?? "N/A",
+                            item.ProductCode ?? "",
+                            item.RequiresCertificate ? "Yes" : "No",
                             item.UnitOfMeasure ?? "",
                             item.StandardPrice?.ToString("N2") ?? "",
-                            item.RequiresCertificate ? "Yes" : "No",
-                            item.Description ?? "",
                             item.CertificateTypeName ?? "N/A",
                             item.CreatedByUserName ?? "N/A",
                             item.CurrencyCode ?? "N/A",
-                            item.ProductCategoryName ?? "N/A",
+                            item.Description ?? "",
                             item.IsActive ? "Active" : "Inactive"
                         };
                         return columnIndices.Select(idx => allValues[idx]).ToList();
@@ -327,17 +327,17 @@ namespace TpaSodManagement.Controllers
             return new ProductItemViewModel
             {
                 ProductId = entity.ProductId,
-                ProductCode = entity.ProductCode,
                 ProductName = entity.ProductName,
+                ProductCategoryName = entity.ProductCategory?.CategoryName,
+                ProductCode = entity.ProductCode,
+                RequiresCertificate = entity.RequiresCertificate,
                 UnitOfMeasure = entity.UnitOfMeasure,
                 StandardPrice = entity.StandardPrice,
-                RequiresCertificate = entity.RequiresCertificate,
-                Description = entity.Description,
-                CreatedDate = entity.CreatedDate,
                 CertificateTypeName = entity.CertificateType?.CertificateTypeName,
                 CreatedByUserName = entity.CreatedByUser?.UserName,
+                CreatedDate = entity.CreatedDate,
                 CurrencyCode = entity.Currency?.CurrencyCode,
-                ProductCategoryName = entity.ProductCategory?.CategoryName,
+                Description = entity.Description,
                 IsActive = entity.IsActive
             };
         }
@@ -347,16 +347,16 @@ namespace TpaSodManagement.Controllers
             return new ProductEditViewModel
             {
                 ProductId = entity.ProductId,
-                ProductCode = entity.ProductCode,
                 ProductName = entity.ProductName,
+                ProductCategoryId = entity.ProductCategoryId,
+                ProductCode = entity.ProductCode,
+                RequiresCertificate = entity.RequiresCertificate,
                 UnitOfMeasure = entity.UnitOfMeasure,
                 StandardPrice = entity.StandardPrice,
-                RequiresCertificate = entity.RequiresCertificate,
-                Description = entity.Description,
                 CertificateTypeId = entity.CertificateTypeId,
                 CreatedByUserId = entity.CreatedByUserId,
                 CurrencyId = entity.CurrencyId,
-                ProductCategoryId = entity.ProductCategoryId,
+                Description = entity.Description,
                 CreatedDate = entity.CreatedDate,
                 IsDetailsView = isDetailsView,
                 IsActive = entity.IsActive
@@ -368,16 +368,16 @@ namespace TpaSodManagement.Controllers
             return new Product
             {
                 ProductId = vm.ProductId,
-                ProductCode = vm.ProductCode,
                 ProductName = vm.ProductName,
+                ProductCategoryId = vm.ProductCategoryId ?? 0,
+                ProductCode = vm.ProductCode,
+                RequiresCertificate = vm.RequiresCertificate,
                 UnitOfMeasure = vm.UnitOfMeasure,
                 StandardPrice = vm.StandardPrice,
-                RequiresCertificate = vm.RequiresCertificate,
-                Description = vm.Description,
                 CertificateTypeId = vm.CertificateTypeId,
                 CreatedByUserId = vm.CreatedByUserId ?? 0,
                 CurrencyId = vm.CurrencyId ?? 0,
-                ProductCategoryId = vm.ProductCategoryId ?? 0,
+                Description = vm.Description,
                 CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow,
                 IsActive = vm.IsActive
             };

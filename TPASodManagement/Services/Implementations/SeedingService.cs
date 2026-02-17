@@ -265,10 +265,10 @@ namespace TpaSodManagement.Services.Implementations
                 // Preserve CreatedByUserId and CreatedDate
                 existingSeeding.UserId = seeding.UserId;
                 existingSeeding.FarmId = seeding.FarmId;
+                existingSeeding.AreaTypeId = seeding.AreaTypeId;
                 existingSeeding.FieldId = seeding.FieldId;
                 existingSeeding.TagRangeId = seeding.TagRangeId;
                 existingSeeding.AreaAmount = seeding.AreaAmount;
-                existingSeeding.AreaTypeId = seeding.AreaTypeId;
                 existingSeeding.SeedingDate = seeding.SeedingDate;
                 existingSeeding.SeedingMethod = seeding.SeedingMethod;
                 existingSeeding.SeedRatePerUnit = seeding.SeedRatePerUnit;
@@ -276,6 +276,7 @@ namespace TpaSodManagement.Services.Implementations
                 existingSeeding.SoilTemperature = seeding.SoilTemperature;
                 existingSeeding.SoilMoisture = seeding.SoilMoisture;
                 existingSeeding.Notes = seeding.Notes;
+                existingSeeding.IsActive = seeding.IsActive;
                 
                 // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
@@ -373,13 +374,11 @@ namespace TpaSodManagement.Services.Implementations
                     Text = a.AreaTypeName
                 }).ToList();
 
-                // Create SelectList for Farms with display name
+                // Create SelectList for Farms - use FarmName from DB exactly
                 var farmItems = farms.Select(f => new SelectListItem
                 {
                     Value = f.FarmId.ToString(),
-                    Text = !string.IsNullOrEmpty(f.LicenseNumber)
-                        ? $"{f.LicenseNumber} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
-                        : $"Farm #{f.FarmId} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
+                    Text = f.FarmName ?? ""
                 }).ToList();
 
                 // Create SelectList for Fields - Simple version (just FieldName)

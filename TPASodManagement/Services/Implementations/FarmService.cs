@@ -251,6 +251,7 @@ namespace TpaSodManagement.Services.Implementations
                 existingFarm.SoilType = farm.SoilType;
                 existingFarm.IrrigationType = farm.IrrigationType;
                 existingFarm.ClimateZone = farm.ClimateZone;
+                existingFarm.IsActive = farm.IsActive;
 
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
                 existingFarm.UpdatedDate = DateTimeOffset.UtcNow;

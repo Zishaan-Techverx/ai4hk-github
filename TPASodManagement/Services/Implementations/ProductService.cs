@@ -224,16 +224,14 @@ namespace TpaSodManagement.Services.Implementations
                     return response;
                 }
 
-                // Update only the properties that should be updated
-                // Preserve CreatedByUserId and CreatedDate
-                existingProduct.ProductCode = product.ProductCode;
                 existingProduct.ProductName = product.ProductName;
-                existingProduct.Description = product.Description;
+                existingProduct.ProductCategoryId = product.ProductCategoryId;
+                existingProduct.ProductCode = product.ProductCode;
                 existingProduct.UnitOfMeasure = product.UnitOfMeasure;
                 existingProduct.StandardPrice = product.StandardPrice;
-                existingProduct.ProductCategoryId = product.ProductCategoryId;
-                existingProduct.CurrencyId = product.CurrencyId;
                 existingProduct.CertificateTypeId = product.CertificateTypeId;
+                existingProduct.CurrencyId = product.CurrencyId;
+                existingProduct.Description = product.Description;
                 existingProduct.IsActive = product.IsActive;
                 
                 // Set update audit fields

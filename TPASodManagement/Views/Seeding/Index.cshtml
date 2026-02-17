@@ -65,6 +65,10 @@
         <table class="table" id="dataTable">
         <thead>
             <tr>
+                <th data-column="Farm">Farm</th>
+                <th data-column="AreaType">Area Type</th>
+                <th data-column="Field">Field</th>
+                <th data-column="TagRange">TagRange</th>
                 <th data-column="AreaAmount">Area Amount</th>
                 <th data-column="SeedingDate">Seeding Date</th>
                 <th data-column="SeedingMethod">Seeding Method</th>
@@ -73,10 +77,6 @@
                 <th data-column="SoilTemperature">Soil Temperature</th>
                 <th data-column="SoilMoisture">Soil Moisture</th>
                 <th data-column="Notes">Notes</th>
-                <th data-column="AreaType">Area Type</th>
-                <th data-column="Farm">Farm</th>
-                <th data-column="Field">Field</th>
-                <th data-column="TagRange">TagRange</th>
                 <th data-column="User">User</th>
                 <th data-column="IsActive">Is Active</th>
                 <th data-column="Actions" class="no-hide-column">Actions</th>
@@ -86,6 +86,10 @@
             @foreach (var item in Model)
             {
                 <tr id="row-@item.SeedingId">
+                    <td data-column="Farm">@(item.FarmDisplay ?? "N/A")</td>
+                    <td data-column="AreaType">@(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")</td>
+                    <td data-column="Field">@(item.FieldName ?? "N/A")</td>
+                    <td data-column="TagRange">@(item.TagRangeCode ?? $"TagRange #{item.TagRangeId}")</td>
                     <td data-column="AreaAmount">@Html.DisplayFor(modelItem => item.AreaAmount)</td>
                     <td data-column="SeedingDate">@(item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("MM/dd/yyyy") : "")</td>
                     <td data-column="SeedingMethod">@Html.DisplayFor(modelItem => item.SeedingMethod)</td>
@@ -94,10 +98,6 @@
                     <td data-column="SoilTemperature">@Html.DisplayFor(modelItem => item.SoilTemperature)</td>
                     <td data-column="SoilMoisture">@Html.DisplayFor(modelItem => item.SoilMoisture)</td>
                     <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
-                    <td data-column="AreaType">@(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")</td>
-                    <td data-column="Farm">@(item.FarmDisplay ?? $"Farm #{item.FarmId}")</td>
-                    <td data-column="Field">@(item.FieldName ?? "N/A")</td>
-                    <td data-column="TagRange">@(item.TagRangeCode ?? $"TagRange #{item.TagRangeId}")</td>
                     <td data-column="User">@(item.UserName ?? "N/A")</td>
                     <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="Actions">
@@ -155,25 +155,32 @@
                 <a class="page-link" href="@Url.Action("Index", new { pageNumber = 1, pageSize = pageSize })">1</a>
             </li>
 
-            @if (pageNumber > 3)
+            @if (pageNumber <= 4)
             {
-                @* Show ellipsis if current page is far from start *@
+                @* Show pages 2, 3, 4 at start *@
+                @for (int i = 2; i <= Math.Min(4, totalPages - 1); i++)
+                {
+                    <li class="page-item @(i == pageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                    </li>
+                }
+            }
+            else
+            {
+                @* Ellipsis then middle pages *@
                 <li class="page-item disabled">
                     <span class="page-link">...</span>
                 </li>
-            }
-
-            @* Show pages around current page *@
-            @for (int i = Math.Max(2, pageNumber - 1); i <= Math.Min(totalPages - 1, pageNumber + 1); i++)
-            {
-                <li class="page-item @(i == pageNumber ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
-                </li>
+                @for (int i = pageNumber - 1; i <= Math.Min(pageNumber + 1, totalPages - 1); i++)
+                {
+                    <li class="page-item @(i == pageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                    </li>
+                }
             }
 
             @if (pageNumber < totalPages - 2)
             {
-                @* Show ellipsis if current page is far from end *@
                 <li class="page-item disabled">
                     <span class="page-link">...</span>
                 </li>
@@ -190,6 +197,13 @@
                 href="@Url.Action("Index", new { pageNumber = pageNumber + 1, pageSize = pageSize })">Next</a>
         </li>
     </ul>
+    <div class="d-flex align-items-center gap-1 ms-2">
+        <input type="hidden" id="totalPagesHolder" value="@totalPages" />
+        <input type="hidden" id="pageSizeHolder" value="@pageSize" />
+        <label for="pageGoInput" class="form-label mb-0 small text-nowrap">Go to</label>
+        <input type="number" id="pageGoInput" class="form-control form-control-sm" style="width:70px" min="1" max="@totalPages" placeholder="Page" aria-label="Page number" />
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="pageGoBtn">Go</button>
+    </div>
     <div>@await Html.PartialAsync("_IsActiveTriStatePartial")</div>
 </nav>
 
@@ -879,6 +893,36 @@
                 await downloadExcel();
             });
         }
+
+        const pageGoBtn = document.getElementById('pageGoBtn');
+        const pageGoInput = document.getElementById('pageGoInput');
+        if (pageGoBtn && pageGoInput) {
+            pageGoBtn.addEventListener('click', function() {
+                const total = parseInt(document.getElementById('totalPagesHolder')?.value || '1', 10) || 1;
+                const page = parseInt(pageGoInput.value, 10);
+                if (isNaN(page) || page < 1 || page > total) {
+                    alert('Invalid page number. Please enter a number between 1 and ' + total + '.');
+                    pageGoInput.focus();
+                    return;
+                }
+                if (isFiltered) {
+                    changeFilteredPage(page);
+                } else {
+                    const psize = parseInt(document.getElementById('pageSizeHolder')?.value || '10', 10) || 10;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('pageNumber', page);
+                    url.searchParams.set('pageSize', psize);
+                    window.location = url.toString();
+                }
+                pageGoInput.value = '';
+            });
+            pageGoInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    pageGoBtn.click();
+                }
+            });
+        }
     })();
 
     function restoreFilterInputsFromStorage() {
@@ -1073,6 +1117,14 @@
             recordCountContainer.innerHTML = `Showing ${start} to ${end} of ${totalCount} filtered records`;
         }
 
+        const totalPagesHolder = document.getElementById('totalPagesHolder');
+        if (totalPagesHolder) totalPagesHolder.value = totalPages;
+        const pageGoInput = document.getElementById('pageGoInput');
+        if (pageGoInput) {
+            pageGoInput.max = totalPages;
+            pageGoInput.value = '';
+        }
+
         if (paginationContainer) {
             let paginationHTML = `
                 <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
@@ -1097,37 +1149,31 @@
                     </li>
                 `;
                 
-                // Show ellipsis if current page is far from start
-                if (currentPage > 3) {
-                    paginationHTML += `
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    `;
+                if (currentPage <= 4) {
+                    // Show pages 2, 3, 4 at start
+                    for (let i = 2; i <= Math.min(4, totalPages - 1); i++) {
+                        paginationHTML += `
+                            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                            </li>
+                        `;
+                    }
+                } else {
+                    // Ellipsis then middle pages
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                    for (let i = currentPage - 1; i <= Math.min(currentPage + 1, totalPages - 1); i++) {
+                        paginationHTML += `
+                            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                            </li>
+                        `;
+                    }
                 }
                 
-                // Show pages around current page
-                const startPage = Math.max(2, currentPage - 1);
-                const endPage = Math.min(totalPages - 1, currentPage + 1);
-                
-                for (let i = startPage; i <= endPage; i++) {
-                    paginationHTML += `
-                        <li class="page-item ${i === currentPage ? 'active' : ''}">
-                            <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
-                        </li>
-                    `;
-                }
-                
-                // Show ellipsis if current page is far from end
                 if (currentPage < totalPages - 2) {
-                    paginationHTML += `
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    `;
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
                 }
                 
-                // Always show last page
                 paginationHTML += `
                     <li class="page-item ${currentPage === totalPages ? 'active' : ''}">
                         <a class="page-link" href="#" onclick="changeFilteredPage(${totalPages}); return false;">${totalPages}</a>
@@ -1165,6 +1211,10 @@
             const row = document.createElement('tr');
             row.id = `row-${item.seedingId}`;
             row.innerHTML = `
+                <td data-column="Farm">${escapeHtml(item.farmDisplay || 'N/A')}</td>
+                <td data-column="AreaType">${escapeHtml(item.areaTypeName || `AreaType #${item.areaTypeId}`)}</td>
+                <td data-column="Field">${escapeHtml(item.fieldName || 'N/A')}</td>
+                <td data-column="TagRange">${escapeHtml(item.tagRangeCode || `TagRange #${item.tagRangeId}`)}</td>
                 <td data-column="AreaAmount">${item.areaAmount || ''}</td>
                 <td data-column="SeedingDate">${item.seedingDate ? formatDate(item.seedingDate) : ''}</td>
                 <td data-column="SeedingMethod">${escapeHtml(item.seedingMethod || '')}</td>
@@ -1173,10 +1223,6 @@
                 <td data-column="SoilTemperature">${item.soilTemperature || ''}</td>
                 <td data-column="SoilMoisture">${escapeHtml(item.soilMoisture || '')}</td>
                 <td data-column="Notes">${escapeHtml(item.notes || '')}</td>
-                <td data-column="AreaType">${escapeHtml(item.areaTypeName || `AreaType #${item.areaTypeId}`)}</td>
-                <td data-column="Farm">${escapeHtml(item.farmDisplay || `Farm #${item.farmId}`)}</td>
-                <td data-column="Field">${escapeHtml(item.fieldName || 'N/A')}</td>
-                <td data-column="TagRange">${escapeHtml(item.tagRangeCode || `TagRange #${item.tagRangeId}`)}</td>
                 <td data-column="User">${escapeHtml(item.userName || 'N/A')}</td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Actions">

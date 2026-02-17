@@ -35,6 +35,10 @@ namespace TpaSodManagement.Controllers
             // Set filter columns for the partial view
             ViewBag.FilterColumns = new Dictionary<string, string>
             {
+                { "FarmName", "Farm" },
+                { "AreaTypeName", "Area Type" },
+                { "FieldName", "Field" },
+                { "TagRangeCode", "Tag Range" },
                 { "AreaAmount", "Area Amount" },
                 { "SeedingDate", "Seeding Date" },
                 { "SeedingMethod", "Seeding Method" },
@@ -43,10 +47,6 @@ namespace TpaSodManagement.Controllers
                 { "SoilTemperature", "Soil Temperature" },
                 { "SoilMoisture", "Soil Moisture" },
                 { "Notes", "Notes" },
-                { "AreaTypeName", "Area Type" },
-                { "FarmLicenseNumber", "Farm" },
-                { "FieldName", "Field" },
-                { "TagRangeCode", "Tag Range" },
                 { "UserName", "User" },
                 { "IsActive", "Is Active" }
             };
@@ -244,6 +244,10 @@ namespace TpaSodManagement.Controllers
 
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
+                    ("Farm", "Farm"),
+                    ("Area Type", "AreaType"),
+                    ("Field", "Field"),
+                    ("Tag Range", "TagRange"),
                     ("Area Amount", "AreaAmount"),
                     ("Seeding Date", "SeedingDate"),
                     ("Seeding Method", "SeedingMethod"),
@@ -252,10 +256,6 @@ namespace TpaSodManagement.Controllers
                     ("Soil Temperature", "SoilTemperature"),
                     ("Soil Moisture", "SoilMoisture"),
                     ("Notes", "Notes"),
-                    ("Area Type", "AreaType"),
-                    ("Farm", "Farm"),
-                    ("Field", "Field"),
-                    ("Tag Range", "TagRange"),
                     ("User", "User"),
                     ("Is Active", "IsActive")
                 };
@@ -273,6 +273,10 @@ namespace TpaSodManagement.Controllers
                     {
                         var allValues = new List<object>
                         {
+                            item.FarmDisplay ?? "N/A",
+                            item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}",
+                            item.FieldName ?? "N/A",
+                            item.TagRangeCode ?? $"TagRange #{item.TagRangeId}",
                             item.AreaAmount?.ToString("N2") ?? "",
                             item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("MM/dd/yyyy") : "",
                             item.SeedingMethod ?? "",
@@ -281,10 +285,6 @@ namespace TpaSodManagement.Controllers
                             item.SoilTemperature?.ToString("N2") ?? "",
                             item.SoilMoisture != null ? Convert.ToDecimal(item.SoilMoisture).ToString("N2") : "",
                             item.Notes ?? "",
-                            item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}",
-                            item.FarmDisplay ?? $"Farm #{item.FarmId}",
-                            item.FieldName ?? "N/A",
-                            item.TagRangeCode ?? $"TagRange #{item.TagRangeId}",
                             item.UserName ?? "N/A",
                             item.IsActive ? "Yes" : "No"
                         };
@@ -307,6 +307,14 @@ namespace TpaSodManagement.Controllers
             return new SeedingItemViewModel
             {
                 SeedingId = entity.SeedingId,
+                FarmId = entity.FarmId,
+                FarmDisplay = entity.Farm?.FarmName,
+                AreaTypeId = entity.AreaTypeId,
+                AreaTypeName = entity.AreaType?.AreaTypeName,
+                FieldId = entity.FieldId,
+                FieldName = entity.Field?.FieldName,
+                TagRangeId = entity.TagRangeId,
+                TagRangeCode = entity.TagRange?.TagRangeCode,
                 AreaAmount = entity.AreaAmount,
                 SeedingDate = entity.SeedingDate,
                 SeedingMethod = entity.SeedingMethod,
@@ -316,14 +324,6 @@ namespace TpaSodManagement.Controllers
                 SoilMoisture = entity.SoilMoisture,
                 Notes = entity.Notes,
                 CreatedDate = entity.CreatedDate,
-                AreaTypeId = entity.AreaTypeId,
-                AreaTypeName = entity.AreaType?.AreaTypeName,
-                FarmId = entity.FarmId,
-                FarmDisplay = !string.IsNullOrEmpty(entity.Farm?.LicenseNumber) ? entity.Farm.LicenseNumber : null,
-                FieldId = entity.FieldId,
-                FieldName = entity.Field?.FieldName,
-                TagRangeId = entity.TagRangeId,
-                TagRangeCode = entity.TagRange?.TagRangeCode,
                 UserName = entity.User?.UserName,
                 IsActive = entity.IsActive
             };
@@ -334,11 +334,11 @@ namespace TpaSodManagement.Controllers
             return new SeedingEditViewModel
             {
                 SeedingId = entity.SeedingId,
-                AreaAmount = entity.AreaAmount,
-                AreaTypeId = entity.AreaTypeId,
                 FarmId = entity.FarmId,
+                AreaTypeId = entity.AreaTypeId,
                 FieldId = entity.FieldId,
                 TagRangeId = entity.TagRangeId,
+                AreaAmount = entity.AreaAmount,
                 UserId = entity.UserId,
                 SeedingDate = entity.SeedingDate,
                 SeedingMethod = entity.SeedingMethod,

@@ -370,7 +370,7 @@ namespace TpaSodManagement.Controllers
                             item.Notes ?? "",
                             item.CurrencyName ?? "N/A",
                             item.CustomerDisplay ?? $"Customer #{item.CustomerId}",
-                            item.FarmDisplay ?? $"Farm #{item.FarmId}",
+                            item.FarmDisplay ?? "N/A",
                             item.SaleTypeName ?? "N/A",
                             item.StatusName ?? "N/A",
                             item.UpdatedByUserName ?? "N/A",
@@ -415,7 +415,7 @@ namespace TpaSodManagement.Controllers
                     ? $"{entity.Customer.Person.FirstName} {entity.Customer.Person.LastName}".Trim()
                     : !string.IsNullOrEmpty(entity.Customer?.CustomerCode) ? entity.Customer.CustomerCode : null,
                 FarmId = entity.FarmId,
-                FarmDisplay = !string.IsNullOrEmpty(entity.Farm?.LicenseNumber) ? entity.Farm.LicenseNumber : null,
+                FarmDisplay = entity.Farm?.FarmName,
                 SaleTypeName = entity.SaleType?.SaleTypeName,
                 StatusName = entity.Status?.StatusName,
                 UpdatedByUserName = entity.UpdatedByUser?.UserName,
@@ -449,6 +449,7 @@ namespace TpaSodManagement.Controllers
                 UpdatedByUserId = entity.UpdatedByUserId,
                 CreatedDate = entity.CreatedDate,
                 UpdatedDate = entity.UpdatedDate,
+                IsActive = entity.IsActive,
                 IsDetailsView = isDetailsView
             };
         }

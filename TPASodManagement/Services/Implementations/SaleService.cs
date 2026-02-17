@@ -394,6 +394,7 @@ namespace TpaSodManagement.Services.Implementations
                 existingSale.PaymentTermsDays = sale.PaymentTermsDays;
                 existingSale.StatusId = sale.StatusId;
                 existingSale.Notes = sale.Notes;
+                existingSale.IsActive = sale.IsActive;
                 
                 // Set update audit fields
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();

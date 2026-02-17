@@ -162,20 +162,28 @@
                 <a class="page-link" href="@Url.Action("Index", new { pageNumber = 1, pageSize = pageSize })">1</a>
             </li>
 
-            @if (pageNumber > 3)
+            @if (pageNumber <= 4)
             {
-                @* Show ellipsis if current page is far from start *@
+                @* Show pages 2, 3, 4 at start *@
+                @for (int i = 2; i <= Math.Min(4, totalPages - 1); i++)
+                {
+                    <li class="page-item @(i == pageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                    </li>
+                }
+            }
+            else
+            {
+                @* Ellipsis then middle pages *@
                 <li class="page-item disabled">
                     <span class="page-link">...</span>
                 </li>
-            }
-
-            @* Show pages around current page *@
-            @for (int i = Math.Max(2, pageNumber - 1); i <= Math.Min(totalPages - 1, pageNumber + 1); i++)
-            {
-                <li class="page-item @(i == pageNumber ? "active" : "")">
-                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
-                </li>
+                @for (int i = pageNumber - 1; i <= Math.Min(pageNumber + 1, totalPages - 1); i++)
+                {
+                    <li class="page-item @(i == pageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                    </li>
+                }
             }
 
             @if (pageNumber < totalPages - 2)
@@ -197,6 +205,13 @@
                 href="@Url.Action("Index", new { pageNumber = pageNumber + 1, pageSize = pageSize })">Next</a>
         </li>
     </ul>
+    <div class="d-flex align-items-center gap-1 ms-2">
+        <input type="hidden" id="totalPagesHolder" value="@totalPages" />
+        <input type="hidden" id="pageSizeHolder" value="@pageSize" />
+        <label for="pageGoInput" class="form-label mb-0 small text-nowrap">Go to</label>
+        <input type="number" id="pageGoInput" class="form-control form-control-sm" style="width:70px" min="1" max="@totalPages" placeholder="Page" aria-label="Page number" />
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="pageGoBtn">Go</button>
+    </div>
     <div>@await Html.PartialAsync("_IsActiveTriStatePartial")</div>
 </nav>
 
@@ -826,6 +841,36 @@
                 await downloadExcel();
             });
         }
+
+        const pageGoBtn = document.getElementById('pageGoBtn');
+        const pageGoInput = document.getElementById('pageGoInput');
+        if (pageGoBtn && pageGoInput) {
+            pageGoBtn.addEventListener('click', function() {
+                const total = parseInt(document.getElementById('totalPagesHolder')?.value || '1', 10) || 1;
+                const page = parseInt(pageGoInput.value, 10);
+                if (isNaN(page) || page < 1 || page > total) {
+                    alert('Invalid page number. Please enter a number between 1 and ' + total + '.');
+                    pageGoInput.focus();
+                    return;
+                }
+                if (isFiltered) {
+                    changeFilteredPage(page);
+                } else {
+                    const psize = parseInt(document.getElementById('pageSizeHolder')?.value || '10', 10) || 10;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('pageNumber', page);
+                    url.searchParams.set('pageSize', psize);
+                    window.location = url.toString();
+                }
+                pageGoInput.value = '';
+            });
+            pageGoInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    pageGoBtn.click();
+                }
+            });
+        }
     })();
 
     function restoreFilterInputsFromStorage() {
@@ -1025,6 +1070,14 @@
             recordCountContainer.innerHTML = `Showing ${start} to ${end} of ${totalCount} filtered records`;
         }
 
+        const totalPagesHolder = document.getElementById('totalPagesHolder');
+        if (totalPagesHolder) totalPagesHolder.value = totalPages;
+        const pageGoInput = document.getElementById('pageGoInput');
+        if (pageGoInput) {
+            pageGoInput.max = totalPages;
+            pageGoInput.value = '';
+        }
+
         // Create pagination controls
         if (paginationContainer) {
             paginationContainer.style.display = 'block';
@@ -1051,34 +1104,27 @@
                     </li>
                 `;
                 
-                // Show ellipsis if current page is far from start
-                if (currentPage > 3) {
-                    paginationHTML += `
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    `;
+                if (currentPage <= 4) {
+                    for (let i = 2; i <= Math.min(4, totalPages - 1); i++) {
+                        paginationHTML += `
+                            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                            </li>
+                        `;
+                    }
+                } else {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                    for (let i = currentPage - 1; i <= Math.min(currentPage + 1, totalPages - 1); i++) {
+                        paginationHTML += `
+                            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                            </li>
+                        `;
+                    }
                 }
                 
-                // Show pages around current page
-                const startPage = Math.max(2, currentPage - 1);
-                const endPage = Math.min(totalPages - 1, currentPage + 1);
-                
-                for (let i = startPage; i <= endPage; i++) {
-                    paginationHTML += `
-                        <li class="page-item ${i === currentPage ? 'active' : ''}">
-                            <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
-                        </li>
-                    `;
-                }
-                
-                // Show ellipsis if current page is far from end
                 if (currentPage < totalPages - 2) {
-                    paginationHTML += `
-                        <li class="page-item disabled">
-                            <span class="page-link">...</span>
-                        </li>
-                    `;
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
                 }
                 
                 // Always show last page
