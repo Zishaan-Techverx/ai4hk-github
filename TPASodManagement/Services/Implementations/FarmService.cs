@@ -23,11 +23,22 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<Farm>>();
             try
             {
-                response.Data = await _context.Farms
+                var query = _context.Farms
                     .Include(f => f.AreaType)
                     .Include(f => f.Organization)
                     .Include(f => f.Address).ThenInclude(a => a!.StateProvince)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(f => f.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(f => false);
+                }
+
+                response.Data = await query.ToListAsync();
             }
             catch (System.Exception ex)
             {
@@ -47,6 +58,15 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(f => f.Organization)
                     .Include(f => f.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(f => f.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(f => false);
+                }
 
                 // Apply filters
                 if (filters != null && filters.Count > 0)
@@ -314,9 +334,18 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(a => a.AreaTypeName)
                     .ToListAsync();
 
-                var orgs = await _context.Organizations
+                var orgsQuery = _context.Organizations
                     .OrderBy(o => o.OrganizationName)
-                    .ToListAsync();
+                    .AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        orgsQuery = orgsQuery.Where(o => o.OrganizationId == orgId.Value);
+                    else
+                        orgsQuery = orgsQuery.Where(o => false);
+                }
+                var orgs = await orgsQuery.ToListAsync();
 
                 response.Data = (
                     new SelectList(areaTypes, "AreaTypeId", "AreaTypeName", selectedAreaTypeId), 

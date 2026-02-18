@@ -1,4 +1,4 @@
-﻿@model TpaSodManagement.ViewModels.Permission.ManagePermissionsViewModel
+@model TpaSodManagement.ViewModels.Permission.ManagePermissionsViewModel
 
 @{
     ViewData["Title"] = "Manage Permissions - " + Model.RoleName;
@@ -38,6 +38,9 @@
             <form method="post" action="@Url.Action("Manage", new { roleId = Model.RoleId })">
                 @Html.AntiForgeryToken()
 
+                @{
+                    var permIndex = 0;
+                }
                 @foreach (var category in Model.AllPermissions.GroupBy(p => p.Category))
                 {
                     <div class="card mb-4">
@@ -57,25 +60,23 @@
                                     <tbody>
                                         @foreach (var permission in category)
                                         {
-                                            var rolePermission = Model.RolePermissions?.FirstOrDefault(rp => rp.PermissionId ==
-                                            permission.Id);
+                                            var rolePermission = Model.RolePermissions?.FirstOrDefault(rp => rp.PermissionId == permission.Id);
+                                            var isGranted = rolePermission != null;
                                             <tr>
                                                 <td>
                                                     <strong>@permission.Name</strong>
-                                                    <input type="hidden" name="permissions[@permission.Id].PermissionId"
-                                                        value="@permission.Id" />
-                                                    <input type="hidden" name="permissions[@permission.Id].RoleId"
-                                                        value="@Model.RoleId" />
+                                                    <input type="hidden" name="permissions[@permIndex].PermissionId" value="@permission.Id" />
                                                 </td>
                                                 <td>@permission.Description</td>
                                                 <td>
                                                     <div class="form-check form-switch">
                                                         <input class="form-check-input permission-toggle" type="checkbox"
-                                                            name="permissions[@permission.Id].IsActive" value="true"
-                                                            @(rolePermission?.IsActive == true ? "checked" : "")>
+                                                            name="permissions[@permIndex].Granted" value="true"
+                                                            @(isGranted ? "checked" : "")>
                                                     </div>
                                                 </td>
                                             </tr>
+                                            permIndex++;
                                         }
                                     </tbody>
                                 </table>

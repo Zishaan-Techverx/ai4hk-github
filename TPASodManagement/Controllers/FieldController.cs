@@ -39,7 +39,7 @@ namespace TpaSodManagement.Controllers
                 { "FieldCode", "Field Code" },
                 { "AreaAmount", "Area Amount" },
                 { "AreaTypeName", "Area Type" },
-                { "FarmLicenseNumber", "Farm" },
+                { "FarmName", "Farm" },
                 { "SoilType", "Soil Type" },
                 { "IrrigationAvailable", "Irrigation Available" },
                 { "IsActive", "Is Active" }
@@ -260,7 +260,7 @@ namespace TpaSodManagement.Controllers
                             item.FieldCode ?? "",
                             item.AreaAmount?.ToString("N2") ?? "",
                             item.AreaTypeName ?? "N/A",
-                            !string.IsNullOrEmpty(item.FarmLicenseNumber) ? item.FarmLicenseNumber : $"Farm #{item.FarmId}",
+                            !string.IsNullOrEmpty(item.FarmName) ? item.FarmName : $"Farm #{item.FarmId}",
                             item.SoilType ?? "",
                             item.IrrigationAvailable ? "Yes" : "No",
                             item.IsActive ? "Active" : "Inactive"
@@ -289,7 +289,7 @@ namespace TpaSodManagement.Controllers
                 AreaAmount = entity.AreaAmount,
                 AreaTypeName = entity.AreaType?.AreaTypeName,
                 FarmId = entity.FarmId,
-                FarmLicenseNumber = entity.Farm?.LicenseNumber,
+                FarmName = entity.Farm?.FarmName,
                 SoilType = entity.SoilType,
                 IrrigationAvailable = entity.IrrigationAvailable,
                 IsActive = entity.IsActive

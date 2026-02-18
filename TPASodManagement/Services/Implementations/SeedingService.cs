@@ -27,13 +27,24 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<Seeding>>();
             try
             {
-                response.Data = await _context.Seedings
+                var query = _context.Seedings
                     .Include(s => s.AreaType)
                     .Include(s => s.Farm)
                     .Include(s => s.Field)
                     .Include(s => s.TagRange)
                     .Include(s => s.User)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(s => s.Farm != null && s.Farm.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(s => false);
+                }
+
+                response.Data = await query.ToListAsync();
             }
             catch (System.Exception ex)
             {
@@ -55,6 +66,15 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.TagRange)
                     .Include(s => s.User)
                     .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(s => s.Farm != null && s.Farm.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(s => false);
+                }
 
                 // Apply filters
                 if (filters != null && filters.Count > 0)
@@ -342,15 +362,34 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(a => a.AreaTypeName)
                     .ToListAsync();
 
-                var farms = await _context.Farms
+                var farmsQuery = _context.Farms
                     .Include(f => f.Organization)
                     .OrderBy(f => f.FarmId)
-                    .ToListAsync();
+                    .AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        farmsQuery = farmsQuery.Where(f => f.OrganizationId == orgId.Value);
+                    else
+                        farmsQuery = farmsQuery.Where(f => false);
+                }
+                var farms = await farmsQuery.ToListAsync();
 
-                // Fields fetch - Simple version without complex includes
-                var fields = await _context.Fields
+                // Fields fetch - Simple version, filter by org via Farm
+                var fieldsQuery = _context.Fields
+                    .Include(f => f.Farm)
                     .OrderBy(f => f.FieldName)
-                    .ToListAsync();
+                    .AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        fieldsQuery = fieldsQuery.Where(f => f.Farm != null && f.Farm.OrganizationId == orgId.Value);
+                    else
+                        fieldsQuery = fieldsQuery.Where(f => false);
+                }
+                var fields = await fieldsQuery.ToListAsync();
                 
                 var tagRanges = await _context.TagRanges
                     .OrderBy(t => t.TagRangeId)

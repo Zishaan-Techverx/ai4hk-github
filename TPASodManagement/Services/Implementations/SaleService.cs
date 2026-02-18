@@ -27,7 +27,7 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<Sale>>();
             try
             {
-                response.Data = await _context.Sales
+                var query = _context.Sales
                     .Include(s => s.Currency)
                     .Include(s => s.Customer)
                         .ThenInclude(c => c.Person)
@@ -38,7 +38,18 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.Status)
                     .Include(s => s.UpdatedByUser)
                     .Include(s => s.User)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(s => s.Farm != null && s.Farm.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(s => false);
+                }
+
+                response.Data = await query.ToListAsync();
             }
             catch (Exception ex)
             {
@@ -65,6 +76,15 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.UpdatedByUser)
                     .Include(s => s.User)
                     .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(s => s.Farm != null && s.Farm.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(s => false);
+                }
 
                 // Apply filters
                 if (filters != null && filters.Count > 0)
@@ -484,11 +504,20 @@ namespace TpaSodManagement.Services.Implementations
                     };
                 }).ToList();
 
-                // Farms fetch karein with Organization
-                var farms = await _context.Farms
+                // Farms fetch karein with Organization (filter by user org for non-SuperAdmin)
+                var farmsQuery = _context.Farms
                     .Include(f => f.Organization)
                     .OrderBy(f => f.FarmId)
-                    .ToListAsync();
+                    .AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        farmsQuery = farmsQuery.Where(f => f.OrganizationId == orgId.Value);
+                    else
+                        farmsQuery = farmsQuery.Where(f => false);
+                }
+                var farms = await farmsQuery.ToListAsync();
 
                 // Create SelectList for Farms with display name (Farm Name preferred)
                 var farmItems = farms.Select(f =>
@@ -524,13 +553,22 @@ namespace TpaSodManagement.Services.Implementations
                     Text = c.CurrencyName
                 }).ToList();
 
-                // Customers fetch karein with Person and Organization for display name
-                var customers = await _context.Customers
+                // Customers fetch karein with Person and Organization for display name (filter by user org for non-SuperAdmin)
+                var customersQuery = _context.Customers
                     .Include(c => c.Person)
                     .Include(c => c.Organization)
                     .Where(c => c.IsActive) // Only active customers
                     .OrderBy(c => c.CustomerId)
-                    .ToListAsync();
+                    .AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        customersQuery = customersQuery.Where(c => c.OrganizationId == orgId.Value);
+                    else
+                        customersQuery = customersQuery.Where(c => false);
+                }
+                var customers = await customersQuery.ToListAsync();
 
                 // Create SelectList for Customers with display name (use Person/Organization to decide)
                 var customerItems = customers.Select(c =>

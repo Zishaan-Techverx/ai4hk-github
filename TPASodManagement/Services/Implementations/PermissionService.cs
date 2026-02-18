@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Database;
 using TpaSodManagement.Database.Entities;
@@ -36,30 +36,20 @@ namespace TpaSodManagement.Services.Implementations
                 .ToListAsync();
         }
 
-        // PermissionService.cs
-
-        public async Task<bool> UpdateRolePermissionsAsync(long roleId, List<RolePermission> permissions)
+        public async Task<bool> UpdateRolePermissionsAsync(long roleId, List<int> grantedPermissionIds)
         {
-            var existingPermissions = await _context.RolePermissions
+            var existing = await _context.RolePermissions
                 .Where(rp => rp.RoleId == roleId)
                 .ToListAsync();
 
-            _context.RolePermissions.RemoveRange(existingPermissions);
+            _context.RolePermissions.RemoveRange(existing);
             await _context.SaveChangesAsync();
 
-            foreach (var permission in permissions)
-            {
-                if (permission.IsActive)
-                {
-                    _context.RolePermissions.Add(new RolePermission
-                    {
-                        RoleId = roleId,
-                        PermissionId = permission.PermissionId,
-                        IsActive = permission.IsActive 
-                    });
-                }
-            }
+            var toAdd = (grantedPermissionIds ?? new List<int>())
+                .Distinct()
+                .Select(pid => new RolePermission { RoleId = roleId, PermissionId = pid });
 
+            _context.RolePermissions.AddRange(toAdd);
             await _context.SaveChangesAsync();
             return true;
         }

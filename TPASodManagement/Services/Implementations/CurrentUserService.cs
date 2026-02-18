@@ -20,14 +20,30 @@ namespace TpaSodManagement.Services.Implementations
 
         public async Task<long?> GetCurrentUserIdAsync()
         {
+            var user = await GetCurrentUserAsync();
+            return user?.Id;
+        }
+
+        public async Task<long?> GetCurrentUserOrganizationIdAsync()
+        {
+            var user = await GetCurrentUserAsync();
+            return user?.OrganizationId;
+        }
+
+        public async Task<bool> IsCurrentUserSuperAdminAsync()
+        {
+            var user = await GetCurrentUserAsync();
+            if (user == null) return false;
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+        }
+
+        private async Task<TpaSodManagementUser?> GetCurrentUserAsync()
+        {
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext == null || httpContext.User.Identity?.IsAuthenticated != true)
-            {
                 return null;
-            }
-
-            var user = await _userManager.GetUserAsync(httpContext.User);
-            return user?.Id;
+            return await _userManager.GetUserAsync(httpContext.User);
         }
     }
 }

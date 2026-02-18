@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -89,7 +89,7 @@ namespace TpaSodManagement.Controllers
 
         // POST: Permission/Manage
         [HttpPost]
-        public async Task<IActionResult> Manage(long roleId, Dictionary<int, RolePermission> permissions)
+        public async Task<IActionResult> Manage(long roleId, [Bind(Prefix = "permissions")] List<PermissionUpdateItemViewModel> permissions)
         {
             try
             {
@@ -107,8 +107,11 @@ namespace TpaSodManagement.Controllers
                     return RedirectToAction("Index");
                 }
 
-                var permissionList = permissions?.Values.ToList() ?? new List<RolePermission>();
-                var success = await _permissionService.UpdateRolePermissionsAsync(roleId, permissionList);
+                var grantedIds = (permissions ?? new List<PermissionUpdateItemViewModel>())
+                    .Where(p => p.Granted)
+                    .Select(p => p.PermissionId)
+                    .ToList();
+                var success = await _permissionService.UpdateRolePermissionsAsync(roleId, grantedIds);
 
                 if (success)
                 {

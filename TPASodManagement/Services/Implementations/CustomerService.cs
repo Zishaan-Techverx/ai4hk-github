@@ -23,12 +23,23 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<Customer>>();
             try
             {
-                response.Data = await _context.Customers
+                var query = _context.Customers
                     .Include(c => c.CustomerType)
                     .Include(c => c.Organization)
                     .Include(c => c.Person)
                     .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(c => c.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(c => false);
+                }
+
+                response.Data = await query.ToListAsync();
             }
             catch (Exception ex)
             {
@@ -49,6 +60,15 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(c => c.Person)
                     .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(c => c.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(c => false);
+                }
 
                 // Apply filters
                 if (filters != null && filters.Count > 0)

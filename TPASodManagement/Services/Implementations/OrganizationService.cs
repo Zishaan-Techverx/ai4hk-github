@@ -28,10 +28,21 @@ namespace TpaSodManagement.Services.Implementations
 
         public async Task<List<Organization>> GetAllOrganizationsAsync()
         {
-            return await _context.Organizations
+            var query = _context.Organizations
                 .Include(o => o.OrganizationType)
                 .Include(o => o.Address).ThenInclude(a => a!.StateProvince)
-                .ToListAsync();
+                .AsQueryable();
+
+            if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+            {
+                var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                if (orgId.HasValue)
+                    query = query.Where(o => o.OrganizationId == orgId.Value);
+                else
+                    query = query.Where(o => false);
+            }
+
+            return await query.ToListAsync();
         }
 
         public async Task<Organization> GetOrganizationByIdAsync(long id)
@@ -156,6 +167,15 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(o => o.OrganizationType)
                     .Include(o => o.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(o => o.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(o => false);
+                }
 
                 // Apply filters
                 if (filters != null && filters.Count > 0)

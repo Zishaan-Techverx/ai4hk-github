@@ -102,7 +102,7 @@
                     <td data-column="FieldCode">@Html.DisplayFor(modelItem => item.FieldCode)</td>
                     <td data-column="AreaAmount">@Html.DisplayFor(modelItem => item.AreaAmount)</td>
                     <td data-column="AreaType">@(item.AreaTypeName ?? "N/A")</td>
-                    <td data-column="Farm">@(!string.IsNullOrEmpty(item.FarmLicenseNumber) ? item.FarmLicenseNumber : $"Farm #{item.FarmId}")</td>
+                    <td data-column="Farm">@(!string.IsNullOrEmpty(item.FarmName) ? item.FarmName : $"Farm #{item.FarmId}")</td>
                     <td data-column="SoilType">@Html.DisplayFor(modelItem => item.SoilType)</td>
                     <td data-column="IrrigationAvailable"><input type="checkbox" class="form-check-input" disabled @(item.IrrigationAvailable ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
@@ -1168,7 +1168,7 @@
                 <td data-column="FieldCode">${escapeHtml(item.fieldCode || '')}</td>
                 <td data-column="AreaAmount">${item.areaAmount || ''}</td>
                 <td data-column="AreaType">${escapeHtml(item.areaTypeName || 'N/A')}</td>
-                <td data-column="Farm">${escapeHtml(!item.farmLicenseNumber ? `Farm #${item.farmId}` : item.farmLicenseNumber)}</td>
+                <td data-column="Farm">${escapeHtml(!item.farmName ? `Farm #${item.farmId}` : item.farmName)}</td>
                 <td data-column="SoilType">${escapeHtml(item.soilType || '')}</td>
                 <td data-column="IrrigationAvailable"><input type="checkbox" class="form-check-input" disabled ${item.irrigationAvailable ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>

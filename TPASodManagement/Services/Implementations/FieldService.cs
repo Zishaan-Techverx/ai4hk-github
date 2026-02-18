@@ -27,12 +27,22 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<Field>>();
             try
             {
-                response.Data = await _context.Fields
+                var query = _context.Fields
                     .Include(f => f.Farm)
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
-                    .OrderBy(f => f.FieldName)
-                    .ToListAsync();
+                    .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(f => f.Farm != null && f.Farm.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(f => false);
+                }
+
+                response.Data = await query.OrderBy(f => f.FieldName).ToListAsync();
             }
             catch (System.Exception ex)
             {
@@ -52,6 +62,15 @@ namespace TpaSodManagement.Services.Implementations
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
                     .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        query = query.Where(f => f.Farm != null && f.Farm.OrganizationId == orgId.Value);
+                    else
+                        query = query.Where(f => false);
+                }
 
                 // Apply filters
                 if (filters != null && filters.Count > 0)
@@ -82,10 +101,10 @@ namespace TpaSodManagement.Services.Implementations
                         query = query.Where(f => f.AreaType != null && f.AreaType.AreaTypeName.Contains(filterValue));
                     }
 
-                    if (filters.ContainsKey("FarmLicenseNumber") && !string.IsNullOrWhiteSpace(filters["FarmLicenseNumber"]))
+                    if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmLicenseNumber"]);
-                        query = query.Where(f => f.Farm != null && f.Farm.LicenseNumber != null && f.Farm.LicenseNumber.Contains(filterValue));
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmName"]);
+                        query = query.Where(f => f.Farm != null && f.Farm.FarmName != null && f.Farm.FarmName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("SoilType") && !string.IsNullOrWhiteSpace(filters["SoilType"]))
@@ -257,10 +276,19 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<(SelectList, SelectList, SelectList)>();
             try
             {
-                var farms = await _context.Farms
+                var farmsQuery = _context.Farms
                     .Include(f => f.Organization)
                     .OrderBy(f => f.FarmId)
-                    .ToListAsync();
+                    .AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        farmsQuery = farmsQuery.Where(f => f.OrganizationId == orgId.Value);
+                    else
+                        farmsQuery = farmsQuery.Where(f => false);
+                }
+                var farms = await farmsQuery.ToListAsync();
 
                 var areaTypes = await _context.AreaTypes
                     .OrderBy(a => a.AreaTypeName)
@@ -278,9 +306,7 @@ namespace TpaSodManagement.Services.Implementations
                 var farmItems = farms.Select(f => new SelectListItem
                 {
                     Value = f.FarmId.ToString(),
-                    Text = !string.IsNullOrEmpty(f.LicenseNumber)
-                        ? $"{f.LicenseNumber} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
-                        : $"Farm #{f.FarmId} ({(f.Organization != null ? f.Organization.OrganizationName : "N/A")})"
+                    Text = f.FarmName ?? $"Farm #{f.FarmId}"
                 }).ToList();
 
                 var areaTypeItems = areaTypes.Select(a => new SelectListItem
