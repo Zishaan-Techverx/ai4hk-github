@@ -9,6 +9,7 @@
 
 @{
     string userOrganizationName = null;
+    string userOrganizationTypeName = null;
     
     if (User.Identity.IsAuthenticated)
     {
@@ -18,39 +19,43 @@
             var organization = await OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value);
             if (organization != null)
             {
-                userOrganizationName = organization.OrganizationName.Trim();
+                userOrganizationName = organization.OrganizationName?.Trim();
+                // Get OrganizationTypeName - prefer from OrganizationType navigation, fallback to OrganizationTypeName property
+                userOrganizationTypeName = organization.OrganizationType?.OrganizationTypeName?.Trim() 
+                    ?? organization.OrganizationTypeName?.Trim();
             }
         }
     }
     
-    // Normalize organization name for comparison
+    // Normalize organization type name for comparison (case-insensitive)
+    var orgTypeUpper = userOrganizationTypeName?.ToUpper() ?? "";
     var orgNameUpper = userOrganizationName?.ToUpper() ?? "";
     
-    // Set navbar colors based on organization
+    // Set navbar colors based on organization TYPE
     string navbarBgColor = "#212529"; // Default dark
     string navbarTextColor = "#ffffff"; // Default white
     
-    if (!string.IsNullOrWhiteSpace(orgNameUpper))
+    if (!string.IsNullOrWhiteSpace(orgTypeUpper))
     {
-        if (orgNameUpper == "TPA" || orgNameUpper == "TURF PRODUCERS ASSOCIATION" || orgNameUpper.Contains("TURF PRODUCERS"))
+        if (orgTypeUpper == "TPA")
         {
             navbarBgColor = "#2B2B2B"; // TPA Dark Gray
             navbarTextColor = "#F6F4EE"; // TPA Off-White
         }
-        else if ((orgNameUpper == "HGT" || orgNameUpper == "HEALTHY GRASS TECHNOLOGY" || orgNameUpper.Contains("HEALTHY GRASS")) && !orgNameUpper.Contains("RTF"))
+        else if (orgTypeUpper == "HGT_SOD")
         {
             navbarBgColor = "#FFDB00"; // HGT Yellow
             navbarTextColor = "#1E1E1E"; // HGT Black
         }
-        else if (orgNameUpper == "RTF" || (orgNameUpper.Contains("RTF") && !orgNameUpper.Contains("HGT")))
+        else if (orgTypeUpper == "RTF_SOD")
         {
             navbarBgColor = "#34B233"; // RTF Green
-            navbarTextColor = "#1E1E1E"; // RTF Black (changed from Yellow)
+            navbarTextColor = "#1E1E1E"; // RTF Black
         }
-        else if (orgNameUpper.Contains("RTF") && orgNameUpper.Contains("HGT"))
+        else if (orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD")
         {
             navbarBgColor = "#00A8E2"; // RTF+HGT Blue
-            navbarTextColor = "Black"; // Yellow
+            navbarTextColor = "Black"; // Black text
         }
     }
     
@@ -124,7 +129,7 @@
 {
     <footer class="organizations-footer">
         @* TPA Footer *@
-        @if (orgNameUpper == "TPA" || orgNameUpper == "TURF PRODUCERS ASSOCIATION" || orgNameUpper.Contains("TURF PRODUCERS"))
+        @if (orgTypeUpper == "TPA")
         {
             <!-- TPA Section -->
             <div class="footer-section" style="background-color: #2B2B2B; color: #F6F4EE;">
@@ -169,8 +174,7 @@
         }
         
         @* HGT Footer *@
-        @if ((orgNameUpper == "HGT" || orgNameUpper == "HEALTHY GRASS TECHNOLOGY" || orgNameUpper.Contains("HEALTHY GRASS")) && 
-             !orgNameUpper.Contains("RTF"))
+        @if (orgTypeUpper == "HGT_SOD")
         {
             <!-- HGT Section -->
             <div class="footer-section" style="background-color: #FFDB00; color: #1E1E1E;">
@@ -215,7 +219,7 @@
         }
         
         @* RTF Footer (not combined) *@
-        @if ((orgNameUpper == "RTF" || orgNameUpper.Contains("RTF")) && !orgNameUpper.Contains("HGT"))
+        @if (orgTypeUpper == "RTF_SOD")
         {
             <!-- RTF Section -->
             <div class="footer-section" style="background-color: #34B233; color: #1E1E1E;">
@@ -260,7 +264,7 @@
         }
         
         @* RTF + HGT Combined Footer *@
-        @if (orgNameUpper.Contains("RTF") && orgNameUpper.Contains("HGT"))
+        @if (orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD")
         {
             <!-- RTF + HGT Combined Section -->
             <div class="footer-section" style="background-color: #00A8E2; color: black;">
@@ -306,10 +310,8 @@
 
         <!-- Generic footer for other organizations -->
         @if (userOrganizationName != null && 
-             !(orgNameUpper == "TPA" || orgNameUpper == "TURF PRODUCERS ASSOCIATION" || orgNameUpper.Contains("TURF PRODUCERS") ||
-               ((orgNameUpper == "HGT" || orgNameUpper == "HEALTHY GRASS TECHNOLOGY" || orgNameUpper.Contains("HEALTHY GRASS")) && !orgNameUpper.Contains("RTF")) ||
-               (orgNameUpper == "RTF" || (orgNameUpper.Contains("RTF") && !orgNameUpper.Contains("HGT"))) ||
-               (orgNameUpper.Contains("RTF") && orgNameUpper.Contains("HGT"))))
+             !(orgTypeUpper == "TPA" || orgTypeUpper == "HGT_SOD" || orgTypeUpper == "RTF_SOD" ||
+               orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD"))
         {
             var orgWords = userOrganizationName.Split(' ');
             string logoLine1 = "";
@@ -384,31 +386,33 @@
             </div>
         }
 
-        <!-- Copyright Bar - Hide for defined organizations (TPA, HGT, RTF, RTF+HGT) -->
-        @* Only show copyright bar if user is not logged in or doesn't belong to defined organizations *@
+        <!-- Copyright Bar - Hide for defined organization types (TPA, HGT_SOD, RTF_SOD, RTF_HGT_SOD) -->
+        @* Only show copyright bar if user is not logged in or doesn't belong to defined organization types *@
         @if (userOrganizationName == null || 
-             !(orgNameUpper == "TPA" || orgNameUpper == "TURF PRODUCERS ASSOCIATION" || orgNameUpper.Contains("TURF PRODUCERS") ||
-               ((orgNameUpper == "HGT" || orgNameUpper == "HEALTHY GRASS TECHNOLOGY" || orgNameUpper.Contains("HEALTHY GRASS")) && !orgNameUpper.Contains("RTF")) ||
-               (orgNameUpper == "RTF" || (orgNameUpper.Contains("RTF") && !orgNameUpper.Contains("HGT"))) ||
-               (orgNameUpper.Contains("RTF") && orgNameUpper.Contains("HGT"))))
+             !(orgTypeUpper == "TPA" || orgTypeUpper == "HGT_SOD" || orgTypeUpper == "RTF_SOD" ||
+               orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD"))
         {
             <div class="copyright-bar text-center py-2" style="background-color: #1E1E1E; color: #FFFFFF;">
                 <div class="container">
                     <p class="mb-0" style="font-size: 14px;">
                         &copy; @DateTime.Now.Year - All Rights Reserved
-                        @if (userOrganizationName != null)
+                        @if (userOrganizationTypeName != null)
                         {
-                            if (orgNameUpper.Contains("TPA"))
+                            if (orgTypeUpper == "TPA")
                             {
                                 <text>| TPA™</text>
                             }
-                            if (orgNameUpper.Contains("HGT"))
+                            if (orgTypeUpper == "HGT_SOD")
                             {
                                 <text>| HGT®</text>
                             }
-                            if (orgNameUpper.Contains("RTF"))
+                            if (orgTypeUpper == "RTF_SOD" || orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD")
                             {
                                 <text>| RTF®</text>
+                            }
+                            if (orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD")
+                            {
+                                <text>| HGT®</text>
                             }
                         }
                     </p>
