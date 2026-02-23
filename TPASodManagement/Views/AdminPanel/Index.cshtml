@@ -1,4 +1,4 @@
-﻿@model TpaSodManagement.ViewModels.Admin.AdminIndexViewModel
+@model TpaSodManagement.ViewModels.Admin.AdminIndexViewModel
 @{
     ViewData["Title"] = "Roles Management";
     var roles = Model.Roles;
@@ -105,21 +105,36 @@
             {
                 <div class="card mt-4">
                     <div class="card-header">
-                        <h5 class="card-title mb-0">Assign Roles to Users (Single Role Assignment)</h5>
+                        <h5 class="card-title mb-0">Assign Roles to Users</h5>
                     </div>
                     <div class="card-body">
 
                         <form id="assignRoleForm" asp-action="AssignRoleToUser" method="post" class="row g-3 align-items-end mb-4">
                             @Html.AntiForgeryToken()
                             <div class="col-md-4">
-                                <label class="form-label">Select User</label>
-                                <select name="userId" class="form-select" required>
-                                    <option value="">-- Select User --</option>
-                                    @foreach (var user in users)
-                                    {
-                                        <option value="@user.Id">@user.UserName (@user.Email)</option>
-                                    }
-                                </select>
+                                <label class="form-label">Select User(s)</label>
+                                <div class="dropdown" data-bs-auto-close="outside">
+                                    <button class="btn btn-outline-secondary dropdown-toggle form-select text-start" type="button" id="userDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <span id="userDropdownLabel">-- Select User(s) --</span>
+                                    </button>
+                                    <ul class="dropdown-menu p-2" id="userDropdownMenu" style="max-height: 280px; overflow-y: auto; min-width: 280px;">
+                                        <li class="dropdown-item border-bottom mb-1">
+                                            <label class="d-flex align-items-center gap-2 mb-0 w-100" style="cursor: pointer;">
+                                                <input type="checkbox" class="form-check-input" id="userSelectAll" />
+                                                <strong>Select All</strong>
+                                            </label>
+                                        </li>
+                                        @foreach (var user in users)
+                                        {
+                                            <li class="dropdown-item">
+                                                <label class="d-flex align-items-center gap-2 mb-0 w-100" style="cursor: pointer;">
+                                                    <input type="checkbox" class="form-check-input user-checkbox" name="userIds" value="@user.Id" />
+                                                    <span>@user.UserName (@user.Email)</span>
+                                                </label>
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
                             </div>
                             <div class="col-md-4">
                                 <label class="form-label">Select Role</label>
@@ -253,19 +268,52 @@
 </div>
 
 @section Scripts {
-
     <script>
-        console.log("DELETE SCRIPT LOADED");
+        (function () {
+            var userSelectAll = document.getElementById("userSelectAll");
+            var userCheckboxes = document.querySelectorAll(".user-checkbox");
+            var userDropdownLabel = document.getElementById("userDropdownLabel");
+            var userDropdownMenu = document.getElementById("userDropdownMenu");
+            var assignRoleForm = document.getElementById("assignRoleForm");
 
-        document.getElementById("assignRoleForm")?.addEventListener("submit", function (e) {
-            const userId = this.querySelector('select[name="userId"]').value;
-            const roleName = this.querySelector('select[name="roleName"]').value;
-
-            if (!userId || !roleName) {
-                e.preventDefault();
-                console.error("Please select both user and role before submitting.");
+            function updateLabel() {
+                var count = document.querySelectorAll(".user-checkbox:checked").length;
+                userDropdownLabel.textContent = count === 0 ? "-- Select User(s) --" : count + " user(s) selected";
             }
-        });
+
+            if (userSelectAll) {
+                userSelectAll.addEventListener("change", function () {
+                    userCheckboxes.forEach(function (cb) { cb.checked = userSelectAll.checked; });
+                    updateLabel();
+                });
+            }
+
+            userCheckboxes.forEach(function (cb) {
+                cb.addEventListener("change", function () {
+                    var total = userCheckboxes.length;
+                    var checked = document.querySelectorAll(".user-checkbox:checked").length;
+                    userSelectAll.checked = total > 0 && checked === total;
+                    userSelectAll.indeterminate = checked > 0 && checked < total;
+                    updateLabel();
+                });
+            });
+
+            if (userDropdownMenu) {
+                userDropdownMenu.addEventListener("click", function (e) {
+                    e.stopPropagation();
+                });
+            }
+
+            assignRoleForm?.addEventListener("submit", function (e) {
+                var roleName = this.querySelector('select[name="roleName"]').value;
+                var checked = this.querySelectorAll('.user-checkbox:checked');
+                if (!checked.length || !roleName) {
+                    e.preventDefault();
+                    alert("Please select at least one user and a role.");
+                    return false;
+                }
+            });
+        })();
 
         const roleIdInput = document.getElementById("roleIdToDelete");
         const roleNamePlaceholder = document.getElementById("roleNamePlaceholder");

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Data;
@@ -64,37 +64,42 @@ namespace TpaSodManagement.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Policy = "CanEditAdmin")]
-        public async Task<IActionResult> AssignRoleToUser(string userId, string roleName)
+        public async Task<IActionResult> AssignRoleToUser(string[] userIds, string roleName)
         {
             try
             {
-                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(roleName))
+                if (userIds == null || userIds.Length == 0 || string.IsNullOrEmpty(roleName))
                 {
-                    TempData["ErrorMessage"] = "Please select both user and role.";
+                    TempData["ErrorMessage"] = "Please select at least one user and a role.";
                     return RedirectToAction("Index");
                 }
 
-                if (!long.TryParse(userId, out long userIdLong))
+                var assigned = 0;
+                var failed = 0;
+                foreach (var userId in userIds)
                 {
-                    TempData["ErrorMessage"] = "Invalid user ID.";
-                    return RedirectToAction("Index");
+                    if (string.IsNullOrWhiteSpace(userId)) continue;
+                    if (!long.TryParse(userId.Trim(), out long userIdLong))
+                    {
+                        failed++;
+                        continue;
+                    }
+                    var (success, _) = await _adminService.AssignRoleToUserAsync(userIdLong, roleName);
+                    if (success) assigned++; else failed++;
                 }
-                var (success, message) = await _adminService.AssignRoleToUserAsync(userIdLong, roleName);
 
-                if (success)
-                {
-                    TempData["SuccessMessage"] = message;
-                }
-                else
-                {
-                    TempData["ErrorMessage"] = message;
-                }
+                if (assigned > 0)
+                    TempData["SuccessMessage"] = failed == 0
+                        ? $"Role assigned to {assigned} user(s)."
+                        : $"Role assigned to {assigned} user(s). {failed} failed.";
+                else if (failed > 0)
+                    TempData["ErrorMessage"] = "Failed to assign role to selected user(s).";
 
                 return RedirectToAction("Index");
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error assigning role {RoleName} to user {UserId}", roleName, userId);
+                _logger.LogError(ex, "Error assigning role {RoleName} to users", roleName);
                 TempData["ErrorMessage"] = "An error occurred while assigning the role.";
                 return RedirectToAction("Index");
             }
