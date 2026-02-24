@@ -129,9 +129,10 @@
 
                             @if (!isDetailsView)
                             {
-                                <input asp-for="LogoFile" type="file" class="form-control" accept="image/*" onchange="previewLogo(event)" />
+                                <input asp-for="LogoFile" type="file" class="form-control" id="logoFileInput" accept=".jpg,.jpeg,.png,.svg" onchange="validateAndPreviewLogo(event)" />
                                 <span asp-validation-for="LogoFile" class="text-danger"></span>
-                                <small class="form-text text-muted">Leave empty to keep current logo</small>
+                                <span id="logoFileError" class="text-danger" style="display:none;"></span>
+                                <small class="form-text text-muted">Allowed: .jpg, .jpeg, .png, .svg. Max size: 2MB. Leave empty to keep current logo.</small>
                             }
                         </div>
 
@@ -170,35 +171,51 @@
         <partial name="_ValidationScriptsPartial" />
         
         <script>
-            function previewLogo(event) {
-                const fileInput = event.target;
-                const previewContainer = document.getElementById('logoPreview');
-                const noLogoText = document.getElementById('noLogoText');
-                const currentLogo = document.getElementById('currentLogo');
+            const ALLOWED_LOGO_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.svg'];
+            const LOGO_MAX_BYTES = 2 * 1024 * 1024; // 2MB
 
+            function getExtension(filename) {
+                if (!filename) return '';
+                var i = filename.lastIndexOf('.');
+                return i >= 0 ? filename.substring(i).toLowerCase() : '';
+            }
+
+            function validateLogoFile(file, errorSpanId) {
+                var errorSpan = document.getElementById(errorSpanId || 'logoFileError');
+                if (!errorSpan) return true;
+                errorSpan.style.display = 'none';
+                errorSpan.textContent = '';
+                if (!file) return true;
+                var ext = getExtension(file.name);
+                if (ALLOWED_LOGO_EXTENSIONS.indexOf(ext) === -1) {
+                    errorSpan.textContent = 'Logo must be one of: .jpg, .jpeg, .png, .svg';
+                    errorSpan.style.display = 'block';
+                    return false;
+                }
+                if (file.size > LOGO_MAX_BYTES) {
+                    errorSpan.textContent = 'Logo size must not exceed 2MB.';
+                    errorSpan.style.display = 'block';
+                    return false;
+                }
+                return true;
+            }
+
+            function validateAndPreviewLogo(event) {
+                var fileInput = event.target;
+                var file = fileInput.files[0];
+                var previewContainer = document.getElementById('logoPreview');
+                var noLogoText = document.getElementById('noLogoText');
+                var currentLogo = document.getElementById('currentLogo');
+                var errorSpan = document.getElementById('logoFileError');
+                if (errorSpan) { errorSpan.style.display = 'none'; errorSpan.textContent = ''; }
                 if (currentLogo) currentLogo.remove();
                 if (noLogoText) noLogoText.remove();
 
-                const file = fileInput.files[0];
-                if (file) {
-                    const reader = new FileReader();
-                    reader.onload = function (e) {
-                        const img = document.createElement('img');
-                        img.src = e.target.result;
-                        img.alt = "New Logo";
-                        img.style.maxWidth = "150px";
-                        img.style.maxHeight = "150px";
-                        img.style.border = "1px solid #ccc";
-                        img.style.borderRadius = "5px";
-                        previewContainer.innerHTML = '';
-                        previewContainer.appendChild(img);
-                    };
-                    reader.readAsDataURL(file);
-                } else {
+                if (!file) {
                     @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
                     {
                         <text>
-                        const img = document.createElement('img');
+                        var img = document.createElement('img');
                         img.src = '@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })';
                         img.alt = "Current Logo";
                         img.style.maxWidth = "150px";
@@ -213,7 +230,7 @@
                     else
                     {
                         <text>
-                        const span = document.createElement('span');
+                        var span = document.createElement('span');
                         span.className = 'text-muted';
                         span.id = 'noLogoText';
                         span.textContent = 'No logo uploaded';
@@ -221,8 +238,67 @@
                         previewContainer.appendChild(span);
                         </text>
                     }
+                    return;
                 }
+                if (!validateLogoFile(file, 'logoFileError')) {
+                    fileInput.value = '';
+                    @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
+                    {
+                        <text>
+                        var img = document.createElement('img');
+                        img.src = '@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })';
+                        img.alt = "Current Logo";
+                        img.style.maxWidth = "150px";
+                        img.style.maxHeight = "150px";
+                        img.style.border = "1px solid #ccc";
+                        img.style.borderRadius = "5px";
+                        img.id = "currentLogo";
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(img);
+                        </text>
+                    }
+                    else
+                    {
+                        <text>
+                        var span = document.createElement('span');
+                        span.className = 'text-muted';
+                        span.id = 'noLogoText';
+                        span.textContent = 'No logo uploaded';
+                        previewContainer.innerHTML = '';
+                        previewContainer.appendChild(span);
+                        </text>
+                    }
+                    return;
+                }
+                var reader = new FileReader();
+                reader.onload = function (e) {
+                    var img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.alt = "New Logo";
+                    img.style.maxWidth = "150px";
+                    img.style.maxHeight = "150px";
+                    img.style.border = "1px solid #ccc";
+                    img.style.borderRadius = "5px";
+                    previewContainer.innerHTML = '';
+                    previewContainer.appendChild(img);
+                };
+                reader.readAsDataURL(file);
             }
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var form = document.querySelector('form');
+                if (form) {
+                    form.addEventListener('submit', function (e) {
+                        var logoInput = document.getElementById('logoFileInput');
+                        if (logoInput && logoInput.files && logoInput.files.length > 0) {
+                            if (!validateLogoFile(logoInput.files[0], 'logoFileError')) {
+                                e.preventDefault();
+                                return false;
+                            }
+                        }
+                    });
+                }
+            });
         </script>
     }
 }

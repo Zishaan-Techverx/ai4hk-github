@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using System.Linq;
 using System.Text.Json;
 using TpaSodManagement.Database;
 using TpaSodManagement.Database.Seeders;
+using TpaSodManagement.Services.Implementations;
 using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.Organization;
 using TpaSodManagement.ViewModels.Address;
@@ -25,13 +27,15 @@ namespace TpaSodManagement.Controllers
         private readonly IExportToExcel _exportToExcel;
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ApplicationDbContext _context;
+        private readonly IWebHostEnvironment _env;
 
-        public OrganizationController(IOrganizationService organizationService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager, ApplicationDbContext context)
+        public OrganizationController(IOrganizationService organizationService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager, ApplicationDbContext context, IWebHostEnvironment env)
         {
             _organizationService = organizationService;
             _exportToExcel = exportToExcel;
             _userManager = userManager;
             _context = context;
+            _env = env;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -73,7 +77,9 @@ namespace TpaSodManagement.Controllers
                     OrganizationTypeId = o.OrganizationTypeId,
                     OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
-                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0,
+                    HasLogo = (o.LogoBytes != null && o.LogoBytes.Length > 0) || !string.IsNullOrEmpty(o.LogoFilePath),
+                    LogoUrl = !string.IsNullOrEmpty(o.LogoFilePath) ? "/" + o.LogoFilePath.TrimStart('/') : null,
+                    LogoDataUrl = string.IsNullOrEmpty(o.LogoFilePath) && o.LogoBytes != null && o.LogoBytes.Length > 0 ? BuildLogoDataUrl(o.LogoBytes) : null,
                     IsActive = o.IsActive
                 })
                 .ToList() ?? new List<OrganizationItemViewModel>();
@@ -110,7 +116,9 @@ namespace TpaSodManagement.Controllers
                     OrganizationTypeId = o.OrganizationTypeId,
                     OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
-                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0,
+                    HasLogo = (o.LogoBytes != null && o.LogoBytes.Length > 0) || !string.IsNullOrEmpty(o.LogoFilePath),
+                    LogoUrl = !string.IsNullOrEmpty(o.LogoFilePath) ? "/" + o.LogoFilePath.TrimStart('/') : null,
+                    LogoDataUrl = string.IsNullOrEmpty(o.LogoFilePath) && o.LogoBytes != null && o.LogoBytes.Length > 0 ? BuildLogoDataUrl(o.LogoBytes) : null,
                     IsActive = o.IsActive
                 }).ToList() ?? new List<OrganizationItemViewModel>();
 
@@ -171,7 +179,9 @@ namespace TpaSodManagement.Controllers
                     OrganizationTypeId = o.OrganizationTypeId,
                     OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
-                    HasLogo = o.LogoBytes != null && o.LogoBytes.Length > 0,
+                    HasLogo = (o.LogoBytes != null && o.LogoBytes.Length > 0) || !string.IsNullOrEmpty(o.LogoFilePath),
+                    LogoUrl = !string.IsNullOrEmpty(o.LogoFilePath) ? "/" + o.LogoFilePath.TrimStart('/') : null,
+                    LogoDataUrl = string.IsNullOrEmpty(o.LogoFilePath) && o.LogoBytes != null && o.LogoBytes.Length > 0 ? BuildLogoDataUrl(o.LogoBytes) : null,
                     IsActive = o.IsActive
                 }).ToList() ?? new List<OrganizationItemViewModel>();
 
@@ -253,6 +263,15 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(OrganizationEditViewModel organizationVm)
         {
+            if (organizationVm.LogoFile != null && organizationVm.LogoFile.Length > 0)
+            {
+                var (logoValid, logoError) = OrganizationService.ValidateLogoFile(organizationVm.LogoFile);
+                if (!logoValid)
+                {
+                    ModelState.AddModelError("LogoFile", logoError ?? "Invalid logo file.");
+                }
+            }
+
             if (ModelState.IsValid)
             {
                 var isDuplicate = await _organizationService.ExistsDuplicateNameAndTypeAsync(organizationVm.OrganizationName!, organizationVm.OrganizationTypeId, null);
@@ -290,6 +309,15 @@ namespace TpaSodManagement.Controllers
         {
             if (id != updatedOrgVm.OrganizationId)
                 return NotFound();
+
+            if (updatedOrgVm.LogoFile != null && updatedOrgVm.LogoFile.Length > 0)
+            {
+                var (logoValid, logoError) = OrganizationService.ValidateLogoFile(updatedOrgVm.LogoFile);
+                if (!logoValid)
+                {
+                    ModelState.AddModelError("LogoFile", logoError ?? "Invalid logo file.");
+                }
+            }
 
             if (ModelState.IsValid)
             {
@@ -364,10 +392,20 @@ namespace TpaSodManagement.Controllers
         public async Task<IActionResult> GetLogo(long id)
         {
             var organization = await _organizationService.GetOrganizationByIdAsync(id);
-            if (organization?.LogoBytes == null || organization.LogoBytes.Length == 0)
+            if (organization == null)
                 return NotFound();
 
-            return File(organization.LogoBytes, GetImageContentType(organization.LogoBytes));
+            if (!string.IsNullOrEmpty(organization.LogoFilePath) && !string.IsNullOrEmpty(_env?.WebRootPath))
+            {
+                var physicalPath = Path.Combine(_env.WebRootPath, organization.LogoFilePath.Replace('/', Path.DirectorySeparatorChar));
+                if (System.IO.File.Exists(physicalPath))
+                    return PhysicalFile(physicalPath, GetContentTypeFromPath(organization.LogoFilePath));
+            }
+
+            if (organization.LogoBytes != null && organization.LogoBytes.Length > 0)
+                return File(organization.LogoBytes, GetImageContentType(organization.LogoBytes));
+
+            return NotFound();
         }
 
         // ADD THIS METHOD - Get Logo by Organization Name
@@ -378,10 +416,32 @@ namespace TpaSodManagement.Controllers
                 return NotFound();
 
             var organization = await _organizationService.GetOrganizationByNameAsync(organizationName);
-            if (organization?.LogoBytes == null || organization.LogoBytes.Length == 0)
+            if (organization == null)
                 return NotFound();
 
-            return File(organization.LogoBytes, GetImageContentType(organization.LogoBytes));
+            if (!string.IsNullOrEmpty(organization.LogoFilePath) && !string.IsNullOrEmpty(_env?.WebRootPath))
+            {
+                var physicalPath = Path.Combine(_env.WebRootPath, organization.LogoFilePath.Replace('/', Path.DirectorySeparatorChar));
+                if (System.IO.File.Exists(physicalPath))
+                    return PhysicalFile(physicalPath, GetContentTypeFromPath(organization.LogoFilePath));
+            }
+
+            if (organization.LogoBytes != null && organization.LogoBytes.Length > 0)
+                return File(organization.LogoBytes, GetImageContentType(organization.LogoBytes));
+
+            return NotFound();
+        }
+
+        private static string GetContentTypeFromPath(string filePath)
+        {
+            var ext = Path.GetExtension(filePath)?.ToLowerInvariant();
+            return ext switch
+            {
+                ".png" => "image/png",
+                ".jpg" or ".jpeg" => "image/jpeg",
+                ".svg" => "image/svg+xml",
+                _ => "image/png"
+            };
         }
 
         private string GetImageContentType(byte[] bytes)
@@ -402,6 +462,22 @@ namespace TpaSodManagement.Controllers
 
             // Default to JPEG
             return "image/jpeg";
+        }
+
+        private static string GetImageContentTypeStatic(byte[] bytes)
+        {
+            if (bytes == null || bytes.Length < 4) return "image/png";
+            if (bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47) return "image/png";
+            if (bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF) return "image/jpeg";
+            if (bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46) return "image/gif";
+            if (bytes.Length >= 5 && bytes[0] == 0x3C && (bytes[1] == 0x3F || bytes[1] == 0x73)) return "image/svg+xml"; // <? or <s
+            return "image/png";
+        }
+
+        private static string? BuildLogoDataUrl(byte[]? logoBytes)
+        {
+            if (logoBytes == null || logoBytes.Length == 0) return null;
+            return "data:" + GetImageContentTypeStatic(logoBytes) + ";base64," + Convert.ToBase64String(logoBytes);
         }
 
         private async Task PopulateOrganizationTypesDropdown(long? selectedId = null)
@@ -430,7 +506,7 @@ namespace TpaSodManagement.Controllers
                 IsActive = entity.IsActive,
                 AddressId = entity.AddressId,
                 LogoBytes = entity.LogoBytes,
-                HasLogo = entity.LogoBytes != null && entity.LogoBytes.Length > 0,
+                HasLogo = (entity.LogoBytes != null && entity.LogoBytes.Length > 0) || !string.IsNullOrEmpty(entity.LogoFilePath),
                 IsDetailsView = isDetailsView
             };
         }

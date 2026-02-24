@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Database;
 using TpaSodManagement.Database.Entities;
@@ -8,14 +9,38 @@ namespace TpaSodManagement.Services.Implementations
 {
     public class OrganizationService : IOrganizationService
     {
+        private const string LogoFolderRelativePath = "uploads/logos";
+        private const int LogoMaxSizeBytes = 2 * 1024 * 1024; // 2MB
+        private static readonly string[] AllowedLogoExtensions = { ".jpg", ".jpeg", ".png", ".svg" };
+
         private readonly ApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IWebHostEnvironment _env;
 
-        // Remove IWebHostEnvironment dependency since we're not using file system
-        public OrganizationService(ApplicationDbContext context, ICurrentUserService currentUserService)
+        public OrganizationService(ApplicationDbContext context, ICurrentUserService currentUserService, IWebHostEnvironment env)
         {
             _context = context;
             _currentUserService = currentUserService;
+            _env = env;
+        }
+
+        /// <summary>
+        /// Validates organization logo file: allowed types .jpg, .jpeg, .png, .svg; max size 2MB.
+        /// Returns (true, null) if valid; (false, errorMessage) if invalid.
+        /// </summary>
+        public static (bool IsValid, string? ErrorMessage) ValidateLogoFile(IFormFile? file)
+        {
+            if (file == null || file.Length == 0)
+                return (true, null);
+
+            var ext = Path.GetExtension(file.FileName)?.ToLowerInvariant();
+            if (string.IsNullOrEmpty(ext) || !AllowedLogoExtensions.Contains(ext))
+                return (false, "Logo must be one of: .jpg, .jpeg, .png, .svg");
+
+            if (file.Length > LogoMaxSizeBytes)
+                return (false, "Logo size must not exceed 2MB.");
+
+            return (true, null);
         }
 
         public async Task<List<OrganizationType>> GetAllOrganizationTypesAsync()
@@ -67,7 +92,11 @@ namespace TpaSodManagement.Services.Implementations
         {
             if (logoFile != null && logoFile.Length > 0)
             {
-                organization.LogoBytes = await ConvertFileToBytesAsync(logoFile);
+                var (valid, _) = ValidateLogoFile(logoFile);
+                if (valid)
+                {
+                    organization.LogoBytes = await ConvertFileToBytesAsync(logoFile);
+                }
             }
 
             await SetOrganizationTypeNameFromTypeIdAsync(organization);
@@ -77,6 +106,22 @@ namespace TpaSodManagement.Services.Implementations
             organization.CreatedByUserId = currentUserId;
             _context.Organizations.Add(organization);
             await _context.SaveChangesAsync();
+
+            if (logoFile != null && logoFile.Length > 0 && organization.LogoBytes != null && organization.LogoBytes.Length > 0)
+            {
+                var (valid, _) = ValidateLogoFile(logoFile);
+                if (valid)
+                {
+                    var relativePath = await SaveLogoToFileSystemAsync(organization.LogoBytes, organization.OrganizationId, logoFile.FileName);
+                    if (relativePath != null)
+                    {
+                        organization.LogoFilePath = relativePath;
+                        _context.Organizations.Update(organization);
+                        await _context.SaveChangesAsync();
+                    }
+                }
+            }
+
             return organization;
         }
 
@@ -101,7 +146,14 @@ namespace TpaSodManagement.Services.Implementations
             // Update logo only if a new file is provided
             if (logoFile != null && logoFile.Length > 0)
             {
-                orgDb.LogoBytes = await ConvertFileToBytesAsync(logoFile);
+                var (valid, _) = ValidateLogoFile(logoFile);
+                if (valid)
+                {
+                    orgDb.LogoBytes = await ConvertFileToBytesAsync(logoFile);
+                    var relativePath = await SaveLogoToFileSystemAsync(orgDb.LogoBytes, orgDb.OrganizationId, logoFile.FileName);
+                    if (relativePath != null)
+                        orgDb.LogoFilePath = relativePath;
+                }
             }
 
             var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
@@ -255,6 +307,28 @@ namespace TpaSodManagement.Services.Implementations
                 await file.CopyToAsync(memoryStream);
                 return memoryStream.ToArray();
             }
+        }
+
+        /// <summary>
+        /// Saves logo to wwwroot/uploads/logos as organization_{OrganizationId}.{ext}.
+        /// Returns relative path (e.g. uploads/logos/organization_1.png) or null on failure.
+        /// </summary>
+        private async Task<string?> SaveLogoToFileSystemAsync(byte[] logoBytes, long organizationId, string? originalFileName)
+        {
+            if (string.IsNullOrEmpty(_env?.WebRootPath))
+                return null;
+
+            var ext = Path.GetExtension(originalFileName)?.ToLowerInvariant();
+            if (string.IsNullOrEmpty(ext) || !AllowedLogoExtensions.Contains(ext))
+                ext = ".png";
+
+            var fileName = $"organization_{organizationId}{ext}";
+            var folderPath = Path.Combine(_env.WebRootPath, "uploads", "logos");
+            Directory.CreateDirectory(folderPath);
+            var filePath = Path.Combine(folderPath, fileName);
+
+            await System.IO.File.WriteAllBytesAsync(filePath, logoBytes);
+            return $"{LogoFolderRelativePath}/{fileName}";
         }
     }
 }

@@ -15,6 +15,7 @@ public partial class Organization : AuditBaseEntity
     public string OrganizationName { get; set; } = null!;
 
     public long? OrganizationTypeId { get; set; }
+
     public virtual OrganizationType? OrganizationType { get; set; }
 
     public string? OrganizationCode { get; set; }
@@ -32,6 +33,11 @@ public partial class Organization : AuditBaseEntity
     public virtual Address? Address { get; set; }
 
     public byte[]? LogoBytes { get; set; }
+
+    /// <summary>
+    /// Relative path under wwwroot, e.g. "uploads/logos/organization_1.png".
+    /// </summary>
+    public string? LogoFilePath { get; set; }
 
     [NotMapped]
     public IFormFile? LogoFile { get; set; }

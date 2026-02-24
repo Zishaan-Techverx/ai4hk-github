@@ -42,6 +42,7 @@
   <ItemGroup>
     <Folder Include="Database\Migrations\" />
     <Folder Include="Database\Seeders\" />
+    <Folder Include="wwwroot\uploads\Logos\" />
   </ItemGroup>
 
 </Project>
