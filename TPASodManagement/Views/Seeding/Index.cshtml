@@ -10,10 +10,16 @@
 <br />
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Seedings</h1>
-    <div>
-        <button type="button" class="btn btn-secondary me-2" id="printBtn">
-            <i class="fas fa-download me-1"></i> Export to Excel
-        </button>
+    <div class="d-flex flex-row align-items-center gap-2">
+        <div class="dropdown me-2">
+            <button type="button" class="btn btn-secondary dropdown-toggle" id="exportDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-download me-1"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="fas fa-file-excel me-2"></i>Export to Excel</a></li>
+                <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="fas fa-file-pdf me-2"></i>Export to PDF</a></li>
+            </ul>
+        </div>
         @if (User.HasPermission("Seeding.Create"))
         {
             <a asp-action="Create" class="btn btn-primary">Create New</a>
@@ -65,19 +71,19 @@
         <table class="table" id="dataTable">
         <thead>
             <tr>
-                <th data-column="Farm">Farm</th>
-                <th data-column="AreaType">Area Type</th>
-                <th data-column="Field">Field</th>
-                <th data-column="TagRange">TagRange</th>
+                <th data-column="FarmName">Farm</th>
+                <th data-column="AreaTypeName">Area Type</th>
+                <th data-column="FieldName">Field</th>
+                <th data-column="TagRangeCode">Tag Range</th>
                 <th data-column="AreaAmount">Area Amount</th>
                 <th data-column="SeedingDate">Seeding Date</th>
                 <th data-column="SeedingMethod">Seeding Method</th>
-                <th data-column="SeedRatePerUnit">SeedRate Per Unit</th>
+                <th data-column="SeedRatePerUnit">Seed Rate Per Unit</th>
                 <th data-column="WeatherConditions">Weather Conditions</th>
                 <th data-column="SoilTemperature">Soil Temperature</th>
                 <th data-column="SoilMoisture">Soil Moisture</th>
                 <th data-column="Notes">Notes</th>
-                <th data-column="User">User</th>
+                <th data-column="UserName">User</th>
                 <th data-column="IsActive">Is Active</th>
                 <th data-column="Actions" class="no-hide-column">Actions</th>
             </tr>
@@ -86,10 +92,10 @@
             @foreach (var item in Model)
             {
                 <tr id="row-@item.SeedingId">
-                    <td data-column="Farm">@(item.FarmDisplay ?? "N/A")</td>
-                    <td data-column="AreaType">@(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")</td>
-                    <td data-column="Field">@(item.FieldName ?? "N/A")</td>
-                    <td data-column="TagRange">@(item.TagRangeCode ?? $"TagRange #{item.TagRangeId}")</td>
+                    <td data-column="FarmName">@(item.FarmDisplay ?? "N/A")</td>
+                    <td data-column="AreaTypeName">@(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")</td>
+                    <td data-column="FieldName">@(item.FieldName ?? "N/A")</td>
+                    <td data-column="TagRangeCode">@(item.TagRangeCode ?? $"TagRange #{item.TagRangeId}")</td>
                     <td data-column="AreaAmount">@Html.DisplayFor(modelItem => item.AreaAmount)</td>
                     <td data-column="SeedingDate">@(item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("MM/dd/yyyy") : "")</td>
                     <td data-column="SeedingMethod">@Html.DisplayFor(modelItem => item.SeedingMethod)</td>
@@ -98,7 +104,7 @@
                     <td data-column="SoilTemperature">@Html.DisplayFor(modelItem => item.SoilTemperature)</td>
                     <td data-column="SoilMoisture">@Html.DisplayFor(modelItem => item.SoilMoisture)</td>
                     <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
-                    <td data-column="User">@(item.UserName ?? "N/A")</td>
+                    <td data-column="UserName">@(item.UserName ?? "N/A")</td>
                     <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td data-column="Actions">
                         <div class="btn-group btn-group-sm">
@@ -526,6 +532,7 @@
                 // Find all filter inputs for this column
                 const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
                 const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterTriState = item.querySelector(`.filter-tristate[data-column="${columnName}"]`);
                 const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
                 const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
                 const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
@@ -542,6 +549,11 @@
                     filterToggle.disabled = isHidden;
                     filterToggle.style.opacity = isHidden ? '0.5' : '1';
                     filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterTriState) {
+                    filterTriState.disabled = isHidden;
+                    filterTriState.style.opacity = isHidden ? '0.5' : '1';
+                    filterTriState.style.cursor = isHidden ? 'not-allowed' : 'pointer';
                 }
                 if (filterDateFrom) {
                     filterDateFrom.disabled = isHidden;
@@ -887,11 +899,13 @@
             applyFilters();
         }
 
-        const printBtn = document.getElementById('printBtn');
-        if (printBtn) {
-            printBtn.addEventListener('click', async function() {
-                await downloadExcel();
-            });
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        if (exportExcelBtn) {
+            exportExcelBtn.addEventListener('click', async function(e) { e.preventDefault(); await downloadExcel(); });
+        }
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        if (exportPdfBtn) {
+            exportPdfBtn.addEventListener('click', async function(e) { e.preventDefault(); await downloadPdf(); });
         }
 
         const pageGoBtn = document.getElementById('pageGoBtn');
@@ -1211,10 +1225,10 @@
             const row = document.createElement('tr');
             row.id = `row-${item.seedingId}`;
             row.innerHTML = `
-                <td data-column="Farm">${escapeHtml(item.farmDisplay || 'N/A')}</td>
-                <td data-column="AreaType">${escapeHtml(item.areaTypeName || `AreaType #${item.areaTypeId}`)}</td>
-                <td data-column="Field">${escapeHtml(item.fieldName || 'N/A')}</td>
-                <td data-column="TagRange">${escapeHtml(item.tagRangeCode || `TagRange #${item.tagRangeId}`)}</td>
+                <td data-column="FarmName">${escapeHtml(item.farmDisplay || 'N/A')}</td>
+                <td data-column="AreaTypeName">${escapeHtml(item.areaTypeName || `AreaType #${item.areaTypeId}`)}</td>
+                <td data-column="FieldName">${escapeHtml(item.fieldName || 'N/A')}</td>
+                <td data-column="TagRangeCode">${escapeHtml(item.tagRangeCode || `TagRange #${item.tagRangeId}`)}</td>
                 <td data-column="AreaAmount">${item.areaAmount || ''}</td>
                 <td data-column="SeedingDate">${item.seedingDate ? formatDate(item.seedingDate) : ''}</td>
                 <td data-column="SeedingMethod">${escapeHtml(item.seedingMethod || '')}</td>
@@ -1223,7 +1237,7 @@
                 <td data-column="SoilTemperature">${item.soilTemperature || ''}</td>
                 <td data-column="SoilMoisture">${escapeHtml(item.soilMoisture || '')}</td>
                 <td data-column="Notes">${escapeHtml(item.notes || '')}</td>
-                <td data-column="User">${escapeHtml(item.userName || 'N/A')}</td>
+                <td data-column="UserName">${escapeHtml(item.userName || 'N/A')}</td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Actions">
                     <div class="btn-group btn-group-sm">
@@ -1285,6 +1299,7 @@
                 
                 const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
                 const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterTriState = item.querySelector(`.filter-tristate[data-column="${columnName}"]`);
                 const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
                 const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
                 const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
@@ -1300,6 +1315,11 @@
                     filterToggle.disabled = isHidden;
                     filterToggle.style.opacity = isHidden ? '0.5' : '1';
                     filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterTriState) {
+                    filterTriState.disabled = isHidden;
+                    filterTriState.style.opacity = isHidden ? '0.5' : '1';
+                    filterTriState.style.cursor = isHidden ? 'not-allowed' : 'pointer';
                 }
                 if (filterDateFrom) {
                     filterDateFrom.disabled = isHidden;
@@ -1503,6 +1523,50 @@
         } catch (error) {
             console.error('Error:', error);
             alert('Error generating Excel file.');
+        }
+    }
+
+    async function downloadPdf() {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const storageKey = `hiddenColumns_Seeding`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const requestData = { filters: activeFilters || {}, hiddenColumns: hiddenCols };
+            const response = await fetch('@Url.Action("ExportPdf", "Seeding")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(requestData),
+                cache: 'no-cache'
+            });
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.style.display = 'none';
+                let filename = `Seedings_${new Date().toISOString().slice(0,10).replace(/-/g,'')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}${String(new Date().getSeconds()).padStart(2,'0')}.pdf`;
+                const contentDisposition = response.headers.get('Content-Disposition');
+                if (contentDisposition) {
+                    const m = contentDisposition.match(/filename\*=UTF-8''([^;,\s]+)/) || contentDisposition.match(/filename=([^;,\s]+)/);
+                    if (m) { filename = decodeURIComponent(m[1].trim().replace(/^["']|["']$/g, '')); if (!filename.endsWith('.pdf')) filename = (filename.split('.')[0] || filename) + '.pdf'; }
+                }
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() { window.URL.revokeObjectURL(url); document.body.removeChild(a); }, 100);
+            } else {
+                let errorMessage = 'Unknown error';
+                try {
+                    if (response.headers.get('content-type')?.includes('application/json')) {
+                        const result = await response.json();
+                        errorMessage = result.message || result.error || 'Unknown error';
+                    } else { errorMessage = await response.text() || 'Server error'; }
+                } catch (e) { errorMessage = 'Server error'; }
+                alert('Error: ' + errorMessage);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error generating PDF file.');
         }
     }
 

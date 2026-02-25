@@ -24,13 +24,15 @@ namespace TpaSodManagement.Controllers
     {
         private readonly IFarmService _farmService;
         private readonly IExportToExcel _exportToExcel;
+        private readonly IExportToPdf _exportToPdf;
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ApplicationDbContext _context;
 
-        public FarmController(IFarmService farmService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager, ApplicationDbContext context)
+        public FarmController(IFarmService farmService, IExportToExcel exportToExcel, IExportToPdf exportToPdf, UserManager<TpaSodManagementUser> userManager, ApplicationDbContext context)
         {
             _farmService = farmService;
             _exportToExcel = exportToExcel;
+            _exportToPdf = exportToPdf;
             _userManager = userManager;
             _context = context;
         }
@@ -310,6 +312,83 @@ namespace TpaSodManagement.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ExportPdf([FromBody] JsonElement requestData)
+        {
+            try
+            {
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    else
+                    {
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                            filters = directFilters;
+                    }
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                }
+                var result = await _farmService.GetFilteredAsync(filters);
+                if (!result.Success)
+                    return Json(new { success = false, message = result.Message });
+                var farms = result.Data ?? new List<Farm>();
+                var vm = farms.Select(MapToItemViewModel).ToList();
+                var allColumns = new List<(string Header, string PropertyName)>
+                {
+                    ("Farm Name", "FarmName"),
+                    ("Address", "Address"),
+                    ("Total Area", "TotalArea"),
+                    ("Organic Certified", "OrganicCertified"),
+                    ("License Number", "LicenseNumber"),
+                    ("Certification Details", "CertificationDetails"),
+                    ("Latitude", "Latitude"),
+                    ("Longitude", "Longitude"),
+                    ("Elevation Meters", "ElevationMeters"),
+                    ("Soil Type", "SoilType"),
+                    ("Irrigation Type", "IrrigationType"),
+                    ("Climate Zone", "ClimateZone"),
+                    ("Area Type", "AreaType"),
+                    ("Is Active", "IsActive")
+                };
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
+                var stream = _exportToPdf.GeneratePdf("Farms", columnHeaders, vm, item =>
+                {
+                    var allValues = new List<object>
+                    {
+                        item.FarmName ?? "",
+                        item.Address ?? "",
+                        item.TotalArea?.ToString("N2") ?? "",
+                        item.OrganicCertified ? "Yes" : "No",
+                        item.LicenseNumber ?? "",
+                        item.CertificationDetails ?? "",
+                        item.Latitude?.ToString("N6") ?? "",
+                        item.Longitude?.ToString("N6") ?? "",
+                        item.ElevationMeters ?? 0,
+                        item.SoilType ?? "",
+                        item.IrrigationType ?? "",
+                        item.ClimateZone ?? "",
+                        item.AreaTypeName ?? "",
+                        item.IsActive ? "Yes" : "No"
+                    };
+                    return columnIndices.Select(idx => allValues[idx]).ToList();
+                });
+                var fileName = $"Farms_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error generating PDF: {ex.Message}" });
             }
         }
 

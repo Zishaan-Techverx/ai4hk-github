@@ -51,6 +51,7 @@ builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddScoped<INotificationService, NotificationService>();
 builder.Services.AddScoped<INotificationResponseService, NotificationResponseService>();
 builder.Services.AddScoped<TpaSodManagement.Utilities.IExportToExcel, TpaSodManagement.Utilities.ExportToExcel>();
+builder.Services.AddScoped<TpaSodManagement.Utilities.IExportToPdf, TpaSodManagement.Utilities.ExportToPdf>();
 
 // Add HttpContextAccessor for CurrentUserService
 builder.Services.AddHttpContextAccessor();

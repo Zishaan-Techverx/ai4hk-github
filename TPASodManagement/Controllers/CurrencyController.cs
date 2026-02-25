@@ -16,12 +16,14 @@ namespace TpaSodManagement.Controllers
     {
         private readonly ICurrencyService _currencyService;
         private readonly IExportToExcel _exportToExcel;
+        private readonly IExportToPdf _exportToPdf;
         private readonly UserManager<TpaSodManagementUser> _userManager;
 
-        public CurrencyController(ICurrencyService currencyService, IExportToExcel exportToExcel, UserManager<TpaSodManagementUser> userManager)
+        public CurrencyController(ICurrencyService currencyService, IExportToExcel exportToExcel, IExportToPdf exportToPdf, UserManager<TpaSodManagementUser> userManager)
         {
             _currencyService = currencyService;
             _exportToExcel = exportToExcel;
+            _exportToPdf = exportToPdf;
             _userManager = userManager;
         }
 
@@ -285,6 +287,65 @@ namespace TpaSodManagement.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ExportPdf([FromBody] JsonElement requestData)
+        {
+            try
+            {
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    else
+                    {
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                            filters = directFilters;
+                    }
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                }
+                var result = await _currencyService.GetFilteredAsync(filters);
+                if (!result.Success)
+                    return Json(new { success = false, message = result.Message });
+                var currencies = result.Data ?? new List<Currency>();
+                var vm = currencies.Select(MapToItemViewModel).ToList();
+                var allColumns = new List<(string Header, string PropertyName)>
+                {
+                    ("Currency Code", "CurrencyCode"),
+                    ("Currency Name", "CurrencyName"),
+                    ("Currency Symbol", "CurrencySymbol"),
+                    ("Decimal Places", "DecimalPlaces"),
+                    ("Is Active", "IsActive")
+                };
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
+                var stream = _exportToPdf.GeneratePdf("Currencies", columnHeaders, vm, item =>
+                {
+                    var allValues = new List<object>
+                    {
+                        item.CurrencyCode ?? "",
+                        item.CurrencyName ?? "",
+                        item.CurrencySymbol ?? "",
+                        item.DecimalPlaces,
+                        item.IsActive ? "Yes" : "No"
+                    };
+                    return columnIndices.Select(idx => allValues[idx]).ToList();
+                });
+                var fileName = $"Currencies_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error generating PDF: {ex.Message}" });
             }
         }
 

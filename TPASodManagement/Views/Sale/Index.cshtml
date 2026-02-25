@@ -11,10 +11,16 @@
 <br/>
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Sales</h1>
-    <div>
-        <button type="button" class="btn btn-secondary me-2" id="printBtn">
-            <i class="fas fa-download me-1"></i> Export to Excel
-        </button>
+    <div class="d-flex flex-row align-items-center gap-2">
+        <div class="dropdown me-2">
+            <button type="button" class="btn btn-secondary dropdown-toggle" id="exportDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                <i class="fas fa-download me-1"></i> Export
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="fas fa-file-excel me-2"></i>Export to Excel</a></li>
+                <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="fas fa-file-pdf me-2"></i>Export to PDF</a></li>
+            </ul>
+        </div>
         @if (User.HasPermission("Sale.Create"))
         {
             <a asp-action="Create" class="btn btn-primary">Create New</a>
@@ -77,13 +83,13 @@
                     <th data-column="TotalAmount">Total Amount</th>
                     <th data-column="PaymentTermsDays">Payment Terms Days</th>
                     <th data-column="Notes">Notes</th>
-                    <th data-column="Currency">Currency</th>
-                    <th data-column="Customer">Customer</th>
-                    <th data-column="Farm">Farm</th>
-                    <th data-column="SaleType">Sale Type</th>
-                    <th data-column="Status">Status</th>
-                    <th data-column="UpdatedByUser">Updated By User</th>
-                    <th data-column="User">User</th>
+                    <th data-column="CurrencyName">Currency</th>
+                    <th data-column="CustomerDisplay">Customer</th>
+                    <th data-column="FarmName">Farm</th>
+                    <th data-column="SaleTypeName">Sale Type</th>
+                    <th data-column="StatusName">Status</th>
+                    <th data-column="UpdatedByUserName">Updated By User</th>
+                    <th data-column="UserName">User</th>
                     <th data-column="IsActive">Is Active</th>
                     <th data-column="Actions" class="no-hide-column">Actions</th>
                 </tr>
@@ -103,13 +109,13 @@
                         <td data-column="TotalAmount">@Html.DisplayFor(modelItem => item.TotalAmount)</td>
                         <td data-column="PaymentTermsDays">@Html.DisplayFor(modelItem => item.PaymentTermsDays)</td>
                         <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
-                        <td data-column="Currency">@(item.CurrencyName ?? "N/A")</td>
-                        <td data-column="Customer">@(item.CustomerDisplay ?? $"Customer #{item.CustomerId}")</td>
-                        <td data-column="Farm">@(item.FarmDisplay ?? "N/A")</td>
-                        <td data-column="SaleType">@(item.SaleTypeName ?? "N/A")</td>
-                        <td data-column="Status">@(item.StatusName ?? "N/A")</td>
-                        <td data-column="UpdatedByUser">@(item.UpdatedByUserName ?? "N/A")</td>
-                        <td data-column="User">@(item.UserName ?? "N/A")</td>
+                        <td data-column="CurrencyName">@(item.CurrencyName ?? "N/A")</td>
+                        <td data-column="CustomerDisplay">@(item.CustomerDisplay ?? $"Customer #{item.CustomerId}")</td>
+                        <td data-column="FarmName">@(item.FarmDisplay ?? "N/A")</td>
+                        <td data-column="SaleTypeName">@(item.SaleTypeName ?? "N/A")</td>
+                        <td data-column="StatusName">@(item.StatusName ?? "N/A")</td>
+                        <td data-column="UpdatedByUserName">@(item.UpdatedByUserName ?? "N/A")</td>
+                        <td data-column="UserName">@(item.UserName ?? "N/A")</td>
                         <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
                         <td data-column="Actions">
                             <div class="btn-group btn-group-sm">
@@ -498,6 +504,7 @@
                 // Find all filter inputs for this column
                 const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
                 const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterTriState = item.querySelector(`.filter-tristate[data-column="${columnName}"]`);
                 const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
                 const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
                 const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
@@ -514,6 +521,11 @@
                     filterToggle.disabled = isHidden;
                     filterToggle.style.opacity = isHidden ? '0.5' : '1';
                     filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterTriState) {
+                    filterTriState.disabled = isHidden;
+                    filterTriState.style.opacity = isHidden ? '0.5' : '1';
+                    filterTriState.style.cursor = isHidden ? 'not-allowed' : 'pointer';
                 }
                 if (filterDateFrom) {
                     filterDateFrom.disabled = isHidden;
@@ -859,11 +871,13 @@
             applyFilters();
         }
 
-        const printBtn = document.getElementById('printBtn');
-        if (printBtn) {
-            printBtn.addEventListener('click', async function() {
-                await downloadExcel();
-            });
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        if (exportExcelBtn) {
+            exportExcelBtn.addEventListener('click', async function(e) { e.preventDefault(); await downloadExcel(); });
+        }
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        if (exportPdfBtn) {
+            exportPdfBtn.addEventListener('click', async function(e) { e.preventDefault(); await downloadPdf(); });
         }
 
         const pageGoBtn = document.getElementById('pageGoBtn');
@@ -1195,13 +1209,13 @@
                 <td data-column="TotalAmount">${item.totalAmount || ''}</td>
                 <td data-column="PaymentTermsDays">${item.paymentTermsDays || ''}</td>
                 <td data-column="Notes">${escapeHtml(item.notes || '')}</td>
-                <td data-column="Currency">${escapeHtml(item.currencyName || 'N/A')}</td>
-                <td data-column="Customer">${escapeHtml(item.customerDisplay || `Customer #${item.customerId}`)}</td>
-                <td data-column="Farm">${escapeHtml(item.farmDisplay || 'N/A')}</td>
-                <td data-column="SaleType">${escapeHtml(item.saleTypeName || 'N/A')}</td>
-                <td data-column="Status">${escapeHtml(item.statusName || 'N/A')}</td>
-                <td data-column="UpdatedByUser">${escapeHtml(item.updatedByUserName || 'N/A')}</td>
-                <td data-column="User">${escapeHtml(item.userName || 'N/A')}</td>
+                <td data-column="CurrencyName">${escapeHtml(item.currencyName || 'N/A')}</td>
+                <td data-column="CustomerDisplay">${escapeHtml(item.customerDisplay || `Customer #${item.customerId}`)}</td>
+                <td data-column="FarmName">${escapeHtml(item.farmDisplay || 'N/A')}</td>
+                <td data-column="SaleTypeName">${escapeHtml(item.saleTypeName || 'N/A')}</td>
+                <td data-column="StatusName">${escapeHtml(item.statusName || 'N/A')}</td>
+                <td data-column="UpdatedByUserName">${escapeHtml(item.updatedByUserName || 'N/A')}</td>
+                <td data-column="UserName">${escapeHtml(item.userName || 'N/A')}</td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Actions">
                     <div class="btn-group btn-group-sm">
@@ -1264,6 +1278,7 @@
                 
                 const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
                 const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterTriState = item.querySelector(`.filter-tristate[data-column="${columnName}"]`);
                 const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
                 const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
                 const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
@@ -1279,6 +1294,11 @@
                     filterToggle.disabled = isHidden;
                     filterToggle.style.opacity = isHidden ? '0.5' : '1';
                     filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterTriState) {
+                    filterTriState.disabled = isHidden;
+                    filterTriState.style.opacity = isHidden ? '0.5' : '1';
+                    filterTriState.style.cursor = isHidden ? 'not-allowed' : 'pointer';
                 }
                 if (filterDateFrom) {
                     filterDateFrom.disabled = isHidden;
@@ -1482,6 +1502,50 @@
         } catch (error) {
             console.error('Error:', error);
             alert('Error generating Excel file.');
+        }
+    }
+
+    async function downloadPdf() {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const storageKey = `hiddenColumns_Sale`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            const requestData = { filters: activeFilters || {}, hiddenColumns: hiddenCols };
+            const response = await fetch('@Url.Action("ExportPdf", "Sale")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(requestData),
+                cache: 'no-cache'
+            });
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.style.display = 'none';
+                let filename = `Sales_${new Date().toISOString().slice(0,10).replace(/-/g,'')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}${String(new Date().getSeconds()).padStart(2,'0')}.pdf`;
+                const contentDisposition = response.headers.get('Content-Disposition');
+                if (contentDisposition) {
+                    const m = contentDisposition.match(/filename\*=UTF-8''([^;,\s]+)/) || contentDisposition.match(/filename=([^;,\s]+)/);
+                    if (m) { filename = decodeURIComponent(m[1].trim().replace(/^["']|["']$/g, '')); if (!filename.endsWith('.pdf')) filename = (filename.split('.')[0] || filename) + '.pdf'; }
+                }
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() { window.URL.revokeObjectURL(url); document.body.removeChild(a); }, 100);
+            } else {
+                let errorMessage = 'Unknown error';
+                try {
+                    if (response.headers.get('content-type')?.includes('application/json')) {
+                        const result = await response.json();
+                        errorMessage = result.message || result.error || 'Unknown error';
+                    } else { errorMessage = await response.text() || 'Server error'; }
+                } catch (e) { errorMessage = 'Server error'; }
+                alert('Error: ' + errorMessage);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error generating PDF file.');
         }
     }
 

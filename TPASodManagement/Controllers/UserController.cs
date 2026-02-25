@@ -24,6 +24,7 @@ namespace TpaSodManagement.Controllers
         private readonly ILogger<UserController> _logger;
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly TpaSodManagement.Utilities.IExportToExcel _exportToExcel;
+        private readonly TpaSodManagement.Utilities.IExportToPdf _exportToPdf;
 
         public UserController(
             IUserService userService,
@@ -33,7 +34,8 @@ namespace TpaSodManagement.Controllers
             ApplicationDbContext context,
             ILogger<UserController> logger,
             UserManager<TpaSodManagementUser> userManager,
-            TpaSodManagement.Utilities.IExportToExcel exportToExcel)
+            TpaSodManagement.Utilities.IExportToExcel exportToExcel,
+            TpaSodManagement.Utilities.IExportToPdf exportToPdf)
         {
             _userService = userService;
             _adminService = adminService;
@@ -43,6 +45,7 @@ namespace TpaSodManagement.Controllers
             _logger = logger;
             _userManager = userManager;
             _exportToExcel = exportToExcel;
+            _exportToPdf = exportToPdf;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -694,6 +697,88 @@ namespace TpaSodManagement.Controllers
             {
                 _logger.LogError(ex, "Error generating Excel for users");
                 return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ExportPdf([FromBody] JsonElement requestData)
+        {
+            try
+            {
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    else
+                    {
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                            filters = directFilters;
+                    }
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                }
+                var currentUser = await _userManager.GetUserAsync(User);
+                if (currentUser == null)
+                    return Json(new { success = false, message = "User not found." });
+                var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
+                bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
+                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
+                var result = await _userService.GetFilteredAsync(filters, organizationFilter);
+                if (!result.Success)
+                    return Json(new { success = false, message = result.Message });
+                var users = result.Data ?? new List<TpaSodManagementUser>();
+                var vm = new List<UserItemViewModel>();
+                foreach (var user in users)
+                {
+                    var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
+                    var address = await _registrationService.GetUserAddressAsync(user.Id.ToString());
+                    vm.Add(MapToItemViewModel(user, person, address));
+                }
+                var allColumns = new List<(string Header, string PropertyName)>
+                {
+                    ("User Name", "UserName"),
+                    ("Email", "Email"),
+                    ("First Name", "FirstName"),
+                    ("Last Name", "LastName"),
+                    ("Phone Number", "PhoneNumber"),
+                    ("Address", "AddressLine1"),
+                    ("City", "City"),
+                    ("State", "StateName"),
+                    ("Postal Code", "PostalCode"),
+                    ("Is Active", "IsActive")
+                };
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
+                var stream = _exportToPdf.GeneratePdf("Users", columnHeaders, vm, item =>
+                {
+                    var allValues = new List<object>
+                    {
+                        item.UserName ?? "",
+                        item.Email ?? "",
+                        item.FirstName ?? "",
+                        item.LastName ?? "",
+                        item.PhoneNumber ?? "",
+                        item.AddressLine1 ?? "",
+                        item.City ?? "",
+                        item.StateName ?? "",
+                        item.PostalCode ?? "",
+                        item.IsActive ? "Active" : "Inactive"
+                    };
+                    return columnIndices.Select(idx => allValues[idx]).ToList();
+                });
+                var fileName = $"Users_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating PDF for users");
+                return Json(new { success = false, message = $"Error generating PDF: {ex.Message}" });
             }
         }
 

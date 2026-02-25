@@ -19,17 +19,20 @@ namespace TpaSodManagement.Controllers
         private readonly UserManager<TpaSodManagementUser> _userManager;
         private readonly ApplicationDbContext _context;
         private readonly IExportToExcel _exportToExcel;
+        private readonly IExportToPdf _exportToPdf;
 
         public ProductController(
             IProductService productService, 
             UserManager<TpaSodManagementUser> userManager,
             ApplicationDbContext context,
-            IExportToExcel exportToExcel)
+            IExportToExcel exportToExcel,
+            IExportToPdf exportToPdf)
         {
             _productService = productService;
             _userManager = userManager;
             _context = context;
             _exportToExcel = exportToExcel;
+            _exportToPdf = exportToPdf;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -319,6 +322,77 @@ namespace TpaSodManagement.Controllers
             catch (Exception ex)
             {
                 return Json(new { success = false, message = $"Error generating Excel: {ex.Message}" });
+            }
+        }
+
+        [HttpPost]
+        [IgnoreAntiforgeryToken]
+        public async Task<IActionResult> ExportPdf([FromBody] JsonElement requestData)
+        {
+            try
+            {
+                Dictionary<string, string> filters = new Dictionary<string, string>();
+                List<string> hiddenColumns = new List<string>();
+                if (requestData.ValueKind == JsonValueKind.Object)
+                {
+                    if (requestData.TryGetProperty("filters", out var filtersElement))
+                        filters = JsonSerializer.Deserialize<Dictionary<string, string>>(filtersElement.GetRawText()) ?? new Dictionary<string, string>();
+                    else
+                    {
+                        var directFilters = JsonSerializer.Deserialize<Dictionary<string, string>>(requestData.GetRawText());
+                        if (directFilters != null && !directFilters.ContainsKey("hiddenColumns"))
+                            filters = directFilters;
+                    }
+                    if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
+                        hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                }
+                var result = await _productService.GetFilteredAsync(filters);
+                if (!result.Success)
+                    return Json(new { success = false, message = result.Message });
+                var products = result.Data ?? new List<Product>();
+                var vm = products.Select(MapToItemViewModel).ToList();
+                var allColumns = new List<(string Header, string PropertyName)>
+                {
+                    ("Product Name", "ProductName"),
+                    ("Product Category", "ProductCategory"),
+                    ("Product Code", "ProductCode"),
+                    ("Requires Certificate", "RequiresCertificate"),
+                    ("Unit Of Measure", "UnitOfMeasure"),
+                    ("Standard Price", "StandardPrice"),
+                    ("Certificate Type", "CertificateType"),
+                    ("Created By User", "CreatedByUser"),
+                    ("Currency", "Currency"),
+                    ("Description", "Description"),
+                    ("Is Active", "IsActive")
+                };
+                var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();
+                var columnHeaders = visibleColumns.Select(col => col.Header).ToList();
+                var columnIndices = visibleColumns.Select(col => allColumns.IndexOf(allColumns.First(c => c.PropertyName == col.PropertyName))).ToList();
+                var stream = _exportToPdf.GeneratePdf("Products", columnHeaders, vm, item =>
+                {
+                    var allValues = new List<object>
+                    {
+                        item.ProductName ?? "",
+                        item.ProductCategoryName ?? "N/A",
+                        item.ProductCode ?? "",
+                        item.RequiresCertificate ? "Yes" : "No",
+                        item.UnitOfMeasure ?? "",
+                        item.StandardPrice?.ToString("N2") ?? "",
+                        item.CertificateTypeName ?? "N/A",
+                        item.CreatedByUserName ?? "N/A",
+                        item.CurrencyCode ?? "N/A",
+                        item.Description ?? "",
+                        item.IsActive ? "Active" : "Inactive"
+                    };
+                    return columnIndices.Select(idx => allValues[idx]).ToList();
+                });
+                var fileName = $"Products_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
+                Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
+                return File(stream, "application/pdf", fileName);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = $"Error generating PDF: {ex.Message}" });
             }
         }
 
