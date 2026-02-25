@@ -19,7 +19,7 @@ public class ExportToPdf : IExportToPdf
         {
             container.Page(page =>
             {
-                page.Size(PageSizes.A4.Landscape());
+                page.Size(PageSizes.A4.Portrait());
                 page.Margin(20);
                 page.Header().Text(moduleName).Bold().FontSize(14);
                 page.Content().PaddingVertical(10).Table(table =>
