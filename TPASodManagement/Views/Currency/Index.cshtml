@@ -1432,7 +1432,10 @@
             const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
             const storageKey = `hiddenColumns_Currency`;
             const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            let headerBase64 = null;
+            try { headerBase64 = await (window.captureFooterForPdf ? window.captureFooterForPdf() : Promise.resolve(null)); } catch (e) {}
             const requestData = { filters: activeFilters || {}, hiddenColumns: hiddenCols };
+            if (headerBase64) requestData.headerImageBase64 = headerBase64;
             const response = await fetch('@Url.Action("ExportPdf", "Currency")', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },

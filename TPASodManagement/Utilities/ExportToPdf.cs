@@ -10,9 +10,11 @@ public class ExportToPdf : IExportToPdf
         string moduleName,
         List<string> columnHeaders,
         List<T> data,
-        Func<T, List<object>> rowMapper)
+        Func<T, List<object>> rowMapper,
+        byte[]? headerImageBytes = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
+        bool useCapturedHeader = headerImageBytes != null && headerImageBytes.Length > 0;
 
         var stream = new MemoryStream();
         Document.Create(container =>
@@ -20,9 +22,20 @@ public class ExportToPdf : IExportToPdf
             container.Page(page =>
             {
                 page.Size(PageSizes.A4.Portrait());
-                page.Margin(20);
-                page.Header().Text(moduleName).Bold().FontSize(14);
-                page.Content().PaddingVertical(10).Table(table =>
+                page.Margin(0); // No margin so header can attach to page corners
+
+                page.Header().Column(headerCol =>
+                {
+                    if (useCapturedHeader)
+                        headerCol.Item().ShowOnce().Image(headerImageBytes!).FitWidth();
+                    else
+                        headerCol.Item().Text(moduleName).Bold().FontSize(14);
+                });
+
+                page.Content().Padding(20).PaddingVertical(10).Column(contentCol =>
+                {
+                    contentCol.Item().PaddingBottom(8).Text(moduleName).Bold().FontSize(14);
+                    contentCol.Item().Table(table =>
                 {
                     var colCount = columnHeaders.Count;
                     table.ColumnsDefinition(columns =>
@@ -47,6 +60,7 @@ public class ExportToPdf : IExportToPdf
                             table.Cell().BorderBottom(0.5f).Padding(5).Text(text).FontSize(8);
                         }
                     }
+                });
                 });
             });
         }).GeneratePdf(stream);

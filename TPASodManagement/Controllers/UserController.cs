@@ -708,6 +708,7 @@ namespace TpaSodManagement.Controllers
             {
                 Dictionary<string, string> filters = new Dictionary<string, string>();
                 List<string> hiddenColumns = new List<string>();
+                byte[]? headerImageBytes = null;
                 if (requestData.ValueKind == JsonValueKind.Object)
                 {
                     if (requestData.TryGetProperty("filters", out var filtersElement))
@@ -720,6 +721,14 @@ namespace TpaSodManagement.Controllers
                     }
                     if (requestData.TryGetProperty("hiddenColumns", out var hiddenColumnsElement))
                         hiddenColumns = JsonSerializer.Deserialize<List<string>>(hiddenColumnsElement.GetRawText()) ?? new List<string>();
+                    if (requestData.TryGetProperty("headerImageBase64", out var headerImgEl))
+                    {
+                        var b64 = headerImgEl.GetString();
+                        if (!string.IsNullOrEmpty(b64))
+                        {
+                            try { headerImageBytes = Convert.FromBase64String(b64); } catch { /* ignore */ }
+                        }
+                    }
                 }
                 var currentUser = await _userManager.GetUserAsync(User);
                 if (currentUser == null)
@@ -770,7 +779,7 @@ namespace TpaSodManagement.Controllers
                         item.IsActive ? "Active" : "Inactive"
                     };
                     return columnIndices.Select(idx => allValues[idx]).ToList();
-                });
+                }, headerImageBytes);
                 var fileName = $"Users_{DateTime.Now:yyyyMMdd_HHmmss}.pdf";
                 Response.Headers["Content-Disposition"] = $"attachment; filename=\"{fileName}\"";
                 return File(stream, "application/pdf", fileName);

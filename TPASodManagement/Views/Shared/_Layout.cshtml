@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -235,8 +235,28 @@
 
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
-    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" crossorigin="anonymous"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+    @* Capture footer as image for PDF header (exact same layout/colors/design) *@
+    <script>
+        window.captureFooterForPdf = function() {
+            return new Promise(function(resolve) {
+                var el = document.getElementById('pdfFooterCapture');
+                if (!el || typeof html2canvas !== 'function') { resolve(null); return; }
+                var firstSection = el.querySelector('.footer-section');
+                if (!firstSection) { resolve(null); return; }
+                html2canvas(firstSection, { useCORS: true, allowTaint: true, scale: 2, backgroundColor: null, logging: false })
+                    .then(function(canvas) {
+                        try {
+                            var dataUrl = canvas.toDataURL('image/png');
+                            var base64 = dataUrl.indexOf(',') >= 0 ? dataUrl.split(',')[1] : dataUrl;
+                            resolve(base64 || null);
+                        } catch (e) { resolve(null); }
+                    })
+                    .catch(function() { resolve(null); });
+            });
+        };
+    </script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

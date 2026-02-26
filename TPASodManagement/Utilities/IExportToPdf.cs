@@ -6,6 +6,7 @@ namespace TpaSodManagement.Utilities
             string moduleName,
             List<string> columnHeaders,
             List<T> data,
-            Func<T, List<object>> rowMapper);
+            Func<T, List<object>> rowMapper,
+            byte[]? headerImageBytes = null);
     }
 }
