@@ -44,6 +44,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 builder.Services.AddScoped<IAreaTypeService, AreaTypeService>();
+builder.Services.AddScoped<ITagRangeService, TagRangeService>();
 builder.Services.AddScoped<IFieldService, FieldService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>(); 
 builder.Services.AddScoped<IHomeService, HomeService>();
@@ -156,6 +157,7 @@ using (var scope = app.Services.CreateScope())
     await TpaSodManagement.Database.Seeders.OrganizationTypeSeeder.SeedAsync(context, userManager);
     await TpaSodManagement.Database.Seeders.AddressTypeSeeder.SeedAsync(context);
     await TpaSodManagement.Database.Seeders.CustomerTypeSeeder.SeedAsync(context);
+    await TpaSodManagement.Database.Seeders.PermissionSeeder.SeedAsync(context, userManager);
     await TpaSodManagement.Database.Seeders.UserPasswordSeeder.SeedAsync(context, userManager);
 }
 

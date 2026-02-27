@@ -13,15 +13,18 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Customers</h1>
     <div class="d-flex flex-row align-items-center gap-2">
-        <div class="dropdown me-2">
-            <button type="button" class="btn btn-secondary dropdown-toggle" id="exportDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
-                <i class="fas fa-download me-1"></i> Export
-            </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="fas fa-file-excel me-2"></i>Export to Excel</a></li>
-                <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="fas fa-file-pdf me-2"></i>Export to PDF</a></li>
-            </ul>
-        </div>
+        @if (User.HasPermission("Export"))
+        {
+            <div class="dropdown me-2">
+                <button type="button" class="btn btn-secondary dropdown-toggle" id="exportDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="fas fa-file-excel me-2"></i>Export to Excel</a></li>
+                    <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="fas fa-file-pdf me-2"></i>Export to PDF</a></li>
+                </ul>
+            </div>
+        }
         @if (User.HasPermission("Customer.Create"))
         {
             <a asp-action="Create" class="btn btn-primary">Create New</a>

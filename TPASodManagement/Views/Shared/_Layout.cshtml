@@ -116,6 +116,24 @@
                                             </a>
                                         </li>
                                     }
+                                    @* TagRange with permission check *@
+                                    @if (User.HasPermission("TagRange.View"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="TagRange" asp-action="Index">
+                                                Tag Range
+                                            </a>
+                                        </li>
+                                    }
+                                    @* SaleType with permission check *@
+                                    @if (User.HasPermission("SaleType.View"))
+                                    {
+                                        <li>
+                                            <a class="dropdown-item" asp-controller="SaleType" asp-action="Index">
+                                                Sale Type
+                                            </a>
+                                        </li>
+                                    }
                                     @* Field with permission check *@
                                     @if (User.HasPermission("Field.View"))
                                     {
