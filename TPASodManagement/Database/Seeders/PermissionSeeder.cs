@@ -100,7 +100,43 @@ public static class PermissionSeeder
         Add("User.Detail", "View user details (read-only)", "User");
         Add("Permission.View", "View permissions and role-permission mapping", "Permission");
         Add("Permission.Edit", "Edit role permissions", "Permission");
-        Add("Export", "Export data to Excel or PDF", "Others");
+        Add("Customer.Export", "Export customer data to Excel or PDF", "Customer");
+        Add("Farm.Export", "Export farm data to Excel or PDF", "Farm");
+        Add("Seeding.Export", "Export seeding data to Excel or PDF", "Seeding");
+        Add("Product.Export", "Export product data to Excel or PDF", "Product");
+        Add("Sale.Export", "Export sale data to Excel or PDF", "Sale");
+        Add("Organization.Export", "Export organization data to Excel or PDF", "Organization");
+        Add("ProductCategory.Export", "Export product category data to Excel or PDF", "ProductCategory");
+        Add("Currency.Export", "Export currency data to Excel or PDF", "Currency");
+        Add("AreaType.Export", "Export area type data to Excel or PDF", "AreaType");
+        Add("TagRange.Export", "Export tag range data to Excel or PDF", "TagRange");
+        Add("SaleType.Export", "Export sale type data to Excel or PDF", "SaleType");
+        Add("Field.Export", "Export field data to Excel or PDF", "Field");
+        Add("User.Export", "Export user data to Excel or PDF", "User");
         if (list.Count > 0) { await context.Permissions.AddRangeAsync(list); await context.SaveChangesAsync(); }
+
+        var superAdminRole = await context.Roles.FirstOrDefaultAsync(r => r.Name == "SuperAdmin");
+        if (superAdminRole != null)
+        {
+            var allPermissionIds = await context.Permissions.Where(p => p.DeletedDate == null).Select(p => p.Id).ToListAsync();
+            var existingPermissionIds = await context.RolePermissions
+                .Where(rp => rp.RoleId == superAdminRole.Id && rp.DeletedDate == null)
+                .Select(rp => rp.PermissionId)
+                .ToListAsync();
+            var missingPermissionIds = allPermissionIds.Except(existingPermissionIds).ToList();
+            if (missingPermissionIds.Count > 0)
+            {
+                var rolePermissionList = missingPermissionIds.Select(permissionId => new RolePermission
+                {
+                    RoleId = superAdminRole.Id,
+                    PermissionId = permissionId,
+                    IsActive = true,
+                    CreatedDate = DateTimeOffset.UtcNow,
+                    CreatedByUserId = createdBy
+                }).ToList();
+                await context.RolePermissions.AddRangeAsync(rolePermissionList);
+                await context.SaveChangesAsync();
+            }
+        }
     }
 }

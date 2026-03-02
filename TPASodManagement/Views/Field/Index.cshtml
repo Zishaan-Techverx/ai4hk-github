@@ -13,7 +13,7 @@
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h1 class="mb-0">Fields</h1>
     <div class="d-flex flex-row align-items-center gap-2">
-        @if (User.HasPermission("Export"))
+        @if (User.HasPermission("Field.Export"))
         {
             <div class="dropdown me-2">
                 <button type="button" class="btn btn-secondary dropdown-toggle" id="exportDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
