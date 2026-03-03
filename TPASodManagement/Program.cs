@@ -45,6 +45,7 @@ builder.Services.AddScoped<IProductCategoryService, ProductCategoryService>();
 builder.Services.AddScoped<ICurrencyService, CurrencyService>();
 builder.Services.AddScoped<IAreaTypeService, AreaTypeService>();
 builder.Services.AddScoped<ITagRangeService, TagRangeService>();
+builder.Services.AddScoped<ISaleTypeService, SaleTypeService>();
 builder.Services.AddScoped<IFieldService, FieldService>();
 builder.Services.AddScoped<IRegistrationService, RegistrationService>(); 
 builder.Services.AddScoped<IHomeService, HomeService>();

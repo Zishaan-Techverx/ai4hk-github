@@ -1,0 +1,146 @@
+@model TpaSodManagement.ViewModels.SaleType.SaleTypeEditViewModel
+
+@{
+    bool isDetailsView = ViewBag.IsDetailsView ?? false;
+    ViewData["Title"] = isDetailsView ? "Sale Type Details" : "Edit Sale Type";
+    string disabledAttr = isDetailsView ? "disabled" : null;
+}
+
+<br />
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">@(isDetailsView ? "Sale Type Details" : "Edit Sale Type")</h5>
+                </div>
+
+                <div class="card-body">
+                    @if (TempData["SuccessMessage"] != null)
+                    {
+                        <div class="alert alert-success alert-dismissible fade show">
+                            <strong>Success!</strong> @TempData["SuccessMessage"]
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    @if (!ViewData.ModelState.IsValid)
+                    {
+                        <div class="alert alert-danger alert-dismissible fade show">
+                            <strong>Validation Errors:</strong>
+                            <ul class="mb-0">
+                                @foreach (var error in ViewData.ModelState.Values.SelectMany(v => v.Errors))
+                                {
+                                    <li>@error.ErrorMessage</li>
+                                }
+                            </ul>
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    }
+
+                    <form asp-action="Edit" method="post">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" asp-for="SaleTypeId" />
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SaleTypeCode" class="form-label">Sale Type Code <span class="text-danger">*</span></label>
+                                <input asp-for="SaleTypeCode" class="form-control" disabled="@disabledAttr" required />
+                                <span asp-validation-for="SaleTypeCode" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="SaleTypeName" class="form-label">Sale Type Name <span class="text-danger">*</span></label>
+                                <input asp-for="SaleTypeName" class="form-control" disabled="@disabledAttr" required />
+                                <span asp-validation-for="SaleTypeName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="RequiresCertificate" class="form-label">Requires Certificate</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input asp-for="RequiresCertificate" type="checkbox" class="form-check-input" disabled="@disabledAttr" />
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="CertificateTypeId" class="form-label">Certificate Type</label>
+                                <select asp-for="CertificateTypeId" class="form-select" asp-items="Model.CertificateTypes" disabled="@disabledAttr">
+                                    <option value="">-- Select --</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="TaxApplicable" class="form-label">Tax Applicable</label>
+                                <div class="form-check form-switch mt-2">
+                                    <input asp-for="TaxApplicable" type="checkbox" class="form-check-input" disabled="@disabledAttr" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label asp-for="Description" class="form-label">Description</label>
+                            <textarea asp-for="Description" rows="3" class="form-control" disabled="@disabledAttr"></textarea>
+                        </div>
+
+                        <div class="mb-3 d-flex align-items-center">
+                            <label class="form-label mb-0 me-2">Is Active</label>
+                            <div class="form-check form-switch mb-0">
+                                <input asp-for="IsActive" type="checkbox" class="form-check-input" disabled="@disabledAttr" />
+                            </div>
+                        </div>
+
+                        @if (isDetailsView)
+                        {
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="CreatedDate" class="form-label">Created Date</label>
+                                    <input asp-for="CreatedDate" type="text" class="form-control" readonly />
+                                </div>
+                            </div>
+                        }
+                        else
+                        {
+                            <input type="hidden" asp-for="CreatedDate" />
+                        }
+
+                        <div class="d-flex justify-content-between mt-3">
+                            <a asp-action="Index" class="btn btn-secondary">@(isDetailsView ? "Back" : "Cancel")</a>
+
+                            @if (!isDetailsView)
+                            {
+                                <button type="submit" class="btn btn-primary">Save Changes</button>
+                            }
+                            else
+                            {
+                                @if (User.HasPermission("SaleType.Edit"))
+                                {
+                                    <a asp-action="Edit" asp-route-id="@Model.SaleTypeId" class="btn btn-warning">Edit</a>
+                                }
+                            }
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    @if (!isDetailsView)
+    {
+        <partial name="_ValidationScriptsPartial" />
+    }
+}

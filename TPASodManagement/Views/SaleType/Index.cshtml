@@ -1,0 +1,1536 @@
+@model IEnumerable<TpaSodManagement.ViewModels.SaleType.SaleTypeItemViewModel>
+
+@{
+    ViewData["Title"] = "Sale Types";
+    int pageNumber = ViewBag.PageNumber ?? 1;
+    int totalPages = ViewBag.TotalPages ?? 1;
+    int totalCount = ViewBag.TotalCount ?? 0;
+    int pageSize = ViewBag.PageSize ?? 10;
+}
+
+<br />
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1 class="mb-0">Sale Types</h1>
+    <div class="d-flex flex-row align-items-center gap-2">
+        @if (User.HasPermission("SaleType.Export"))
+        {
+            <div class="dropdown me-2">
+                <button type="button" class="btn btn-secondary dropdown-toggle" id="exportDropdownBtn" data-bs-toggle="dropdown" aria-expanded="false">
+                    <i class="fas fa-download me-1"></i> Export
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" id="exportExcelBtn"><i class="fas fa-file-excel me-2"></i>Export to Excel</a></li>
+                    <li><a class="dropdown-item" href="#" id="exportPdfBtn"><i class="fas fa-file-pdf me-2"></i>Export to PDF</a></li>
+                </ul>
+            </div>
+        }
+        @if (User.HasPermission("SaleType.Create"))
+        {
+            <a asp-action="Create" class="btn btn-primary">Create New</a>
+        }
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        <strong>Success!</strong> @TempData["SuccessMessage"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null || TempData["Error"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        <strong>Error!</strong> @(TempData["ErrorMessage"] ?? TempData["Error"])
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+<br />
+
+@Html.AntiForgeryToken()
+
+<!-- Column Filter and Page Size Controls -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <label class="form-label">Hide Columns</label>
+        <div class="d-flex align-items-center gap-2">
+            <div class="dropdown">
+                <button class="btn btn-outline-secondary dropdown-toggle" type="button" id="columnFilterDropdown" data-bs-toggle="dropdown" data-bs-auto-close="outside" aria-expanded="false" style="min-width: 200px;">
+                    Show All
+                </button>
+                <ul class="dropdown-menu" id="columnFilterMenu" aria-labelledby="columnFilterDropdown" style="max-height: 300px; overflow-y: auto;">
+                    <li>
+                        <a class="dropdown-item" href="#" id="showAllOption">
+                            <input type="checkbox" id="showAllCheckbox" class="form-check-input me-2" checked>
+                            <label class="form-check-label" for="showAllCheckbox" style="cursor: pointer; width: 100%;">Show All</label>
+                        </a>
+                    </li>
+                    <li><hr class="dropdown-divider"></li>
+                </ul>
+            </div>
+            @await Html.PartialAsync("_FilterPartial", new Dictionary<string, string>())
+        </div>
+        <div id="hiddenColumnsBadges" class="mt-2 d-flex flex-wrap gap-1"></div>
+        <div id="activeFilterTags" class="mt-2 d-flex flex-wrap gap-1"></div>
+    </div>
+    <div class="col-md-6 text-end">
+        <label for="pageSizeSelect" class="form-label">Page Size</label>
+        <select id="pageSizeSelect" class="form-select d-inline-block" style="width: auto;"
+            onchange="changePageSize(this.value)">
+            <option value="10" selected="@(pageSize == 10)">10</option>
+            <option value="15" selected="@(pageSize == 15)">15</option>
+            <option value="20" selected="@(pageSize == 20)">20</option>
+            <option value="25" selected="@(pageSize == 25)">25</option>
+            <option value="50" selected="@(pageSize == 50)">50</option>
+            <option value="100" selected="@(pageSize == 100)">100</option>
+        </select>
+    </div>
+</div>
+
+<div class="card card-body shadow-sm">
+    <div class="table-responsive">
+        <table class="table" id="dataTable">
+        <thead>
+            <tr>
+                <th data-column="SaleTypeCode">Sale Type Code</th>
+                <th data-column="SaleTypeName">Sale Type Name</th>
+                <th data-column="RequiresCertificate">Requires Certificate</th>
+                <th data-column="CertificateTypeName">Certificate Type</th>
+                <th data-column="TaxApplicable">Tax Applicable</th>
+                <th data-column="IsActive">Is Active</th>
+                <th data-column="Actions" class="no-hide-column">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model)
+            {
+                <tr id="row-@item.SaleTypeId">
+                    <td data-column="SaleTypeCode">@Html.DisplayFor(modelItem => item.SaleTypeCode)</td>
+                    <td data-column="SaleTypeName">@Html.DisplayFor(modelItem => item.SaleTypeName)</td>
+                    <td data-column="RequiresCertificate"><input type="checkbox" class="form-check-input" disabled @(item.RequiresCertificate ? "checked" : "") style="accent-color: #0d6efd;"></td>
+                    <td data-column="CertificateTypeName">@Html.DisplayFor(modelItem => item.CertificateTypeName)</td>
+                    <td data-column="TaxApplicable"><input type="checkbox" class="form-check-input" disabled @(item.TaxApplicable ? "checked" : "") style="accent-color: #0d6efd;"></td>
+                    <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
+                    <td>
+                        <div class="btn-group btn-group-sm">
+                            @if (User.HasPermission("SaleType.Detail"))
+                            {
+                                <a class="btn btn-info" asp-action="Details" asp-route-id="@item.SaleTypeId">Details</a>
+                            }
+                            @if (User.HasPermission("SaleType.Edit"))
+                            {
+                                <a class="btn btn-warning" asp-action="Edit" asp-route-id="@item.SaleTypeId">Edit</a>
+                            }
+                            @if (User.HasPermission("SaleType.Delete"))
+                            {
+                                <a href="#" class="btn btn-danger delete-btn" data-id="@item.SaleTypeId" data-name="@item.SaleTypeName" data-bs-toggle="modal" data-bs-target="#deleteModal" title="Delete">Delete</a>
+                            }
+                        </div>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    </div>
+</div>
+
+<br />
+
+<nav aria-label="Page navigation" class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+    <ul class="pagination mb-0">
+        <li class="page-item @(pageNumber == 1 ? "disabled" : "")">
+            <a class="page-link"
+                href="@Url.Action("Index", new { pageNumber = pageNumber - 1, pageSize = pageSize })">Previous</a>
+        </li>
+
+        @if (totalPages <= 7)
+        {
+            @* Show all pages if 7 or fewer *@
+            @for (int i = 1; i <= totalPages; i++)
+            {
+                <li class="page-item @(i == pageNumber ? "active" : "")">
+                    <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                </li>
+            }
+        }
+        else
+        {
+            @* Always show first page *@
+            <li class="page-item @(pageNumber == 1 ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { pageNumber = 1, pageSize = pageSize })">1</a>
+            </li>
+
+            @if (pageNumber <= 4)
+            {
+                @* Show pages 2, 3, 4 at start *@
+                @for (int i = 2; i <= Math.Min(4, totalPages - 1); i++)
+                {
+                    <li class="page-item @(i == pageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                    </li>
+                }
+            }
+            else
+            {
+                @* Ellipsis then middle pages *@
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+                @for (int i = pageNumber - 1; i <= Math.Min(pageNumber + 1, totalPages - 1); i++)
+                {
+                    <li class="page-item @(i == pageNumber ? "active" : "")">
+                        <a class="page-link" href="@Url.Action("Index", new { pageNumber = i, pageSize = pageSize })">@i</a>
+                    </li>
+                }
+            }
+
+            @if (pageNumber < totalPages - 2)
+            {
+                @* Show ellipsis if current page is far from end *@
+                <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                </li>
+            }
+
+            @* Always show last page *@
+            <li class="page-item @(pageNumber == totalPages ? "active" : "")">
+                <a class="page-link" href="@Url.Action("Index", new { pageNumber = totalPages, pageSize = pageSize })">@totalPages</a>
+            </li>
+        }
+
+        <li class="page-item @(pageNumber == totalPages ? "disabled" : "")">
+            <a class="page-link"
+                href="@Url.Action("Index", new { pageNumber = pageNumber + 1, pageSize = pageSize })">Next</a>
+        </li>
+    </ul>
+    <div class="d-flex align-items-center gap-1 ms-2">
+        <input type="hidden" id="totalPagesHolder" value="@totalPages" />
+        <input type="hidden" id="pageSizeHolder" value="@pageSize" />
+        <label for="pageGoInput" class="form-label mb-0 small text-nowrap">Go to</label>
+        <input type="number" id="pageGoInput" class="form-control form-control-sm" style="width:70px" min="1" max="@totalPages" placeholder="Page" aria-label="Page number" />
+        <button type="button" class="btn btn-sm btn-outline-secondary" id="pageGoBtn">Go</button>
+    </div>
+    <div>@await Html.PartialAsync("_IsActiveTriStatePartial")</div>
+</nav>
+
+<div class="text-muted mt-2">Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records</div>
+
+<br />
+<br />
+
+<div aria-live="polite" aria-atomic="true" class="position-relative">
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="deleteSuccessToast" class="toast align-items-center text-white bg-success border-0" role="alert"
+            aria-live="assertive" aria-atomic="true">
+            <div class="d-flex">
+                <div class="toast-body">
+                    Record deleted successfully!
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+                    aria-label="Close"></button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteModalLabel">Confirm Deletion</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete the sale type: <strong id="saleTypeNamePlaceholder"></strong>?</p>
+                <div class="alert alert-danger d-none" role="alert" id="deleteError">
+                    Error deleting the record. Please try again.
+                </div>
+
+                <input type="hidden" id="saleTypeIdToDelete" />
+
+                @Html.AntiForgeryToken()
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const moduleName = 'SaleType';
+        const storageKey = `hiddenColumns_${moduleName}`;
+        const table = document.getElementById('dataTable');
+        const columnFilterDropdown = document.getElementById('columnFilterDropdown');
+        const columnFilterMenu = document.getElementById('columnFilterMenu');
+        const showAllOption = document.getElementById('showAllOption');
+        const showAllCheckbox = document.getElementById('showAllCheckbox');
+        const hiddenColumnsBadges = document.getElementById('hiddenColumnsBadges');
+        
+        if (!table || !columnFilterMenu) return;
+        
+        // Get all column headers except Actions
+        const headers = table.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+        const columnMap = new Map(); // Store column name -> display name mapping
+        
+        // Populate dropdown with checkboxes
+        headers.forEach(header => {
+            const columnName = header.getAttribute('data-column');
+            const displayName = header.textContent.trim();
+            columnMap.set(columnName, displayName);
+            
+            const listItem = document.createElement('li');
+            const checkboxId = `colCheckbox_${columnName}`;
+            
+            listItem.innerHTML = `
+                <a class="dropdown-item" href="#" style="pointer-events: none;">
+                    <input type="checkbox" id="${checkboxId}" class="form-check-input me-2" data-column="${columnName}" checked style="pointer-events: auto;">
+                    <label class="form-check-label" for="${checkboxId}" style="cursor: pointer; width: 100%; pointer-events: auto;">${displayName}</label>
+                </a>
+            `;
+            
+            columnFilterMenu.appendChild(listItem);
+            
+            // Get the checkbox after it's been added to DOM
+            const checkbox = document.getElementById(checkboxId);
+            
+            // Handle checkbox click directly to toggle state
+            checkbox.addEventListener('click', function(e) {
+                e.stopPropagation(); // Prevent dropdown from closing
+                
+                const columnName = this.dataset.column;
+                const isChecked = this.checked;
+                
+                // Update hiddenColumns array
+                // Checked = visible, Unchecked = hidden
+                if (!isChecked) {
+                    // Hide the column (unchecked)
+                    if (!hiddenColumns.includes(columnName)) {
+                        hiddenColumns.push(columnName);
+                    }
+                } else {
+                    // Show the column (checked)
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                }
+                
+                // Update "Show All" checkbox state
+                updateShowAllCheckbox();
+                
+                // Save to localStorage
+                localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                
+                // Update UI
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
+                // Update filter inputs state
+                updateFilterInputsState(hiddenColumns);
+            });
+        });
+        
+        // Load saved preferences
+        let hiddenColumns = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        
+        // Update checkboxes based on saved preferences
+        updateCheckboxes();
+        
+        // Update "Show All" checkbox state based on current column visibility
+        updateShowAllCheckbox();
+        
+        // Update UI based on saved preferences
+        updateHiddenColumnsUI(hiddenColumns, columnMap);
+        applyColumnVisibility(hiddenColumns);
+        updateDropdownButton();
+        // Update filter inputs state
+        updateFilterInputsState(hiddenColumns);
+        
+        // Function to handle "Show All" action
+        function handleShowAll() {
+            // Check all column checkboxes (show all columns)
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            allCheckboxes.forEach(checkbox => {
+                checkbox.checked = true;
+            });
+            
+            // Update hiddenColumns
+            hiddenColumns = [];
+            localStorage.setItem(storageKey, JSON.stringify([]));
+            
+            // Update "Show All" checkbox state (should be checked when all columns are visible)
+            showAllCheckbox.checked = true;
+            
+            // Update UI
+            updateHiddenColumnsUI(hiddenColumns, columnMap);
+            applyColumnVisibility(hiddenColumns);
+            updateDropdownButton();
+            // Update filter inputs state
+            updateFilterInputsState(hiddenColumns);
+        }
+        
+        // Handle "Show All" option click (on text/label)
+        showAllOption.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            handleShowAll();
+        });
+        
+        // Handle "Show All" checkbox direct click
+        showAllCheckbox.addEventListener('click', function(e) {
+            e.stopPropagation();
+            // If checkbox is being checked, show all columns
+            if (this.checked) {
+                handleShowAll();
+            } else {
+                // If unchecking, don't allow it - keep it checked
+                this.checked = true;
+            }
+        });
+        
+        // Handle individual checkbox changes
+        columnFilterMenu.addEventListener('change', function(e) {
+            if (e.target.type === 'checkbox' && e.target.dataset.column) {
+                e.stopPropagation(); // Prevent dropdown from closing
+                
+                const columnName = e.target.dataset.column;
+                const isChecked = e.target.checked;
+                
+                // Update hiddenColumns array
+                // Checked = visible, Unchecked = hidden
+                if (!isChecked) {
+                    // Hide the column (unchecked)
+                    if (!hiddenColumns.includes(columnName)) {
+                        hiddenColumns.push(columnName);
+                    }
+                } else {
+                    // Show the column (checked)
+                    hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                }
+                
+                // Update "Show All" checkbox state
+                updateShowAllCheckbox();
+                
+                // Save to localStorage
+                localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                
+                // Update UI
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
+            }
+        });
+        
+        // Prevent dropdown from closing when clicking inside the menu (but allow checkbox clicks)
+        columnFilterMenu.addEventListener('click', function(e) {
+            // Don't stop propagation for checkbox clicks - let them work normally
+            if (e.target.type !== 'checkbox' && !e.target.closest('input[type="checkbox"]') && !e.target.closest('label')) {
+                e.stopPropagation();
+            }
+        });
+        
+        function updateCheckboxes() {
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            allCheckboxes.forEach(checkbox => {
+                const columnName = checkbox.dataset.column;
+                // Checked = visible, Unchecked = hidden
+                checkbox.checked = !hiddenColumns.includes(columnName);
+            });
+            updateShowAllCheckbox();
+        }
+        
+        function updateShowAllCheckbox() {
+            const allCheckboxes = columnFilterMenu.querySelectorAll('input[type="checkbox"][data-column]');
+            const allChecked = Array.from(allCheckboxes).every(cb => cb.checked);
+            
+            // Show All checkbox should be checked only if all columns are visible (checked)
+            showAllCheckbox.checked = allChecked;
+        }
+        
+        function updateDropdownButton() {
+            if (hiddenColumns.length === 0) {
+                columnFilterDropdown.textContent = 'Show All';
+            } else {
+                columnFilterDropdown.textContent = `${hiddenColumns.length} Column(s) Hidden`;
+            }
+        }
+        
+        function updateHiddenColumnsUI(hiddenCols, colMap) {
+            hiddenColumnsBadges.innerHTML = '';
+            hiddenCols.forEach(columnName => {
+                const displayName = colMap.get(columnName);
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-secondary me-1 mb-1';
+                badge.style.cursor = 'pointer';
+                badge.innerHTML = displayName + ' <i class="fa-solid fa-times ms-1"></i>';
+                badge.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    // Check the corresponding checkbox (to show the column)
+                    const checkbox = columnFilterMenu.querySelector(`input[data-column="${columnName}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                        
+                        // Remove from hiddenColumns array
+                        hiddenColumns = hiddenColumns.filter(col => col !== columnName);
+                        
+                        // Update "Show All" checkbox state
+                        updateShowAllCheckbox();
+                        
+                        // Save to localStorage
+                        localStorage.setItem(storageKey, JSON.stringify(hiddenColumns));
+                        
+                // Update UI
+                updateHiddenColumnsUI(hiddenColumns, columnMap);
+                applyColumnVisibility(hiddenColumns);
+                updateDropdownButton();
+                // Update filter inputs state
+                updateFilterInputsState(hiddenColumns);
+                    }
+                });
+                hiddenColumnsBadges.appendChild(badge);
+            });
+        }
+        
+        function applyColumnVisibility(hiddenCols) {
+            // Get table and headers from DOM each time (not from closure) to ensure fresh references
+            const currentTable = document.getElementById('dataTable');
+            if (!currentTable) return;
+            
+            const currentHeaders = currentTable.querySelectorAll('thead th[data-column]:not([data-column="Actions"])');
+            currentHeaders.forEach(header => {
+                const columnName = header.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                // Hide/show header
+                header.style.display = isHidden ? 'none' : '';
+                
+                // Hide/show all cells in this column
+                const cells = currentTable.querySelectorAll(`tbody td[data-column="${columnName}"]`);
+                cells.forEach(cell => {
+                    cell.style.display = isHidden ? 'none' : '';
+                });
+            });
+            
+            // Ensure Actions column is always visible
+            const actionsHeaders = currentTable.querySelectorAll('thead th[data-column="Actions"]');
+            const actionsCells = currentTable.querySelectorAll('tbody td[data-column="Actions"]');
+            actionsHeaders.forEach(header => header.style.display = '');
+            actionsCells.forEach(cell => cell.style.display = '');
+            
+            // Disable/enable filter inputs for hidden columns
+            updateFilterInputsState(hiddenCols);
+        }
+        
+        // Make applyColumnVisibility globally accessible
+        window.applyColumnVisibility = applyColumnVisibility;
+        
+        function updateFilterInputsState(hiddenCols) {
+            // Get all filter items
+            const filterItems = document.querySelectorAll('.filter-item[data-column]');
+            filterItems.forEach(item => {
+                const columnName = item.getAttribute('data-column');
+                const isHidden = hiddenCols.includes(columnName);
+                
+                // Find all filter inputs for this column
+                const filterInput = item.querySelector(`.filter-input[data-column="${columnName}"]`);
+                const filterToggle = item.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                const filterTriState = item.querySelector(`.filter-tristate[data-column="${columnName}"]`);
+                const filterDateFrom = item.querySelector(`.filter-date-from[data-column="${columnName}"]`);
+                const filterDateTo = item.querySelector(`.filter-date-to[data-column="${columnName}"]`);
+                const clearBtn = item.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
+                const clearDateFromBtn = item.querySelector(`.clear-date-from-filter[data-column="${columnName}"]`);
+                const clearDateToBtn = item.querySelector(`.clear-date-to-filter[data-column="${columnName}"]`);
+                
+                // Disable/enable inputs
+                if (filterInput) {
+                    filterInput.disabled = isHidden;
+                    filterInput.style.opacity = isHidden ? '0.5' : '1';
+                    filterInput.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterToggle) {
+                    filterToggle.disabled = isHidden;
+                    filterToggle.style.opacity = isHidden ? '0.5' : '1';
+                    filterToggle.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterTriState) {
+                    filterTriState.disabled = isHidden;
+                    filterTriState.style.opacity = isHidden ? '0.5' : '1';
+                    filterTriState.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (filterDateFrom) {
+                    filterDateFrom.disabled = isHidden;
+                    filterDateFrom.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateFrom.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                if (filterDateTo) {
+                    filterDateTo.disabled = isHidden;
+                    filterDateTo.style.opacity = isHidden ? '0.5' : '1';
+                    filterDateTo.style.cursor = isHidden ? 'not-allowed' : 'text';
+                }
+                
+                // Disable clear buttons
+                if (clearBtn) {
+                    clearBtn.disabled = isHidden;
+                    clearBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateFromBtn) {
+                    clearDateFromBtn.disabled = isHidden;
+                    clearDateFromBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateFromBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                if (clearDateToBtn) {
+                    clearDateToBtn.disabled = isHidden;
+                    clearDateToBtn.style.opacity = isHidden ? '0.5' : '1';
+                    clearDateToBtn.style.cursor = isHidden ? 'not-allowed' : 'pointer';
+                }
+                
+                // Update label style
+                const label = item.querySelector('label');
+                if (label) {
+                    label.style.opacity = isHidden ? '0.5' : '1';
+                    label.style.cursor = isHidden ? 'not-allowed' : 'default';
+                }
+            });
+        }
+        
+        // Delete functionality
+        const deleteModal = new bootstrap.Modal(document.getElementById('deleteModal'));
+        const saleTypeIdInput = document.getElementById('saleTypeIdToDelete');
+        const saleTypeNamePlaceholder = document.getElementById('saleTypeNamePlaceholder');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+        const deleteErrorAlert = document.getElementById('deleteError');
+        const deleteSuccessToast = new bootstrap.Toast(document.getElementById('deleteSuccessToast'));
+
+        const antiForgeryToken = document.querySelector('input[name="__RequestVerificationToken"]').value;
+
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const saleTypeId = this.getAttribute('data-id');
+                const saleTypeName = this.getAttribute('data-name');
+
+                saleTypeIdInput.value = saleTypeId;
+                saleTypeNamePlaceholder.innerText = saleTypeName;
+                deleteErrorAlert.classList.add('d-none');
+                confirmDeleteBtn.disabled = false;
+                confirmDeleteBtn.innerHTML = 'Delete';
+            });
+        });
+
+        confirmDeleteBtn.addEventListener('click', function () {
+            const saleTypeId = saleTypeIdInput.value;
+            if (!saleTypeId) {
+                deleteErrorAlert.innerText = 'Error: Sale Type ID not found.';
+                deleteErrorAlert.classList.remove('d-none');
+                return;
+            }
+
+            confirmDeleteBtn.disabled = true;
+            confirmDeleteBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Deleting...';
+
+            const requestBody = 'id=' + encodeURIComponent(saleTypeId) +
+                '&__RequestVerificationToken=' + encodeURIComponent(antiForgeryToken);
+
+            fetch('@Url.Action("Delete", "SaleType")', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: requestBody
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const rowToRemove = document.getElementById('row-' + saleTypeId);
+                        if (rowToRemove) {
+                            rowToRemove.remove();
+                        }
+                        deleteModal.hide();
+                        deleteSuccessToast.show();
+                    } else {
+                        deleteErrorAlert.innerText = data.message || 'Error deleting the record. Please try again.';
+                        deleteErrorAlert.classList.remove('d-none');
+                    }
+                })
+                .catch(error => {
+                    console.error('Delete failed:', error);
+                    deleteErrorAlert.innerText = 'Deletion failed: ' + error.message;
+                    deleteErrorAlert.classList.remove('d-none');
+                })
+                .finally(() => {
+                    confirmDeleteBtn.disabled = false;
+                    confirmDeleteBtn.innerHTML = 'Delete';
+                });
+        });
+    });
+    
+    // Filter Functionality
+    const dataFiltersStorageKey = 'dataFilters_SaleType';
+    let activeFilters = JSON.parse(localStorage.getItem(dataFiltersStorageKey) || '{}');
+    let currentFilteredData = [];
+    let isFiltered = Object.keys(activeFilters).length > 0;
+    let currentPage = 1;
+    let pageSize = @pageSize;
+
+    function changePageSize(size) {
+        // If filters are active, update pageSize and re-paginate
+        if (isFiltered) {
+            pageSize = parseInt(size);
+            currentPage = 1;
+            updatePagination();
+            updateTable(getPaginatedData());
+            
+            // Reapply column visibility
+            const storageKey = `hiddenColumns_SaleType`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            if (typeof applyColumnVisibility === 'function') {
+                applyColumnVisibility(hiddenCols);
+            }
+        } else {
+            // Server-side pagination
+            const url = new URL(window.location.href);
+            url.searchParams.set('pageSize', size);
+            url.searchParams.set('pageNumber', '1'); // Reset to first page
+            window.location.href = url.toString();
+        }
+    }
+
+    (function() {
+        const table = document.getElementById('dataTable');
+        if (!table) return;
+
+        const filterContainer = document.getElementById('filterContainer');
+        
+        // Handle input changes to show/hide clear buttons
+        const filterInputs = document.querySelectorAll('.filter-input');
+        filterInputs.forEach(input => {
+            const columnName = input.getAttribute('data-column');
+            const clearBtn = document.querySelector(`.clear-column-filter[data-column="${columnName}"]`);
+            
+            input.addEventListener('input', function() {
+                if (this.value.trim()) {
+                    if (clearBtn) clearBtn.style.display = 'block';
+                } else {
+                    if (clearBtn) clearBtn.style.display = 'none';
+                }
+            });
+
+            // Show clear button if input has value on load
+            if (input.value.trim() && clearBtn) {
+                clearBtn.style.display = 'block';
+            }
+        });
+
+        // Handle clear column filter button clicks
+        const clearColumnButtons = document.querySelectorAll('.clear-column-filter');
+        clearColumnButtons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const columnName = this.getAttribute('data-column');
+                const input = document.querySelector(`.filter-input[data-column="${columnName}"]`);
+                const toggle = document.querySelector(`.filter-toggle[data-column="${columnName}"]`);
+                if (input) {
+                    input.value = '';
+                    this.style.display = 'none';
+                }
+                if (toggle) {
+                    toggle.checked = false;
+                }
+                // Remove from active filters
+                if (activeFilters[columnName]) {
+                    delete activeFilters[columnName];
+                }
+            });
+        });
+
+        // Clear all filters in modal
+        const clearAllFiltersInModalBtn = document.getElementById('clearAllFiltersInModalBtn');
+        if (clearAllFiltersInModalBtn) {
+            clearAllFiltersInModalBtn.addEventListener('click', function() {
+                document.querySelectorAll('.filter-input').forEach(input => {
+                    input.value = '';
+                });
+                document.querySelectorAll('.filter-toggle').forEach(toggle => {
+                    toggle.checked = false;
+                });
+                document.querySelectorAll('.clear-column-filter').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                var tri = document.getElementById('isActiveTriState');
+                if (tri) tri.value = 1;
+                var modalTri = document.getElementById('filterTriState_IsActive');
+                if (modalTri) modalTri.value = 1;
+                activeFilters = {};
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
+                   updateFilterCount();
+            });
+        }
+
+        // Clear all filters button (outside modal)
+        const clearAllFiltersBtn = document.getElementById('clearAllFiltersBtn');
+        if (clearAllFiltersBtn) {
+            clearAllFiltersBtn.addEventListener('click', async function() {
+                document.querySelectorAll('.filter-input').forEach(input => {
+                    input.value = '';
+                });
+                document.querySelectorAll('.filter-toggle').forEach(toggle => {
+                    toggle.checked = false;
+                });
+                document.querySelectorAll('.filter-date-from').forEach(input => {
+                    input.value = '';
+                });
+                document.querySelectorAll('.filter-date-to').forEach(input => {
+                    input.value = '';
+                });
+                document.querySelectorAll('.clear-column-filter').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                document.querySelectorAll('.clear-date-from-filter').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                document.querySelectorAll('.clear-date-to-filter').forEach(btn => {
+                    btn.style.display = 'none';
+                });
+                var tri = document.getElementById('isActiveTriState');
+                if (tri) tri.value = 1;
+                var modalTri = document.getElementById('filterTriState_IsActive');
+                if (modalTri) modalTri.value = 1;
+                activeFilters = {};
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
+                isFiltered = false;
+                currentPage = 1;
+                updateFilterTags();
+                updateFilterCount();
+                
+                // Reload page to show server-side pagination
+                window.location.reload();
+            });
+        }
+
+        // Handle toggle switches for boolean columns
+        const filterToggles = document.querySelectorAll('.filter-toggle');
+        filterToggles.forEach(toggle => {
+            toggle.addEventListener('change', function() {
+                const column = this.getAttribute('data-column');
+                if (this.checked) {
+                    activeFilters[column] = 'true';
+                } else {
+                    delete activeFilters[column];
+                }
+            });
+        });
+
+        const applyFilterBtn = document.getElementById('applyFilterBtn');
+        if (applyFilterBtn) {
+            applyFilterBtn.addEventListener('click', async function() {
+                await applyFilters();
+            });
+        }
+
+        // Is Active tri-state: init from storage and on change re-apply filters
+        function syncIsActiveTriStateFromFilters() {
+            var triVal = activeFilters.IsActive === 'false' ? 0 : (activeFilters.IsActive === 'true' ? 2 : 1);
+            var mt = document.getElementById('filterTriState_IsActive'), bt = document.getElementById('isActiveTriState');
+            if (mt) mt.value = triVal;
+            if (bt) bt.value = triVal;
+            if (typeof window.updateIsActiveTriStateTrackClass === 'function') window.updateIsActiveTriStateTrackClass();
+        }
+        window.syncFilterModalIsActive = syncIsActiveTriStateFromFilters;
+        syncIsActiveTriStateFromFilters();
+        const isActiveTriState = document.getElementById('isActiveTriState');
+        if (isActiveTriState) {
+            isActiveTriState.addEventListener('change', async function() {
+                var v = parseInt(this.value, 10);
+                if (v === 0) activeFilters.IsActive = 'false';
+                else if (v === 2) activeFilters.IsActive = 'true';
+                else delete activeFilters.IsActive;
+                var m = document.getElementById('filterTriState_IsActive');
+                if (m) m.value = this.value;
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
+                isFiltered = Object.keys(activeFilters).length > 0;
+                if (!isFiltered) {
+                    updateFilterTags();
+                    updateFilterCount();
+                    window.location.reload();
+                    return;
+                }
+                await applyFilters();
+            });
+        }
+
+        // Restore persisted filters on page load
+        if (isFiltered && Object.keys(activeFilters).length > 0) {
+            restoreFilterInputsFromStorage();
+            updateFilterTags();
+            updateFilterCount();
+            applyFilters();
+        }
+
+        const exportExcelBtn = document.getElementById('exportExcelBtn');
+        if (exportExcelBtn) {
+            exportExcelBtn.addEventListener('click', async function(e) { e.preventDefault(); await downloadExcel(); });
+        }
+        const exportPdfBtn = document.getElementById('exportPdfBtn');
+        if (exportPdfBtn) {
+            exportPdfBtn.addEventListener('click', async function(e) { e.preventDefault(); await downloadPdf(); });
+        }
+
+        const pageGoBtn = document.getElementById('pageGoBtn');
+        const pageGoInput = document.getElementById('pageGoInput');
+        if (pageGoBtn && pageGoInput) {
+            pageGoBtn.addEventListener('click', function() {
+                const total = parseInt(document.getElementById('totalPagesHolder')?.value || '1', 10) || 1;
+                const page = parseInt(pageGoInput.value, 10);
+                if (isNaN(page) || page < 1 || page > total) {
+                    alert('Invalid page number. Please enter a number between 1 and ' + total + '.');
+                    pageGoInput.focus();
+                    return;
+                }
+                if (isFiltered) {
+                    changeFilteredPage(page);
+                } else {
+                    const psize = parseInt(document.getElementById('pageSizeHolder')?.value || '10', 10) || 10;
+                    const url = new URL(window.location.href);
+                    url.searchParams.set('pageNumber', page);
+                    url.searchParams.set('pageSize', psize);
+                    window.location = url.toString();
+                }
+                pageGoInput.value = '';
+            });
+            pageGoInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    e.preventDefault();
+                    pageGoBtn.click();
+                }
+            });
+        }
+    })();
+
+    function restoreFilterInputsFromStorage() {
+        Object.keys(activeFilters).forEach(columnKey => {
+            const value = activeFilters[columnKey];
+            const baseCol = columnKey.endsWith('_From') ? columnKey.slice(0, -5) : (columnKey.endsWith('_To') ? columnKey.slice(0, -3) : columnKey);
+            if (columnKey.endsWith('_From')) {
+                const dateFrom = document.querySelector(`.filter-date-from[data-column="${baseCol}"]`);
+                if (dateFrom) dateFrom.value = value;
+            } else if (columnKey.endsWith('_To')) {
+                const dateTo = document.querySelector(`.filter-date-to[data-column="${baseCol}"]`);
+                if (dateTo) dateTo.value = value;
+            } else {
+                const filterInput = document.querySelector(`.filter-input[data-column="${baseCol}"]`);
+                if (filterInput) {
+                    filterInput.value = value;
+                    const clearBtn = document.querySelector(`.clear-column-filter[data-column="${baseCol}"]`);
+                    if (clearBtn) clearBtn.style.display = 'block';
+                }
+                const filterToggle = document.querySelector(`.filter-toggle[data-column="${baseCol}"]`);
+                if (filterToggle && (value === 'true' || value === 'false')) {
+                    filterToggle.checked = (value === 'true');
+                }
+                const filterTri = document.getElementById(`filterTriState_${baseCol}`);
+                if (filterTri && (baseCol === 'IsActive')) {
+                    filterTri.value = value === 'false' ? 0 : (value === 'true' ? 2 : 1);
+                }
+            }
+        });
+    }
+
+    async function applyFilters() {
+        try {
+            // Collect all filter values from inputs and toggles
+            activeFilters = {};
+            
+            // Collect from text inputs (skip disabled ones)
+            const filterInputs = document.querySelectorAll('.filter-input:not(:disabled)');
+            filterInputs.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value.trim();
+                if (value) {
+                    activeFilters[column] = value;
+                }
+            });
+            
+            // Collect from toggle switches (skip disabled ones)
+            const filterToggles = document.querySelectorAll('.filter-toggle:not(:disabled)');
+            filterToggles.forEach(toggle => {
+                const column = toggle.getAttribute('data-column');
+                if (toggle.checked) {
+                    activeFilters[column] = 'true';
+                }
+            });
+            
+            // Collect from date inputs (skip disabled ones)
+            const filterDateFroms = document.querySelectorAll('.filter-date-from:not(:disabled)');
+            filterDateFroms.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value;
+                if (value) {
+                    activeFilters[`${column}_From`] = value;
+                }
+            });
+            
+            const filterDateTos = document.querySelectorAll('.filter-date-to:not(:disabled)');
+            filterDateTos.forEach(input => {
+                const column = input.getAttribute('data-column');
+                const value = input.value;
+                if (value) {
+                    activeFilters[`${column}_To`] = value;
+                }
+            });
+
+            // Merge Is Active tri-state (modal or bottom) into activeFilters and sync both
+            var triEl = document.getElementById('filterTriState_IsActive') || document.getElementById('isActiveTriState');
+            if (triEl) {
+                var v = parseInt(triEl.value, 10);
+                if (v === 0) activeFilters.IsActive = 'false';
+                else if (v === 2) activeFilters.IsActive = 'true';
+                else delete activeFilters.IsActive;
+                var mt = document.getElementById('filterTriState_IsActive'), bt = document.getElementById('isActiveTriState');
+                if (mt) mt.value = triEl.value;
+                if (bt) bt.value = triEl.value;
+                if (typeof window.updateIsActiveTriStateTrackClass === 'function') window.updateIsActiveTriStateTrackClass();
+            }
+
+            // If no filters are active, clear everything and reload
+            if (Object.keys(activeFilters).length === 0) {
+                // Clear filter tags and count
+                updateFilterTags();
+                updateFilterCount();
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify({}));
+                // Close modal if open
+                const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                if (modal) modal.hide();
+                // Reload page to show all data with server-side pagination
+                window.location.reload();
+                return; // Exit early - no filters to apply
+            }
+
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const response = await fetch('@Url.Action("Filter", "SaleType")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(activeFilters)
+            });
+            const result = await response.json();
+            if (result.success) {
+                currentFilteredData = result.data;
+                isFiltered = Object.keys(activeFilters).length > 0;
+                currentPage = 1; // Reset to first page when filter is applied
+                localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
+                updatePagination();
+                updateTable(getPaginatedData()); // updateTable already calls applyColumnVisibility at the end
+                updateFilterTags();
+                updateFilterCount();
+                
+                // Close modal
+                const modal = bootstrap.Modal.getInstance(document.getElementById('filterModal'));
+                if (modal) modal.hide();
+            } else {
+                alert('Error: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error applying filters.');
+        }
+    }
+
+    function updateFilterCount() {
+        const count = Object.keys(activeFilters).length;
+        const countBadge = document.getElementById('activeFilterCount');
+        const clearAllBtn = document.getElementById('clearAllFiltersBtn');
+        
+        if (count > 0) {
+            if (countBadge) {
+                countBadge.textContent = count;
+                countBadge.style.display = 'inline-block';
+            }
+            if (clearAllBtn) {
+                clearAllBtn.style.display = 'inline-block';
+            }
+        } else {
+            if (countBadge) {
+                countBadge.style.display = 'none';
+            }
+            if (clearAllBtn) {
+                clearAllBtn.style.display = 'none';
+            }
+        }
+    }
+
+    function getPaginatedData() {
+        if (!isFiltered || currentFilteredData.length === 0) {
+            return [];
+        }
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+        return currentFilteredData.slice(start, end);
+    }
+
+    function updatePagination() {
+        const paginationContainer = document.querySelector('nav[aria-label="Page navigation"]');
+        const recordCountContainer = document.querySelector('.text-muted.mt-2');
+        
+        if (!isFiltered) {
+            if (paginationContainer) paginationContainer.style.display = 'block';
+            if (recordCountContainer) recordCountContainer.style.display = 'block';
+            return;
+        }
+
+        if (paginationContainer) paginationContainer.style.display = 'block';
+        if (recordCountContainer) recordCountContainer.style.display = 'block';
+
+        const totalCount = currentFilteredData.length;
+        if (totalCount === 0) {
+            if (recordCountContainer) recordCountContainer.innerHTML = 'Showing 0 to 0 of 0 records';
+            const ul = paginationContainer ? paginationContainer.querySelector('ul') : null;
+            if (ul) {
+                ul.innerHTML = `
+                    <li class="page-item disabled"><span class="page-link">Previous</span></li>
+                    <li class="page-item active"><span class="page-link">1</span></li>
+                    <li class="page-item disabled"><span class="page-link">Next</span></li>
+                `;
+            }
+            return;
+        }
+
+        const totalPages = Math.ceil(totalCount / pageSize);
+        const start = (currentPage - 1) * pageSize + 1;
+        const end = Math.min(currentPage * pageSize, totalCount);
+
+        // Update record count
+        if (recordCountContainer) {
+            recordCountContainer.style.display = 'block';
+            recordCountContainer.innerHTML = `Showing ${start} to ${end} of ${totalCount} filtered records`;
+        }
+
+        const totalPagesHolder = document.getElementById('totalPagesHolder');
+        if (totalPagesHolder) totalPagesHolder.value = totalPages;
+        const pageGoInput = document.getElementById('pageGoInput');
+        if (pageGoInput) {
+            pageGoInput.max = totalPages;
+            pageGoInput.value = '';
+        }
+
+        // Create pagination controls
+        if (paginationContainer) {
+            paginationContainer.style.display = 'block';
+            let paginationHTML = `
+                <li class="page-item ${currentPage === 1 ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeFilteredPage(${currentPage - 1}); return false;">Previous</a>
+                </li>
+            `;
+            
+            if (totalPages <= 7) {
+                // Show all pages if 7 or fewer
+                for (let i = 1; i <= totalPages; i++) {
+                    paginationHTML += `
+                        <li class="page-item ${i === currentPage ? 'active' : ''}">
+                            <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                        </li>
+                    `;
+                }
+            } else {
+                // Always show first page
+                paginationHTML += `
+                    <li class="page-item ${currentPage === 1 ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changeFilteredPage(1); return false;">1</a>
+                    </li>
+                `;
+                
+                if (currentPage <= 4) {
+                    for (let i = 2; i <= Math.min(4, totalPages - 1); i++) {
+                        paginationHTML += `
+                            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                            </li>
+                        `;
+                    }
+                } else {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                    for (let i = currentPage - 1; i <= Math.min(currentPage + 1, totalPages - 1); i++) {
+                        paginationHTML += `
+                            <li class="page-item ${i === currentPage ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changeFilteredPage(${i}); return false;">${i}</a>
+                            </li>
+                        `;
+                    }
+                }
+                
+                if (currentPage < totalPages - 2) {
+                    paginationHTML += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                }
+                
+                // Always show last page
+                paginationHTML += `
+                    <li class="page-item ${currentPage === totalPages ? 'active' : ''}">
+                        <a class="page-link" href="#" onclick="changeFilteredPage(${totalPages}); return false;">${totalPages}</a>
+                    </li>
+                `;
+            }
+            
+            paginationHTML += `
+                <li class="page-item ${currentPage === totalPages ? 'disabled' : ''}">
+                    <a class="page-link" href="#" onclick="changeFilteredPage(${currentPage + 1}); return false;">Next</a>
+                </li>
+            `;
+            
+            paginationContainer.querySelector('ul').innerHTML = paginationHTML;
+        }
+    }
+
+    function changeFilteredPage(page) {
+        const totalPages = Math.ceil(currentFilteredData.length / pageSize);
+        if (page < 1 || page > totalPages) return;
+        currentPage = page;
+        updateTable(getPaginatedData());
+        updatePagination();
+        // Scroll to top of table
+        document.querySelector('#dataTable')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        
+        // Reapply column visibility
+        const storageKey = `hiddenColumns_SaleType`;
+        const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        if (typeof applyColumnVisibility === 'function') {
+            applyColumnVisibility(hiddenCols);
+        }
+    }
+
+    function updateTable(data) {
+        const tbody = document.querySelector('#dataTable tbody');
+        if (!tbody) return;
+        
+        // Use DocumentFragment to build all rows first, then replace in one go (no flicker)
+        const fragment = document.createDocumentFragment();
+        data.forEach(item => {
+            const row = document.createElement('tr');
+            row.id = `row-${item.saleTypeId}`;
+            row.innerHTML = `
+                <td data-column="SaleTypeCode">${escapeHtml(item.saleTypeCode || '')}</td>
+                <td data-column="SaleTypeName">${escapeHtml(item.saleTypeName || '')}</td>
+                <td data-column="RequiresCertificate"><input type="checkbox" class="form-check-input" disabled ${item.requiresCertificate ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
+                <td data-column="CertificateTypeName">${escapeHtml(item.certificateTypeName || '')}</td>
+                <td data-column="TaxApplicable"><input type="checkbox" class="form-check-input" disabled ${item.taxApplicable ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
+                <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
+                <td>
+                    <div class="btn-group btn-group-sm">
+                        <a class="btn btn-info" href="@Url.Action("Details", "SaleType")/${item.saleTypeId}">Details</a>
+                        <a class="btn btn-warning" href="@Url.Action("Edit", "SaleType")/${item.saleTypeId}">Edit</a>
+                        <a href="#" class="btn btn-danger delete-btn" data-id="${item.saleTypeId}" data-name="${escapeHtml(item.saleTypeName || '')}" data-bs-toggle="modal" data-bs-target="#deleteModal">Delete</a>
+                    </div>
+                </td>
+            `;
+            fragment.appendChild(row);
+        });
+        
+        // Replace all content in one operation (no flicker)
+        tbody.innerHTML = '';
+        tbody.appendChild(fragment);
+        
+        // Re-attach delete button handlers
+        document.querySelectorAll('.delete-btn').forEach(button => {
+            button.addEventListener('click', function (e) {
+                e.preventDefault();
+                const saleTypeId = this.getAttribute('data-id');
+                const saleTypeName = this.getAttribute('data-name');
+                const saleTypeIdInput = document.getElementById('saleTypeIdToDelete');
+                const saleTypeNamePlaceholder = document.getElementById('saleTypeNamePlaceholder');
+                if (saleTypeIdInput) saleTypeIdInput.value = saleTypeId;
+                if (saleTypeNamePlaceholder) saleTypeNamePlaceholder.innerText = saleTypeName;
+            });
+        });
+        
+        // Reapply column visibility and filter inputs state after table update
+        const storageKey = `hiddenColumns_SaleType`;
+        const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+        if (typeof applyColumnVisibility === 'function') {
+            applyColumnVisibility(hiddenCols);
+        }
+    }
+
+    function updateFilterTags() {
+        const tagsContainer = document.getElementById('activeFilterTags');
+        if (!tagsContainer) return;
+        tagsContainer.innerHTML = '';
+        if (Object.keys(activeFilters).length === 0) {
+            return;
+        }
+        
+        // Track which date columns we've already processed
+        const processedDateColumns = new Set();
+        
+        Object.keys(activeFilters).forEach(column => {
+            if (column === 'IsActive') return; // Is Active shown by tri-state at bottom right, not as tag
+            // Skip date range suffix columns (_From, _To) as we'll handle them together
+            if (column.endsWith('_From') || column.endsWith('_To')) {
+                const baseColumn = column.replace('_From', '').replace('_To', '');
+                if (processedDateColumns.has(baseColumn)) {
+                    return;
+                }
+                processedDateColumns.add(baseColumn);
+                
+                const fromValue = activeFilters[`${baseColumn}_From`];
+                const toValue = activeFilters[`${baseColumn}_To`];
+                const columnName = document.querySelector(`thead th[data-column="${baseColumn}"]`)?.textContent.trim() || baseColumn;
+                
+                let filterValue = '';
+                if (fromValue && toValue) {
+                    filterValue = `${fromValue} to ${toValue}`;
+                } else if (fromValue) {
+                    filterValue = `From ${fromValue}`;
+                } else if (toValue) {
+                    filterValue = `To ${toValue}`;
+                }
+                
+                if (filterValue) {
+                    const badge = document.createElement('span');
+                    badge.className = 'badge bg-secondary me-1 mb-1';
+                    badge.style.cursor = 'pointer';
+                    badge.innerHTML = `${columnName}: ${escapeHtml(filterValue)} <i class="fa-solid fa-times ms-1"></i>`;
+                    badge.addEventListener('click', async function(e) {
+                        e.stopPropagation();
+                        delete activeFilters[`${baseColumn}_From`];
+                        delete activeFilters[`${baseColumn}_To`];
+                        localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
+                        const filterDateFrom = document.querySelector(`.filter-date-from[data-column="${baseColumn}"]`);
+                        const filterDateTo = document.querySelector(`.filter-date-to[data-column="${baseColumn}"]`);
+                        const clearFromBtn = document.querySelector(`.clear-date-from-filter[data-column="${baseColumn}"]`);
+                        const clearToBtn = document.querySelector(`.clear-date-to-filter[data-column="${baseColumn}"]`);
+                        if (filterDateFrom) filterDateFrom.value = '';
+                        if (filterDateTo) filterDateTo.value = '';
+                        if (clearFromBtn) clearFromBtn.style.display = 'none';
+                        if (clearToBtn) clearToBtn.style.display = 'none';
+                        updateFilterTags();
+                        updateFilterCount();
+                        // If no filters left, reload page
+                        if (Object.keys(activeFilters).length === 0) {
+                            isFiltered = false;
+                            currentPage = 1;
+                            window.location.reload();
+                        } else {
+                            await applyFilters();
+                        }
+                    });
+                    tagsContainer.appendChild(badge);
+                }
+            } else {
+                const columnName = document.querySelector(`thead th[data-column="${column}"]`)?.textContent.trim() || column;
+                const filterValue = activeFilters[column] === 'true' ? 'Yes' : (activeFilters[column] === 'false' ? 'No' : activeFilters[column]);
+                const badge = document.createElement('span');
+                badge.className = 'badge bg-secondary me-1 mb-1';
+                badge.style.cursor = 'pointer';
+                badge.innerHTML = `${columnName}: ${escapeHtml(filterValue)} <i class="fa-solid fa-times ms-1"></i>`;
+                badge.addEventListener('click', async function(e) {
+                    e.stopPropagation();
+                    delete activeFilters[column];
+                    localStorage.setItem(dataFiltersStorageKey, JSON.stringify(activeFilters));
+                    const filterInput = document.querySelector(`.filter-input[data-column="${column}"]`);
+                    const filterToggle = document.querySelector(`.filter-toggle[data-column="${column}"]`);
+                    const clearBtn = document.querySelector(`.clear-column-filter[data-column="${column}"]`);
+                    if (filterInput) filterInput.value = '';
+                    if (filterToggle) filterToggle.checked = false;
+                    if (clearBtn) clearBtn.style.display = 'none';
+                    updateFilterTags();
+                    updateFilterCount();
+                    // If no filters left, reload page
+                    if (Object.keys(activeFilters).length === 0) {
+                        isFiltered = false;
+                        currentPage = 1;
+                        window.location.reload();
+                    } else {
+                        await applyFilters();
+                    }
+                });
+                tagsContainer.appendChild(badge);
+            }
+        });
+    }
+
+    async function downloadExcel() {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            
+            // Get hidden columns from localStorage
+            const storageKey = `hiddenColumns_SaleType`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            
+            // Prepare request data with filters and hidden columns
+            const requestData = {
+                filters: activeFilters || {},
+                hiddenColumns: hiddenCols
+            };
+            
+            const response = await fetch('@Url.Action("Print", "SaleType")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(requestData),
+                cache: 'no-cache' // Prevent caching
+            });
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.style.display = 'none';
+                // Get filename from Content-Disposition header if available, otherwise use default
+                const contentDisposition = response.headers.get('Content-Disposition');
+                const now = new Date();
+                const dateStr = now.toISOString().slice(0, 10).replace(/-/g, '');
+                const timeStr = String(now.getHours()).padStart(2, '0') + 
+                               String(now.getMinutes()).padStart(2, '0') + 
+                               String(now.getSeconds()).padStart(2, '0');
+                let filename = `SaleTypes_${dateStr}_${timeStr}.xlsx`;
+                if (contentDisposition) {
+                    // Try to match filename*=UTF-8''filename format first (RFC 5987)
+                    let filenameMatch = contentDisposition.match(/filename\*=UTF-8''([^;,\s]+)/);
+                    if (filenameMatch) {
+                        filename = decodeURIComponent(filenameMatch[1].trim());
+                    } else {
+                        // Fall back to regular filename="..." format
+                        filenameMatch = contentDisposition.match(/filename=([^;,\s]+)/);
+                        if (filenameMatch) {
+                            filename = filenameMatch[1].trim();
+                            // Remove quotes if present
+                            filename = filename.replace(/^["']|["']$/g, '');
+                        }
+                    }
+                    // Clean up: remove any extra parameters, encoding info, or spaces
+                    filename = filename.split(';')[0].split('filename_=')[0].trim();
+                    // Remove any parentheses and numbers like "(2)" at the end
+                    filename = filename.replace(/\s*\(\d+\)\s*$/, '');
+                    // Ensure it ends with .xlsx
+                    if (!filename.endsWith('.xlsx')) {
+                        const baseName = filename.split('.')[0];
+                        filename = baseName + '.xlsx';
+                    }
+                }
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                // Delay revoking URL to ensure download starts
+                setTimeout(() => {
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                }, 100);
+            } else {
+                // Try to parse error response as JSON, but handle non-JSON responses
+                let errorMessage = 'Unknown error';
+                try {
+                    const contentType = response.headers.get('content-type');
+                    if (contentType && contentType.includes('application/json')) {
+                        const result = await response.json();
+                        errorMessage = result.message || result.error || 'Unknown error';
+                    } else {
+                        const errorText = await response.text();
+                        errorMessage = errorText || `Server returned status ${response.status}`;
+                    }
+                } catch (e) {
+                    errorMessage = `Server returned status ${response.status}`;
+                }
+                alert('Error: ' + errorMessage);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error generating Excel file.');
+        }
+    }
+
+    async function downloadPdf() {
+        try {
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const storageKey = `hiddenColumns_SaleType`;
+            const hiddenCols = JSON.parse(localStorage.getItem(storageKey) || '[]');
+            let headerBase64 = null;
+            try { headerBase64 = await (window.captureFooterForPdf ? window.captureFooterForPdf() : Promise.resolve(null)); } catch (e) {}
+            const requestData = { filters: activeFilters || {}, hiddenColumns: hiddenCols };
+            if (headerBase64) requestData.headerImageBase64 = headerBase64;
+            const response = await fetch('@Url.Action("ExportPdf", "SaleType")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify(requestData),
+                cache: 'no-cache'
+            });
+            if (response.ok) {
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.style.display = 'none';
+                let filename = `SaleTypes_${new Date().toISOString().slice(0,10).replace(/-/g,'')}_${String(new Date().getHours()).padStart(2,'0')}${String(new Date().getMinutes()).padStart(2,'0')}${String(new Date().getSeconds()).padStart(2,'0')}.pdf`;
+                const contentDisposition = response.headers.get('Content-Disposition');
+                if (contentDisposition) {
+                    const m = contentDisposition.match(/filename\*=UTF-8''([^;,\s]+)/) || contentDisposition.match(/filename=([^;,\s]+)/);
+                    if (m) { filename = decodeURIComponent(m[1].trim().replace(/^["']|["']$/g, '')); if (!filename.endsWith('.pdf')) filename = (filename.split('.')[0] || filename) + '.pdf'; }
+                }
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                setTimeout(function() { window.URL.revokeObjectURL(url); document.body.removeChild(a); }, 100);
+            } else {
+                let errorMessage = 'Unknown error';
+                try {
+                    if (response.headers.get('content-type')?.includes('application/json')) {
+                        const result = await response.json();
+                        errorMessage = result.message || result.error || 'Unknown error';
+                    } else { errorMessage = await response.text() || 'Server error'; }
+                } catch (e) { errorMessage = 'Server error'; }
+                alert('Error: ' + errorMessage);
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error generating PDF file.');
+        }
+    }
+
+    async function loadAllData() {
+        try {
+            // When filters are cleared, fetch all data via Filter action and use client-side pagination
+            // This approach is smooth - no page reload, no flicker
+            const token = document.querySelector('input[name="__RequestVerificationToken"]')?.value || '';
+            const response = await fetch('@Url.Action("Filter", "SaleType")', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'RequestVerificationToken': token },
+                body: JSON.stringify({})
+            });
+            
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Response error:', response.status, errorText);
+                alert('Error: Server returned status ' + response.status);
+                return;
+            }
+            
+            const result = await response.json();
+            if (result.success) {
+                // Store all data and use client-side pagination (smooth, no flicker)
+                currentFilteredData = result.data;
+                isFiltered = true; // Keep as filtered to use client-side pagination
+                currentPage = 1;
+                
+                // Get paginated data first
+                const paginatedData = getPaginatedData();
+                
+                // Update everything in a single batch using requestAnimationFrame to minimize flicker
+                requestAnimationFrame(() => {
+                    updatePagination();
+                    updateTable(paginatedData); // updateTable already calls applyColumnVisibility at the end
+                    updateFilterTags();
+                    updateFilterCount();
+                });
+            } else {
+                alert('Error: ' + (result.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Error loading data: ' + error.message);
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+</script>
