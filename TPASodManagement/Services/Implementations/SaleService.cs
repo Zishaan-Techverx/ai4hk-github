@@ -27,7 +27,11 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<Sale>>();
             try
             {
+                // IgnoreQueryFilters so related entities (Farm, Currency, Customer, etc.) with soft-delete
+                // don't exclude Sales via INNER JOIN. We manually filter Sale.DeletedDate.
                 var query = _context.Sales
+                    .IgnoreQueryFilters()
+                    .Where(s => s.DeletedDate == null)
                     .Include(s => s.Currency)
                     .Include(s => s.Customer)
                         .ThenInclude(c => c.Person)
@@ -65,6 +69,8 @@ namespace TpaSodManagement.Services.Implementations
             try
             {
                 var query = _context.Sales
+                    .IgnoreQueryFilters()
+                    .Where(s => s.DeletedDate == null)
                     .Include(s => s.Currency)
                     .Include(s => s.Customer)
                         .ThenInclude(c => c.Person)
@@ -298,6 +304,8 @@ namespace TpaSodManagement.Services.Implementations
             try
             {
                 var sale = await _context.Sales
+                    .IgnoreQueryFilters()
+                    .Where(s => s.DeletedDate == null)
                     .Include(s => s.Currency)
                     .Include(s => s.Customer)
                     .Include(s => s.Farm)
@@ -331,6 +339,8 @@ namespace TpaSodManagement.Services.Implementations
             try
             {
                 var sale = await _context.Sales
+                    .IgnoreQueryFilters()
+                    .Where(s => s.DeletedDate == null)
                     .Include(s => s.Currency)
                     .Include(s => s.Customer).ThenInclude(c => c!.Person)
                     .Include(s => s.Customer).ThenInclude(c => c!.Organization)

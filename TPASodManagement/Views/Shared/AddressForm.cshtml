@@ -38,8 +38,12 @@
                         </div>
                     }
 
-                    <form asp-action="@(isEdit ? "EditAddress" : "CreateAddress")" asp-route-id="@Model.ParentEntityId" method="post">
+                    <form asp-action="@(isEdit ? "EditAddress" : "CreateAddress")" asp-route-id="@Model.ParentEntityId" asp-route-returnUrl="@ViewBag.ReturnUrl" method="post">
                         @Html.AntiForgeryToken()
+                        @if (!isEdit && ViewBag.ReturnUrl != null)
+                        {
+                            <input type="hidden" name="returnUrl" value="@ViewBag.ReturnUrl" />
+                        }
                         <input type="hidden" asp-for="ParentEntityName" />
                         <input type="hidden" asp-for="ParentEntityId" />
                         @if (Model.AddressId.HasValue)
@@ -140,6 +144,10 @@
                             @if (Model.ParentEntityId == 0)
                             {
                                 <a asp-action="SkipAddress" asp-route-id="0" class="btn btn-secondary me-2">Skip</a>
+                            }
+                            else if (ViewBag.ReturnUrl != null)
+                            {
+                                <a href="@ViewBag.ReturnUrl" class="btn btn-secondary me-2">Skip</a>
                             }
                             else
                             {

@@ -172,6 +172,26 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(SaleEditViewModel saleVm)
         {
+            // Non-SuperAdmin: set defaults for restricted fields (hidden in UI)
+            if (!User.IsInRole("SuperAdmin"))
+            {
+                saleVm.SubtotalAmount ??= 0;
+                saleVm.TaxAmount ??= 0;
+                saleVm.DiscountAmount ??= 0;
+                saleVm.TotalAmount ??= 0;
+                if (saleVm.StatusId == null || saleVm.StatusId == 0)
+                {
+                    var dropdowns = await _saleService.GetDropdownDataAsync();
+                    var firstStatus = dropdowns.Data?.ContainsKey("StatusId") == true
+                        ? dropdowns.Data["StatusId"]?.FirstOrDefault(s => !string.IsNullOrEmpty(s.Value))
+                        : null;
+                    if (firstStatus != null && int.TryParse(firstStatus.Value, out int defaultStatusId))
+                        saleVm.StatusId = defaultStatusId;
+                    else
+                        saleVm.StatusId = 1;
+                }
+            }
+
             // Set automatic fields
             saleVm.CreatedDate = DateTimeOffset.UtcNow;
             saleVm.UpdatedDate = DateTimeOffset.UtcNow;

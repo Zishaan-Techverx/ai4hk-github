@@ -105,20 +105,22 @@ namespace TpaSodManagement.Controllers
             return View("Edit", vm);
         }
 
-        public async Task<IActionResult> Create()
+        public async Task<IActionResult> Create(string? returnUrl = null)
         {
             var vm = new CustomerEditViewModel { IsActive = true };
             await PopulateDropdowns(vm);
+            ViewBag.ReturnUrl = returnUrl;
             return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create(CustomerEditViewModel customerVm)
+        public async Task<IActionResult> Create(CustomerEditViewModel customerVm, string? returnUrl = null)
         {
             if (!ModelState.IsValid)
             {
                 await PopulateDropdowns(customerVm);
+                ViewBag.ReturnUrl = returnUrl;
                 return View(customerVm);
             }
 
@@ -128,10 +130,11 @@ namespace TpaSodManagement.Controllers
             {
                 TempData["Error"] = result.Message;
                 await PopulateDropdowns(customerVm);
+                ViewBag.ReturnUrl = returnUrl;
                 return View(customerVm);
             }
 
-            return RedirectToAction(nameof(CreateAddress), new { id = result.Data!.CustomerId });
+            return RedirectToAction(nameof(CreateAddress), new { id = result.Data!.CustomerId, returnUrl });
         }
 
         public async Task<IActionResult> Edit(long? id)
@@ -465,7 +468,7 @@ namespace TpaSodManagement.Controllers
                 .ToListAsync();
         }
 
-        public async Task<IActionResult> CreateAddress(long id)
+        public async Task<IActionResult> CreateAddress(long id, string? returnUrl = null)
         {
             var result = await _customerService.GetByIdAsync(id);
             if (!result.Success || result.Data == null) return NotFound();
@@ -479,12 +482,13 @@ namespace TpaSodManagement.Controllers
                 IsActive = true
             };
             await PopulateAddressDropdowns(vm);
+            ViewBag.ReturnUrl = returnUrl;
             return View("AddressForm", vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateAddress(long id, AddressFormViewModel vm)
+        public async Task<IActionResult> CreateAddress(long id, AddressFormViewModel vm, string? returnUrl = null)
         {
             if (id != vm.ParentEntityId) return NotFound();
             var result = await _customerService.GetByIdAsync(id);
@@ -514,6 +518,8 @@ namespace TpaSodManagement.Controllers
                 _context.Customers.Update(customer);
                 await _context.SaveChangesAsync();
                 TempData["SuccessMessage"] = "Customer and address saved successfully.";
+                if (!string.IsNullOrEmpty(returnUrl))
+                    return Redirect(returnUrl);
                 return RedirectToAction(nameof(Index));
             }
             vm.ParentEntityName = "Customer";
@@ -521,6 +527,7 @@ namespace TpaSodManagement.Controllers
             vm.IsAddressTypeReadOnly = true;
             vm.AddressTypeId = (await AddressTypeSeeder.GetAddressTypeIdByNameAsync(_context, "Customer")) ?? vm.AddressTypeId;
             await PopulateAddressDropdowns(vm);
+            ViewBag.ReturnUrl = returnUrl;
             return View("AddressForm", vm);
         }
 

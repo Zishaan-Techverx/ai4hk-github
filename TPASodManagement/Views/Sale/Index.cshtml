@@ -232,7 +232,7 @@
 </nav>
 
 <div class="text-muted mt-2">
-    Showing @((pageNumber - 1) * pageSize + 1) to @Math.Min(pageNumber * pageSize, totalCount) of @totalCount records
+    Showing @(totalCount == 0 ? 0 : (pageNumber - 1) * pageSize + 1) to @(totalCount == 0 ? 0 : Math.Min(pageNumber * pageSize, totalCount)) of @totalCount records
 </div>
 
 <br />
