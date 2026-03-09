@@ -298,10 +298,17 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(c => c.CertificateTypeId)
                     .ToListAsync();
                     
-                // Use UserManager instead of _context.TpaUsers
-                var users = await _userManager.Users
-                    .OrderBy(u => u.UserName)
-                    .ToListAsync();
+                // Users: filter by org for non-SuperAdmin
+                var usersQuery = _userManager.Users.AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        usersQuery = usersQuery.Where(u => u.OrganizationId == orgId.Value);
+                    else
+                        usersQuery = usersQuery.Where(u => false);
+                }
+                var users = await usersQuery.OrderBy(u => u.UserName).ToListAsync();
                     
                 var categories = await _context.ProductCategories
                     .Where(c => c.IsActive)

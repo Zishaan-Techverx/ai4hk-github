@@ -355,10 +355,20 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<(SelectList Organizations, SelectList People, SelectList CustomerTypes)>();
             try
             {
-                var orgs = await _context.Organizations
+                // Organizations: filter by org for non-SuperAdmin
+                var orgsQuery = _context.Organizations
                     .Where(o => o.DeletedDate == null)
                     .OrderBy(o => o.OrganizationName)
-                    .ToListAsync();
+                    .AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        orgsQuery = orgsQuery.Where(o => o.OrganizationId == orgId.Value);
+                    else
+                        orgsQuery = orgsQuery.Where(o => false);
+                }
+                var orgs = await orgsQuery.ToListAsync();
 
                 var people = await _context.People
                     .Where(p => p.DeletedDate == null)

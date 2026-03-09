@@ -481,10 +481,17 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Dictionary<string, IEnumerable<SelectListItem>>>();
             try
             {
-                // TpaSodManagementUser se users fetch karein
-                var users = await _userManager.Users
-                    .OrderBy(u => u.UserName)
-                    .ToListAsync();
+                // TpaSodManagementUser se users fetch karein (filter by org for non-SuperAdmin)
+                var usersQuery = _userManager.Users.AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        usersQuery = usersQuery.Where(u => u.OrganizationId == orgId.Value);
+                    else
+                        usersQuery = usersQuery.Where(u => false);
+                }
+                var users = await usersQuery.OrderBy(u => u.UserName).ToListAsync();
 
                 // Fetch all Person records for these users in one query (efficient batch loading)
                 var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId!.Value).ToList();
