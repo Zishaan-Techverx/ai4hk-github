@@ -45,14 +45,25 @@
                         }
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="CustomerTypeId" class="form-label">Customer Type <span class="text-danger">*</span></label>
-                                <select asp-for="CustomerTypeId" class="form-select" asp-items="Model.CustomerTypes" required>
-                                    <option value="">-- Select Customer Type --</option>
-                                </select>
-                                <span asp-validation-for="CustomerTypeId" class="text-danger"></span>
-                            </div>
-
+                            @if (ViewBag.IsCustomerTypeOrgReadOnly == true)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="CustomerTypeId" class="form-label">Customer Type <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" value="@ViewBag.CurrentCustomerTypeDisplayName" readonly />
+                                    <input type="hidden" asp-for="CustomerTypeId" />
+                                    <span asp-validation-for="CustomerTypeId" class="text-danger"></span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="CustomerTypeId" class="form-label">Customer Type <span class="text-danger">*</span></label>
+                                    <select asp-for="CustomerTypeId" class="form-select" asp-items="Model.CustomerTypes" required>
+                                        <option value="">-- Select Customer Type --</option>
+                                    </select>
+                                    <span asp-validation-for="CustomerTypeId" class="text-danger"></span>
+                                </div>
+                            }
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CustomerCode" class="form-label">Customer Code</label>
                                 <input asp-for="CustomerCode" class="form-control" />
@@ -68,14 +79,25 @@
                                 </select>
                                 <span asp-validation-for="PersonId" class="text-danger"></span>
                             </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationId" class="form-label">Organization</label>
-                                <select asp-for="OrganizationId" class="form-select" asp-items="Model.Organizations">
-                                    <option value="">-- Select Organization --</option>
-                                </select>
-                                <span asp-validation-for="OrganizationId" class="text-danger"></span>
-                            </div>
+                            @if (ViewBag.IsCustomerTypeOrgReadOnly == true)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="OrganizationId" class="form-label">Organization</label>
+                                    <input type="text" class="form-control" value="@ViewBag.CurrentOrganizationDisplayName" readonly />
+                                    <input type="hidden" asp-for="OrganizationId" />
+                                    <span asp-validation-for="OrganizationId" class="text-danger"></span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="OrganizationId" class="form-label">Organization</label>
+                                    <select asp-for="OrganizationId" class="form-select" asp-items="Model.Organizations">
+                                        <option value="">-- Select Organization --</option>
+                                    </select>
+                                    <span asp-validation-for="OrganizationId" class="text-danger"></span>
+                                </div>
+                            }
                         </div>
 
                         <div class="row">

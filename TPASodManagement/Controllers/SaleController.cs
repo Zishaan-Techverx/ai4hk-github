@@ -15,6 +15,8 @@ using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.ViewModels.Sale;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
+using TpaSodManagement.Database;
+using Microsoft.EntityFrameworkCore;
 
 namespace TpaSodManagement.Controllers
 {
@@ -27,6 +29,7 @@ namespace TpaSodManagement.Controllers
         private readonly IExportToExcel _exportToExcel;
         private readonly IExportToPdf _exportToPdf;
         private readonly IWebHostEnvironment _env;
+        private readonly ApplicationDbContext _context;
 
         public SaleController(
             ISaleService saleService,
@@ -34,7 +37,8 @@ namespace TpaSodManagement.Controllers
             ILogger<SaleController> logger,
             IExportToExcel exportToExcel,
             IExportToPdf exportToPdf,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            ApplicationDbContext context)
         {
             _saleService = saleService;
             _userManager = userManager;
@@ -42,6 +46,7 @@ namespace TpaSodManagement.Controllers
             _exportToExcel = exportToExcel;
             _exportToPdf = exportToPdf;
             _env = env;
+            _context = context;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -165,6 +170,51 @@ namespace TpaSodManagement.Controllers
         {
             var vm = new SaleEditViewModel();
             await PopulateDropdowns(vm);
+
+            // Non-SuperAdmin: User and Farm are read-only, pre-filled from current user
+            if (!User.IsInRole("SuperAdmin"))
+            {
+                var currentUser = await _userManager.GetUserAsync(HttpContext.User);
+                if (currentUser != null)
+                {
+                    vm.UserId = currentUser.Id;
+                    vm.FarmId = currentUser.FarmId;
+
+                    // User display name (FirstName LastName (UserName))
+                    string? userDisplayName = null;
+                    if (currentUser.PersonId.HasValue)
+                    {
+                        var person = await _context.People.FindAsync(currentUser.PersonId.Value);
+                        if (person != null && !string.IsNullOrEmpty(person.FirstName) && !string.IsNullOrEmpty(person.LastName))
+                            userDisplayName = $"{person.FirstName} {person.LastName} ({currentUser.UserName})";
+                    }
+                    ViewBag.CurrentUserDisplayName = userDisplayName ?? currentUser.UserName ?? $"User #{currentUser.Id}";
+
+                    // Farm display name
+                    string? farmDisplayName = null;
+                    if (currentUser.FarmId.HasValue)
+                    {
+                        var farm = await _context.Farms.Include(f => f.Organization).FirstOrDefaultAsync(f => f.FarmId == currentUser.FarmId.Value);
+                        if (farm != null)
+                        {
+                            farmDisplayName = !string.IsNullOrEmpty(farm.FarmName)
+                                ? farm.FarmName
+                                : !string.IsNullOrEmpty(farm.LicenseNumber)
+                                    ? farm.LicenseNumber
+                                    : $"Farm #{farm.FarmId}";
+                            if (farm.Organization != null && !string.IsNullOrEmpty(farm.Organization.OrganizationName))
+                                farmDisplayName += $" ({farm.Organization.OrganizationName})";
+                        }
+                    }
+                    ViewBag.CurrentFarmDisplayName = farmDisplayName ?? "-- No Farm Assigned --";
+                    ViewBag.IsUserFarmReadOnly = true;
+                }
+            }
+            else
+            {
+                ViewBag.IsUserFarmReadOnly = false;
+            }
+
             return View(vm);
         }
 
@@ -172,6 +222,17 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(SaleEditViewModel saleVm)
         {
+            // Non-SuperAdmin: set User and Farm from current user (read-only in UI)
+            if (!User.IsInRole("SuperAdmin"))
+            {
+                var currentUser = await _userManager.GetUserAsync(HttpContext.User);
+                if (currentUser != null)
+                {
+                    saleVm.UserId = currentUser.Id;
+                    saleVm.FarmId = currentUser.FarmId;
+                }
+            }
+
             // Non-SuperAdmin: set defaults for restricted fields (hidden in UI)
             if (!User.IsInRole("SuperAdmin"))
             {

@@ -110,17 +110,108 @@ namespace TpaSodManagement.Controllers
             var vm = new CustomerEditViewModel { IsActive = true };
             await PopulateDropdowns(vm);
             ViewBag.ReturnUrl = returnUrl;
+
+            // Non-SuperAdmin: Customer Type and Organization are read-only, pre-filled from current user's org
+            if (!User.IsInRole("SuperAdmin"))
+            {
+                var currentUser = await _userManager.GetUserAsync(HttpContext.User);
+                if (currentUser != null && currentUser.OrganizationId.HasValue)
+                {
+                    var org = await _context.Organizations
+                        .Include(o => o.OrganizationType)
+                        .FirstOrDefaultAsync(o => o.OrganizationId == currentUser.OrganizationId.Value);
+                    if (org != null)
+                    {
+                        vm.OrganizationId = org.OrganizationId;
+                        var orgTypeName = org.OrganizationType?.OrganizationTypeName;
+                        if (!string.IsNullOrEmpty(orgTypeName))
+                        {
+                            var customerType = await _context.CustomerTypes
+                                .Where(ct => ct.DeletedDate == null && ct.IsActive)
+                                .FirstOrDefaultAsync(ct => MapOrgTypeToCustomerTypeName(orgTypeName) == ct.CustomerTypeName);
+                            if (customerType != null)
+                                vm.CustomerTypeId = customerType.CustomerTypeId;
+                        }
+                    }
+                }
+            }
+            await SetCreateReadOnlyViewBagAsync(vm);
+
             return View(vm);
+        }
+
+        /// <summary>
+        /// Maps OrganizationTypeName to CustomerTypeName (e.g. HGT_Sod -> HGTSod, RTF_HGT_Sod -> RTFHGTSod).
+        /// </summary>
+        private static string MapOrgTypeToCustomerTypeName(string orgTypeName)
+        {
+            var normalized = orgTypeName?.Replace("_", "").Replace(" ", "") ?? "";
+            return normalized;
+        }
+
+        private async Task SetCreateReadOnlyViewBagAsync(CustomerEditViewModel vm)
+        {
+            if (!User.IsInRole("SuperAdmin"))
+            {
+                var currentUser = await _userManager.GetUserAsync(HttpContext.User);
+                if (currentUser != null && currentUser.OrganizationId.HasValue)
+                {
+                    var org = await _context.Organizations
+                        .Include(o => o.OrganizationType)
+                        .FirstOrDefaultAsync(o => o.OrganizationId == currentUser.OrganizationId.Value);
+                    if (org != null)
+                    {
+                        ViewBag.CurrentOrganizationDisplayName = org.OrganizationName ?? $"Organization #{org.OrganizationId}";
+                        var orgTypeName = org.OrganizationType?.OrganizationTypeName;
+                        if (!string.IsNullOrEmpty(orgTypeName))
+                        {
+                            var customerType = await _context.CustomerTypes
+                                .Where(ct => ct.DeletedDate == null && ct.IsActive)
+                                .FirstOrDefaultAsync(ct => MapOrgTypeToCustomerTypeName(orgTypeName) == ct.CustomerTypeName);
+                            ViewBag.CurrentCustomerTypeDisplayName = customerType?.CustomerTypeName ?? orgTypeName;
+                        }
+                        else
+                        {
+                            ViewBag.CurrentCustomerTypeDisplayName = "-- No Organization Type --";
+                        }
+                        ViewBag.IsCustomerTypeOrgReadOnly = true;
+                        return;
+                    }
+                }
+            }
+            ViewBag.IsCustomerTypeOrgReadOnly = false;
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CustomerEditViewModel customerVm, string? returnUrl = null)
         {
+            // Non-SuperAdmin: set Customer Type and Organization from current user (read-only in UI)
+            if (!User.IsInRole("SuperAdmin"))
+            {
+                var currentUser = await _userManager.GetUserAsync(HttpContext.User);
+                if (currentUser != null && currentUser.OrganizationId.HasValue)
+                {
+                    customerVm.OrganizationId = currentUser.OrganizationId.Value;
+                    var org = await _context.Organizations
+                        .Include(o => o.OrganizationType)
+                        .FirstOrDefaultAsync(o => o.OrganizationId == currentUser.OrganizationId.Value);
+                    if (org?.OrganizationType != null)
+                    {
+                        var customerType = await _context.CustomerTypes
+                            .Where(ct => ct.DeletedDate == null && ct.IsActive)
+                            .FirstOrDefaultAsync(ct => MapOrgTypeToCustomerTypeName(org.OrganizationType.OrganizationTypeName ?? "") == ct.CustomerTypeName);
+                        if (customerType != null)
+                            customerVm.CustomerTypeId = customerType.CustomerTypeId;
+                    }
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateDropdowns(customerVm);
                 ViewBag.ReturnUrl = returnUrl;
+                await SetCreateReadOnlyViewBagAsync(customerVm);
                 return View(customerVm);
             }
 
@@ -131,6 +222,7 @@ namespace TpaSodManagement.Controllers
                 TempData["Error"] = result.Message;
                 await PopulateDropdowns(customerVm);
                 ViewBag.ReturnUrl = returnUrl;
+                await SetCreateReadOnlyViewBagAsync(customerVm);
                 return View(customerVm);
             }
 

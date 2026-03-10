@@ -41,21 +41,38 @@
                         @Html.AntiForgeryToken()
 
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="UserId" class="form-label">User <span class="text-danger">*</span></label>
-                                <select asp-for="UserId" class="form-select" asp-items="Model.Users" required>
-                                    <option value="">-- Select User --</option>
-                                </select>
-                                <span asp-validation-for="UserId" class="text-danger"></span>
-                            </div>
-
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="FarmId" class="form-label">Farm <span class="text-danger">*</span></label>
-                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms" required>
-                                    <option value="">-- Select Farm --</option>
-                                </select>
-                                <span asp-validation-for="FarmId" class="text-danger"></span>
-                            </div>
+                            @if (ViewBag.IsUserFarmReadOnly == true)
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="UserId" class="form-label">User <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" value="@ViewBag.CurrentUserDisplayName" readonly />
+                                    <input type="hidden" asp-for="UserId" />
+                                    <span asp-validation-for="UserId" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="FarmId" class="form-label">Farm <span class="text-danger">*</span></label>
+                                    <input type="text" class="form-control" value="@ViewBag.CurrentFarmDisplayName" readonly />
+                                    <input type="hidden" asp-for="FarmId" />
+                                    <span asp-validation-for="FarmId" class="text-danger"></span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="UserId" class="form-label">User <span class="text-danger">*</span></label>
+                                    <select asp-for="UserId" class="form-select" asp-items="Model.Users" required>
+                                        <option value="">-- Select User --</option>
+                                    </select>
+                                    <span asp-validation-for="UserId" class="text-danger"></span>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label asp-for="FarmId" class="form-label">Farm <span class="text-danger">*</span></label>
+                                    <select asp-for="FarmId" class="form-select" asp-items="Model.Farms" required>
+                                        <option value="">-- Select Farm --</option>
+                                    </select>
+                                    <span asp-validation-for="FarmId" class="text-danger"></span>
+                                </div>
+                            }
                         </div>
 
                         <div class="row">
