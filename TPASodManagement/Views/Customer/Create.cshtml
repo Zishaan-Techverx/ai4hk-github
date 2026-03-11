@@ -73,11 +73,30 @@
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="PersonId" class="form-label">Person</label>
-                                <select asp-for="PersonId" class="form-select" asp-items="Model.People">
-                                    <option value="">-- Select Person --</option>
-                                </select>
-                                <span asp-validation-for="PersonId" class="text-danger"></span>
+                                <label class="form-label">Person</label>
+                                <input type="hidden" asp-for="CreateNewPerson" id="CreateNewPerson" value="@(Model?.CreateNewPerson == true ? "true" : "false")" />
+                                <div id="personDropdownSection">
+                                    <div class="input-group">
+                                        <select asp-for="PersonId" class="form-select" id="PersonId" asp-items="Model.People">
+                                            <option value="">-- Select Person --</option>
+                                        </select>
+                                        <button type="button" class="btn btn-outline-secondary" id="btnCreateNewPerson" title="Create new person">Create New</button>
+                                    </div>
+                                    <span asp-validation-for="PersonId" class="text-danger" id="personIdValidation"></span>
+                                </div>
+                                <div id="personNewFieldsSection" style="display: none;">
+                                    <div class="mb-2">
+                                        <label for="NewPersonFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="NewPersonFirstName" name="NewPersonFirstName" maxlength="200" value="@Model?.NewPersonFirstName" />
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="NewPersonFirstName" data-valmsg-replace="true"></span>
+                                    </div>
+                                    <div class="mb-2">
+                                        <label for="NewPersonLastName" class="form-label">Last Name <span class="text-danger">*</span></label>
+                                        <input type="text" class="form-control" id="NewPersonLastName" name="NewPersonLastName" maxlength="200" value="@Model?.NewPersonLastName" />
+                                        <span class="text-danger field-validation-valid" data-valmsg-for="NewPersonLastName" data-valmsg-replace="true"></span>
+                                    </div>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCancelNewPerson">Use existing person</button>
+                                </div>
                             </div>
                             @if (ViewBag.IsCustomerTypeOrgReadOnly == true)
                             {
@@ -147,4 +166,71 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var createNewPerson = document.getElementById('CreateNewPerson');
+            var personId = document.getElementById('PersonId');
+            var personDropdownSection = document.getElementById('personDropdownSection');
+            var personNewFieldsSection = document.getElementById('personNewFieldsSection');
+            var btnCreateNewPerson = document.getElementById('btnCreateNewPerson');
+            var btnCancelNewPerson = document.getElementById('btnCancelNewPerson');
+            var newFirstName = document.getElementById('NewPersonFirstName');
+            var newLastName = document.getElementById('NewPersonLastName');
+            var personIdValidation = document.getElementById('personIdValidation');
+            var form = document.querySelector('form');
+
+            function showCreateNewPersonMode() {
+                createNewPerson.value = 'true';
+                personId.disabled = true;
+                personId.removeAttribute('data-val');
+                personId.value = '';
+                personDropdownSection.style.display = 'none';
+                personNewFieldsSection.style.display = 'block';
+                newFirstName.setAttribute('required', 'required');
+                newLastName.setAttribute('required', 'required');
+                newFirstName.setAttribute('data-val', 'true');
+                newLastName.setAttribute('data-val', 'true');
+                if (personIdValidation) personIdValidation.textContent = '';
+            }
+
+            function showDropdownMode() {
+                createNewPerson.value = 'false';
+                personId.disabled = false;
+                personId.setAttribute('data-val', 'true');
+                personDropdownSection.style.display = 'block';
+                personNewFieldsSection.style.display = 'none';
+                newFirstName.removeAttribute('required');
+                newLastName.removeAttribute('required');
+                newFirstName.removeAttribute('data-val');
+                newLastName.removeAttribute('data-val');
+                newFirstName.value = '';
+                newLastName.value = '';
+            }
+
+            if (btnCreateNewPerson) {
+                btnCreateNewPerson.addEventListener('click', function () {
+                    showCreateNewPersonMode();
+                });
+            }
+            if (btnCancelNewPerson) {
+                btnCancelNewPerson.addEventListener('click', function () {
+                    showDropdownMode();
+                });
+            }
+
+            if (form) {
+                form.addEventListener('submit', function () {
+                    if (createNewPerson.value === 'true') {
+                        personId.disabled = false;
+                        personId.removeAttribute('name');
+                    }
+                });
+            }
+
+            // Restore "create new person" mode when returning with validation errors
+            if (createNewPerson && createNewPerson.value === 'true') {
+                showCreateNewPersonMode();
+            }
+        })();
+    </script>
 }

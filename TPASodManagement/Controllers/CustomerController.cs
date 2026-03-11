@@ -207,6 +207,35 @@ namespace TpaSodManagement.Controllers
                 }
             }
 
+            // Create new person when user chose "Create New" and provided First/Last name
+            if (customerVm.CreateNewPerson)
+            {
+                var firstName = customerVm.NewPersonFirstName?.Trim();
+                var lastName = customerVm.NewPersonLastName?.Trim();
+                if (string.IsNullOrEmpty(firstName))
+                    ModelState.AddModelError("NewPersonFirstName", "First Name is required when creating a new person.");
+                if (string.IsNullOrEmpty(lastName))
+                    ModelState.AddModelError("NewPersonLastName", "Last Name is required when creating a new person.");
+                if (!string.IsNullOrEmpty(firstName) && !string.IsNullOrEmpty(lastName))
+                {
+                    var currentUser = await _userManager.GetUserAsync(HttpContext.User);
+                    var newPerson = new Person
+                    {
+                        FirstName = firstName,
+                        LastName = lastName,
+                        IsPrimaryContact = false,
+                        IsActive = true,
+                        CreatedDate = DateTimeOffset.UtcNow,
+                        CreatedByUserId = currentUser?.Id,
+                        UpdatedDate = DateTimeOffset.UtcNow,
+                        UpdatedByUserId = currentUser?.Id
+                    };
+                    _context.People.Add(newPerson);
+                    await _context.SaveChangesAsync();
+                    customerVm.PersonId = newPerson.PersonId;
+                }
+            }
+
             if (!ModelState.IsValid)
             {
                 await PopulateDropdowns(customerVm);

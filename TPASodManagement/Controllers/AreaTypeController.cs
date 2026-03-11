@@ -35,7 +35,7 @@ namespace TpaSodManagement.Controllers
                 { "AreaTypeName", "Area Type Name" },
                 { "UnitAbbreviation", "Unit Abbreviation" },
                 { "UnitSystem", "Unit System" },
-                { "ConversionToSquareMeters", "Conversion To Square Meters" },
+                { "ConversionToSquareMeters", "Conversion To Square Yards" },
                 { "IsActive", "Is Active" }
             };
             ViewBag.ModuleName = "Area Types";
@@ -119,7 +119,7 @@ namespace TpaSodManagement.Controllers
                     ("Area Type Name", "AreaTypeName"),
                     ("Unit Abbreviation", "UnitAbbreviation"),
                     ("Unit System", "UnitSystem"),
-                    ("Conversion To Square Meters", "ConversionToSquareMeters"),
+                    ("Conversion To Square Yards", "ConversionToSquareMeters"),
                     ("Is Active", "IsActive")
                 };
 
@@ -196,7 +196,7 @@ namespace TpaSodManagement.Controllers
                     ("Area Type Name", "AreaTypeName"),
                     ("Unit Abbreviation", "UnitAbbreviation"),
                     ("Unit System", "UnitSystem"),
-                    ("Conversion To Square Meters", "ConversionToSquareMeters"),
+                    ("Conversion To Square Yards", "ConversionToSquareMeters"),
                     ("Is Active", "IsActive")
                 };
                 var visibleColumns = allColumns.Where(col => !hiddenColumns.Contains(col.PropertyName)).ToList();

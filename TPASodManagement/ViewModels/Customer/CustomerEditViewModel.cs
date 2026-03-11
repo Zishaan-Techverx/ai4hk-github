@@ -32,6 +32,17 @@ namespace TpaSodManagement.ViewModels.Customer
         public long? PersonId { get; set; }
         public long? AddressId { get; set; }
 
+        /// <summary>When true, create a new person from NewPersonFirstName/NewPersonLastName and use it for the customer.</summary>
+        public bool CreateNewPerson { get; set; }
+
+        [StringLength(200)]
+        [Display(Name = "First Name")]
+        public string? NewPersonFirstName { get; set; }
+
+        [StringLength(200)]
+        [Display(Name = "Last Name")]
+        public string? NewPersonLastName { get; set; }
+
         public IEnumerable<SelectListItem> CustomerTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Organizations { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> People { get; set; } = Enumerable.Empty<SelectListItem>();

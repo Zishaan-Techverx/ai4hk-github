@@ -74,12 +74,12 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="ConversionToSquareMeters" class="form-label">Conversion to Square Meters</label>
+                                <label asp-for="ConversionToSquareMeters" class="form-label">Conversion to Square Yards</label>
                                 <input asp-for="ConversionToSquareMeters" type="number" class="form-control" disabled="@disabledAttr" />
                                 <span asp-validation-for="ConversionToSquareMeters" class="text-danger"></span>
                                 @if (!isDetailsView)
                                 {
-                                    <small class="form-text text-muted">Conversion factor to square meters</small>
+                                    <small class="form-text text-muted">Conversion factor to square yards</small>
                                 }
                             </div>
                         </div>
