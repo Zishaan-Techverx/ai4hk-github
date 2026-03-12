@@ -4,6 +4,7 @@ namespace TpaSodManagement.Services.Interfaces
     {
         Task<long?> GetCurrentUserIdAsync();
         Task<long?> GetCurrentUserOrganizationIdAsync();
+        Task<long?> GetCurrentUserPersonIdAsync();
         Task<bool> IsCurrentUserSuperAdminAsync();
     }
 }

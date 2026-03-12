@@ -6,6 +6,10 @@
     string disabledAttr = isDetailsView ? "disabled" : null;
 }
 
+<style>
+    .person-dropdown-edit .select2-container .selection .select2-selection { border-radius: var(--bs-border-radius); }
+</style>
+
 <br />
 
 <div class="container-fluid">
@@ -51,7 +55,6 @@
                         @Html.AntiForgeryToken()
                         
                         <input type="hidden" asp-for="CustomerId" />
-                        <input type="hidden" asp-for="AddressId" />
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
@@ -72,9 +75,11 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="PersonId" class="form-label">Person</label>
-                                <select asp-for="PersonId" class="form-select" asp-items="Model.People" disabled="@disabledAttr">
-                                    <option value="">-- Select Person --</option>
-                                </select>
+                                <div class="person-dropdown-edit">
+                                    <select asp-for="PersonId" class="form-select rounded" asp-items="Model.People" disabled="@disabledAttr">
+                                        <option value="">-- Select Person --</option>
+                                    </select>
+                                </div>
                                 <span asp-validation-for="PersonId" class="text-danger"></span>
                             </div>
 
@@ -170,5 +175,16 @@
     @if (!isDetailsView)
     {
         <partial name="_ValidationScriptsPartial" />
+        <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+        <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+        <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var personSelect = document.getElementById('PersonId');
+                if (personSelect && typeof $ !== 'undefined' && $.fn.select2) {
+                    $('#PersonId').select2({ theme: 'bootstrap-5', width: '100%' });
+                }
+            });
+        </script>
     }
 }

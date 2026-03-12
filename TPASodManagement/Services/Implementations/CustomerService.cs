@@ -370,11 +370,36 @@ namespace TpaSodManagement.Services.Implementations
                 }
                 var orgs = await orgsQuery.ToListAsync();
 
-                var people = await _context.People
+                IQueryable<Person> peopleQuery = _context.People
                     .Where(p => p.DeletedDate == null)
                     .OrderBy(p => p.FirstName)
-                    .ThenBy(p => p.LastName)
-                    .ToListAsync();
+                    .ThenBy(p => p.LastName);
+
+                // Non-SuperAdmin: only show persons linked to current user (User.PersonId) or to customers in current user's org (Customer.PersonId)
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var currentUserPersonId = await _currentUserService.GetCurrentUserPersonIdAsync();
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    var allowedPersonIds = new List<long>();
+                    if (currentUserPersonId.HasValue)
+                        allowedPersonIds.Add(currentUserPersonId.Value);
+                    if (orgId.HasValue)
+                    {
+                        var customerPersonIds = await _context.Customers
+                            .Where(c => c.OrganizationId == orgId.Value && c.PersonId.HasValue)
+                            .Select(c => c.PersonId!.Value)
+                            .Distinct()
+                            .ToListAsync();
+                        allowedPersonIds.AddRange(customerPersonIds);
+                    }
+                    var allowedSet = allowedPersonIds.Distinct().ToHashSet();
+                    if (allowedSet.Count > 0)
+                        peopleQuery = peopleQuery.Where(p => allowedSet.Contains(p.PersonId));
+                    else
+                        peopleQuery = peopleQuery.Where(p => false);
+                }
+
+                var people = await peopleQuery.ToListAsync();
 
                 var customerTypes = await _context.CustomerTypes
                     .Where(ct => ct.DeletedDate == null && ct.IsActive)

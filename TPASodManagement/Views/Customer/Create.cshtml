@@ -4,6 +4,15 @@
     ViewData["Title"] = "Create Customer";
 }
 
+<style>
+    .person-field-wrapper { display: flex; gap: 0.5rem; align-items: stretch; flex-wrap: wrap; }
+    .person-field-wrapper .select2-container { flex: 1 1 auto; min-width: 120px; }
+    .person-field-wrapper .select2-container .selection .select2-selection {
+        height: 100%; min-height: 38px; border-radius: var(--bs-border-radius);
+    }
+    .person-field-wrapper .btn-create-new-person { border-radius: var(--bs-border-radius); }
+</style>
+
 <br />
 
 <div class="container-fluid">
@@ -76,15 +85,20 @@
                                 <label class="form-label">Person</label>
                                 <input type="hidden" asp-for="CreateNewPerson" id="CreateNewPerson" value="@(Model?.CreateNewPerson == true ? "true" : "false")" />
                                 <div id="personDropdownSection">
-                                    <div class="input-group">
-                                        <select asp-for="PersonId" class="form-select" id="PersonId" asp-items="Model.People">
-                                            <option value="">-- Select Person --</option>
-                                        </select>
-                                        <button type="button" class="btn btn-outline-secondary" id="btnCreateNewPerson" title="Create new person">Create New</button>
+                                    <div class="person-field-wrapper">
+                                        <div class="flex-grow-1" style="min-width: 0;">
+                                            <select asp-for="PersonId" class="form-select rounded" id="PersonId" asp-items="Model.People">
+                                                <option value="">-- Select Person --</option>
+                                            </select>
+                                        </div>
+                                        <button type="button" class="btn btn-outline-primary btn-create-new-person flex-shrink-0 d-flex align-items-center gap-1" id="btnCreateNewPerson" title="Create new person">
+                                            <i class="fa fa-plus small"></i>
+                                            <span>Create New</span>
+                                        </button>
                                     </div>
                                     <span asp-validation-for="PersonId" class="text-danger" id="personIdValidation"></span>
                                 </div>
-                                <div id="personNewFieldsSection" style="display: none;">
+                                <div id="personNewFieldsSection" class="person-new-fields mt-2" style="display: none;">
                                     <div class="mb-2">
                                         <label for="NewPersonFirstName" class="form-label">First Name <span class="text-danger">*</span></label>
                                         <input type="text" class="form-control" id="NewPersonFirstName" name="NewPersonFirstName" maxlength="200" value="@Model?.NewPersonFirstName" />
@@ -95,7 +109,9 @@
                                         <input type="text" class="form-control" id="NewPersonLastName" name="NewPersonLastName" maxlength="200" value="@Model?.NewPersonLastName" />
                                         <span class="text-danger field-validation-valid" data-valmsg-for="NewPersonLastName" data-valmsg-replace="true"></span>
                                     </div>
-                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCancelNewPerson">Use existing person</button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="btnCancelNewPerson">
+                                        <i class="fa fa-arrow-left small me-1"></i>Use existing person
+                                    </button>
                                 </div>
                             </div>
                             @if (ViewBag.IsCustomerTypeOrgReadOnly == true)
@@ -166,6 +182,9 @@
 
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
     <script>
         (function () {
             var createNewPerson = document.getElementById('CreateNewPerson');
@@ -179,7 +198,17 @@
             var personIdValidation = document.getElementById('personIdValidation');
             var form = document.querySelector('form');
 
+            function initPersonSelect2() {
+                if (typeof $ !== 'undefined' && $.fn.select2 && personId && !personId.disabled) {
+                    $(personId).select2({ theme: 'bootstrap-5', width: '100%' });
+                }
+            }
+
             function showCreateNewPersonMode() {
+                if (typeof $ !== 'undefined' && $(personId).data('select2')) {
+                    $(personId).val('').trigger('change');
+                    $(personId).prop('disabled', true).trigger('change.select2');
+                }
                 createNewPerson.value = 'true';
                 personId.disabled = true;
                 personId.removeAttribute('data-val');
@@ -205,6 +234,9 @@
                 newLastName.removeAttribute('data-val');
                 newFirstName.value = '';
                 newLastName.value = '';
+                if (typeof $ !== 'undefined' && $(personId).data('select2')) {
+                    $(personId).prop('disabled', false).trigger('change.select2');
+                }
             }
 
             if (btnCreateNewPerson) {
@@ -225,6 +257,10 @@
                         personId.removeAttribute('name');
                     }
                 });
+            }
+
+            if (personId && !personId.disabled) {
+                initPersonSelect2();
             }
 
             // Restore "create new person" mode when returning with validation errors
