@@ -5,6 +5,7 @@ namespace TpaSodManagement.ViewModels.Field
         public long FieldId { get; set; }
         public string? FieldName { get; set; }
         public string? FieldCode { get; set; }
+        public string? FieldTypeName { get; set; }
         public decimal? AreaAmount { get; set; }
         public string? AreaTypeName { get; set; }
         public string? FarmName { get; set; }

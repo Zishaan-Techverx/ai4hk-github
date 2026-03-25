@@ -1,15 +1,18 @@
 @* Organization Theme Partial - Handles Navbar Colors and Footer *@
 
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using TpaSodManagement.Areas.Identity.Data
+@using TpaSodManagement.Database
 @using TpaSodManagement.Services.Interfaces
 
 @inject UserManager<TpaSodManagementUser> UserManager
 @inject IOrganizationService OrganizationService
+@inject ApplicationDbContext DbContext
 
 @{
     string userOrganizationName = null;
-    string userOrganizationTypeName = null;
+    string userFieldTypeName = null;
     Organization userOrganization = null;
     
     if (User.Identity.IsAuthenticated)
@@ -22,16 +25,24 @@
             {
                 userOrganization = organization;
                 userOrganizationName = organization.OrganizationName?.Trim();
-                // Get OrganizationTypeName - prefer from OrganizationType navigation, fallback to OrganizationTypeName property
-                userOrganizationTypeName = organization.OrganizationType?.OrganizationTypeName?.Trim() 
-                    ?? organization.OrganizationTypeName?.Trim();
+                if (!User.IsInRole("SuperAdmin"))
+                {
+                    userFieldTypeName = await DbContext.Fields
+                        .Where(f => f.DeletedDate == null && f.Farm != null && f.Farm.OrganizationId == organization.OrganizationId)
+                        .Include(f => f.FieldType)
+                        .OrderBy(f => f.FieldId)
+                        .Select(f => f.FieldType.FieldTypeName)
+                        .FirstOrDefaultAsync();
+                }
             }
         }
     }
     bool hasFooterLogo = userOrganization != null && ((userOrganization.LogoBytes != null && userOrganization.LogoBytes.Length > 0) || !string.IsNullOrEmpty(userOrganization.LogoFilePath));
     
-    // Normalize organization type name for comparison (case-insensitive)
-    var orgTypeUpper = userOrganizationTypeName?.ToUpper() ?? "";
+    // SuperAdmin always sees TPA theme, others use field type.
+    var orgTypeUpper = User.IsInRole("SuperAdmin")
+        ? "TPA"
+        : (userFieldTypeName?.ToUpper() ?? "");
     var orgNameUpper = userOrganizationName?.ToUpper() ?? "";
     
     // Set navbar colors based on organization TYPE
@@ -434,7 +445,7 @@
                 <div class="container">
                     <p class="mb-0" style="font-size: 14px;">
                         &copy; @DateTime.Now.Year - All Rights Reserved
-                        @if (userOrganizationTypeName != null)
+                        @if (userFieldTypeName != null || User.IsInRole("SuperAdmin"))
                         {
                             if (orgTypeUpper == "TPA")
                             {

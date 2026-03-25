@@ -13,7 +13,7 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<Field>> CreateAsync(Field field);
         Task<ServiceResponse<Field>> UpdateAsync(Field field);
         Task<ServiceResponse<bool>> DeleteAsync(long id, long? deletedByUserId);
-        Task<ServiceResponse<(SelectList Farms, SelectList AreaTypes, SelectList Users)>> GetDropdownDataAsync();
+        Task<ServiceResponse<(SelectList Farms, SelectList AreaTypes, SelectList FieldTypes, SelectList Users)>> GetDropdownDataAsync();
         Task<ServiceResponse<bool>> ExisTpasync(long id);
     }
 }

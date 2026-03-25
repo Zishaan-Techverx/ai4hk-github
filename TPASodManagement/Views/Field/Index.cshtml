@@ -94,6 +94,7 @@
             <tr>
                 <th data-column="FieldName">Field Name</th>
                 <th data-column="FieldCode">Field Code</th>
+                <th data-column="FieldTypeName">Field Type</th>
                 <th data-column="AreaAmount">Area Amount</th>
                 <th data-column="AreaTypeName">Area Type</th>
                 <th data-column="FarmName">Farm</th>
@@ -109,6 +110,7 @@
                 <tr id="row-@item.FieldId">
                     <td data-column="FieldName">@Html.DisplayFor(modelItem => item.FieldName)</td>
                     <td data-column="FieldCode">@Html.DisplayFor(modelItem => item.FieldCode)</td>
+                    <td data-column="FieldTypeName">@Html.DisplayFor(modelItem => item.FieldTypeName)</td>
                     <td data-column="AreaAmount">@Html.DisplayFor(modelItem => item.AreaAmount)</td>
                     <td data-column="AreaTypeName">@(item.AreaTypeName ?? "N/A")</td>
                     <td data-column="FarmName">@(!string.IsNullOrEmpty(item.FarmName) ? item.FarmName : $"Farm #{item.FarmId}")</td>
@@ -1183,6 +1185,7 @@
             row.innerHTML = `
                 <td data-column="FieldName">${escapeHtml(item.fieldName || '')}</td>
                 <td data-column="FieldCode">${escapeHtml(item.fieldCode || '')}</td>
+                <td data-column="FieldTypeName">${escapeHtml(item.fieldTypeName || '')}</td>
                 <td data-column="AreaAmount">${item.areaAmount || ''}</td>
                 <td data-column="AreaTypeName">${escapeHtml(item.areaTypeName || 'N/A')}</td>
                 <td data-column="FarmName">${escapeHtml(!item.farmName ? `Farm #${item.farmId}` : item.farmName)}</td>

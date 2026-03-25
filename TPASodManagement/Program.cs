@@ -149,13 +149,13 @@ builder.Services.AddAutoMapper(typeof(Program));
 
 var app = builder.Build();
 
-// Seed OrganizationType data
+// Seed lookup data
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TpaSodManagementUser>>();
     await context.Database.MigrateAsync();
-    await TpaSodManagement.Database.Seeders.OrganizationTypeSeeder.SeedAsync(context, userManager);
+    await TpaSodManagement.Database.Seeders.FieldTypeSeeder.SeedAsync(context, userManager);
     await TpaSodManagement.Database.Seeders.AddressTypeSeeder.SeedAsync(context);
     await TpaSodManagement.Database.Seeders.CustomerTypeSeeder.SeedAsync(context);
     await TpaSodManagement.Database.Seeders.PermissionSeeder.SeedAsync(context, userManager);

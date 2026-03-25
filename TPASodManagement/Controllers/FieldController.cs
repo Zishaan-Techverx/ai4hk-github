@@ -39,6 +39,7 @@ namespace TpaSodManagement.Controllers
             {
                 { "FieldName", "Field Name" },
                 { "FieldCode", "Field Code" },
+                { "FieldTypeName", "Field Type" },
                 { "AreaAmount", "Area Amount" },
                 { "AreaTypeName", "Area Type" },
                 { "FarmName", "Farm" },
@@ -237,6 +238,7 @@ namespace TpaSodManagement.Controllers
                 {
                     ("Field Name", "FieldName"),
                     ("Field Code", "FieldCode"),
+                    ("Field Type", "FieldTypeName"),
                     ("Area Amount", "AreaAmount"),
                     ("Area Type", "AreaType"),
                     ("Farm", "Farm"),
@@ -260,6 +262,7 @@ namespace TpaSodManagement.Controllers
                         {
                             item.FieldName ?? "",
                             item.FieldCode ?? "",
+                            item.FieldTypeName ?? "",
                             item.AreaAmount?.ToString("N2") ?? "",
                             item.AreaTypeName ?? "N/A",
                             !string.IsNullOrEmpty(item.FarmName) ? item.FarmName : $"Farm #{item.FarmId}",
@@ -320,6 +323,7 @@ namespace TpaSodManagement.Controllers
                 {
                     ("Field Name", "FieldName"),
                     ("Field Code", "FieldCode"),
+                    ("Field Type", "FieldTypeName"),
                     ("Area Amount", "AreaAmount"),
                     ("Area Type", "AreaType"),
                     ("Farm", "Farm"),
@@ -336,6 +340,7 @@ namespace TpaSodManagement.Controllers
                     {
                         item.FieldName ?? "",
                         item.FieldCode ?? "",
+                        item.FieldTypeName ?? "",
                         item.AreaAmount?.ToString("N2") ?? "",
                         item.AreaTypeName ?? "N/A",
                         !string.IsNullOrEmpty(item.FarmName) ? item.FarmName : $"Farm #{item.FarmId}",
@@ -362,6 +367,7 @@ namespace TpaSodManagement.Controllers
                 FieldId = entity.FieldId,
                 FieldName = entity.FieldName,
                 FieldCode = entity.FieldCode,
+                FieldTypeName = entity.FieldType?.FieldTypeName,
                 AreaAmount = entity.AreaAmount,
                 AreaTypeName = entity.AreaType?.AreaTypeName,
                 FarmId = entity.FarmId,
@@ -381,6 +387,7 @@ namespace TpaSodManagement.Controllers
                 FieldCode = entity.FieldCode,
                 FarmId = entity.FarmId,
                 AreaTypeId = entity.AreaTypeId,
+                FieldTypeId = entity.FieldTypeId,
                 AreaAmount = entity.AreaAmount,
                 CreatedByUserId = entity.CreatedByUserId,
                 SoilType = entity.SoilType,
@@ -404,6 +411,7 @@ namespace TpaSodManagement.Controllers
                 FieldCode = vm.FieldCode,
                 FarmId = vm.FarmId ?? 0,
                 AreaTypeId = vm.AreaTypeId.HasValue ? (int)vm.AreaTypeId.Value : 0,
+                FieldTypeId = vm.FieldTypeId ?? 0,
                 AreaAmount = vm.AreaAmount ?? 0,
                 CreatedByUserId = vm.CreatedByUserId,
                 SoilType = vm.SoilType,
@@ -424,12 +432,14 @@ namespace TpaSodManagement.Controllers
             {
                 vm.Farms = dropdowns.Data.Farms as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
                 vm.AreaTypes = dropdowns.Data.AreaTypes as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+                vm.FieldTypes = dropdowns.Data.FieldTypes as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
                 vm.Users = dropdowns.Data.Users as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
             }
             else
             {
                 vm.Farms = Enumerable.Empty<SelectListItem>();
                 vm.AreaTypes = Enumerable.Empty<SelectListItem>();
+                vm.FieldTypes = Enumerable.Empty<SelectListItem>();
                 vm.Users = Enumerable.Empty<SelectListItem>();
                 TempData["Error"] = dropdowns.Message;
             }

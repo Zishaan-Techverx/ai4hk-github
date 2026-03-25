@@ -70,6 +70,13 @@
                                 </select>
                                 <span asp-validation-for="AreaTypeId" class="text-danger"></span>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FieldTypeId" class="form-label">Field Type <span class="text-danger">*</span></label>
+                                <select asp-for="FieldTypeId" class="form-select" asp-items="Model.FieldTypes" required>
+                                    <option value="">-- Select Field Type --</option>
+                                </select>
+                                <span asp-validation-for="FieldTypeId" class="text-danger"></span>
+                            </div>
                         </div>
 
                         <div class="row">

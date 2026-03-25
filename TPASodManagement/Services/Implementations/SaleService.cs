@@ -346,7 +346,7 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.Customer).ThenInclude(c => c!.Organization)
                     .Include(s => s.Customer).ThenInclude(c => c!.Address).ThenInclude(a => a!.StateProvince)
                     .Include(s => s.Farm).ThenInclude(f => f.Address).ThenInclude(a => a!.StateProvince)
-                    .Include(s => s.Farm).ThenInclude(f => f.Organization).ThenInclude(o => o!.OrganizationType)
+                    .Include(s => s.Farm).ThenInclude(f => f.Fields).ThenInclude(fl => fl.FieldType)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
                     .FirstOrDefaultAsync(s => s.SaleId == id);

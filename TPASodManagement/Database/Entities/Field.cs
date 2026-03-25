@@ -18,6 +18,8 @@ public partial class Field : AuditBaseEntity
 
     public int AreaTypeId { get; set; }
 
+    public long FieldTypeId { get; set; }
+
     public string? SoilType { get; set; }
 
     public decimal? SlopePercentage { get; set; }
@@ -33,6 +35,8 @@ public partial class Field : AuditBaseEntity
     public string? Notes { get; set; }
 
     public virtual AreaType AreaType { get; set; } = null!;
+
+    public virtual FieldType FieldType { get; set; } = null!;
 
     public virtual Farm Farm { get; set; } = null!;
 

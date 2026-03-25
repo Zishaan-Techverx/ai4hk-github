@@ -46,7 +46,6 @@ namespace TpaSodManagement.Controllers
             ViewBag.FilterColumns = new Dictionary<string, string>
                 {
                     { "OrganizationName", "Organization Name" },
-                    { "OrganizationType", "Organization Type" },
                     { "Address", "Address" },
                     { "OrganizationCode", "Organization Code" },
                     { "IsActive", "Is Active" }
@@ -55,29 +54,12 @@ namespace TpaSodManagement.Controllers
             ViewBag.BooleanColumns = new HashSet<string>();
             ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
 
-            var organizationTypes = await _organizationService.GetAllOrganizationTypesAsync();
-            var organizationTypeOptions = new List<SelectListItem>
-            {
-                new SelectListItem { Value = "", Text = "-- Select Organization Type --", Selected = true }
-            };
-            organizationTypeOptions.AddRange(organizationTypes.Select(ot => new SelectListItem
-            {
-                Value = ot.OrganizationTypeId.ToString(),
-                Text = ot.OrganizationTypeName ?? ""
-            }));
-            ViewBag.DropdownFilterColumns = new Dictionary<string, IEnumerable<SelectListItem>>
-            {
-                { "OrganizationType", organizationTypeOptions }
-            };
-
             var organizations = await _organizationService.GetAllOrganizationsAsync();
             var allVm = organizations?
                 .Select(o => new OrganizationItemViewModel
                 {
                     OrganizationId = o.OrganizationId,
                     OrganizationName = o.OrganizationName,
-                    OrganizationTypeId = o.OrganizationTypeId,
-                    OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
                     HasLogo = (o.LogoBytes != null && o.LogoBytes.Length > 0) || !string.IsNullOrEmpty(o.LogoFilePath),
                     LogoUrl = !string.IsNullOrEmpty(o.LogoFilePath) ? "/" + o.LogoFilePath.TrimStart('/') : null,
@@ -115,8 +97,6 @@ namespace TpaSodManagement.Controllers
                 {
                     OrganizationId = o.OrganizationId,
                     OrganizationName = o.OrganizationName,
-                    OrganizationTypeId = o.OrganizationTypeId,
-                    OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
                     HasLogo = (o.LogoBytes != null && o.LogoBytes.Length > 0) || !string.IsNullOrEmpty(o.LogoFilePath),
                     LogoUrl = !string.IsNullOrEmpty(o.LogoFilePath) ? "/" + o.LogoFilePath.TrimStart('/') : null,
@@ -178,8 +158,6 @@ namespace TpaSodManagement.Controllers
                 {
                     OrganizationId = o.OrganizationId,
                     OrganizationName = o.OrganizationName,
-                    OrganizationTypeId = o.OrganizationTypeId,
-                    OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
                     HasLogo = (o.LogoBytes != null && o.LogoBytes.Length > 0) || !string.IsNullOrEmpty(o.LogoFilePath),
                     LogoUrl = !string.IsNullOrEmpty(o.LogoFilePath) ? "/" + o.LogoFilePath.TrimStart('/') : null,
@@ -191,7 +169,6 @@ namespace TpaSodManagement.Controllers
                 var allColumns = new List<(string Header, string PropertyName)>
                     {
                         ("Organization Name", "OrganizationName"),
-                        ("Organization Type", "OrganizationType"),
                         ("Address", "Address"),
                         ("Logo", "Logo"),
                         ("Is Active", "IsActive")
@@ -215,7 +192,6 @@ namespace TpaSodManagement.Controllers
                         var allValues = new List<object>
                         {
                                 item.OrganizationName ?? "",
-                                item.OrganizationTypeName ?? "",
                                 item.Address ?? "",
                                 item.HasLogo ? "Yes" : "No",
                                 item.IsActive ? "Yes" : "No"
@@ -272,8 +248,6 @@ namespace TpaSodManagement.Controllers
                 {
                     OrganizationId = o.OrganizationId,
                     OrganizationName = o.OrganizationName,
-                    OrganizationTypeId = o.OrganizationTypeId,
-                    OrganizationTypeName = o.OrganizationTypeName,
                     Address = FormatAddress(o.Address),
                     HasLogo = (o.LogoBytes != null && o.LogoBytes.Length > 0) || !string.IsNullOrEmpty(o.LogoFilePath),
                     LogoUrl = !string.IsNullOrEmpty(o.LogoFilePath) ? "/" + o.LogoFilePath.TrimStart('/') : null,
@@ -283,7 +257,6 @@ namespace TpaSodManagement.Controllers
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
                     ("Organization Name", "OrganizationName"),
-                    ("Organization Type", "OrganizationType"),
                     ("Address", "Address"),
                     ("Logo", "Logo"),
                     ("Is Active", "IsActive")
@@ -300,7 +273,6 @@ namespace TpaSodManagement.Controllers
                         var allValues = new List<object>
                         {
                             item.OrganizationName ?? "",
-                            item.OrganizationTypeName ?? "",
                             item.Address ?? "",
                             item.HasLogo ? "Yes" : "No",
                             item.IsActive ? "Yes" : "No"
@@ -328,7 +300,6 @@ namespace TpaSodManagement.Controllers
             if (organization == null)
                 return NotFound();
 
-            await PopulateOrganizationTypesDropdown(organization.OrganizationTypeId);
             TempData.Remove("SuccessMessage");
             TempData.Remove("ErrorMessage");
             var vm = MapToEditViewModel(organization, isDetailsView: true);
@@ -340,7 +311,6 @@ namespace TpaSodManagement.Controllers
 
         public async Task<IActionResult> Create()
         {
-            await PopulateOrganizationTypesDropdown();
             return View(new OrganizationEditViewModel { IsActive = true });
         }
 
@@ -359,18 +329,16 @@ namespace TpaSodManagement.Controllers
 
             if (ModelState.IsValid)
             {
-                var isDuplicate = await _organizationService.ExistsDuplicateNameAndTypeAsync(organizationVm.OrganizationName!, organizationVm.OrganizationTypeId, null);
+                var isDuplicate = await _organizationService.ExistsDuplicateNameAsync(organizationVm.OrganizationName!, null);
                 if (isDuplicate)
                 {
-                    ModelState.AddModelError("", "An organization with this name already exists for the selected organization type. Please use a different name or select a different organization type.");
-                    await PopulateOrganizationTypesDropdown(organizationVm.OrganizationTypeId);
+                    ModelState.AddModelError("", "An organization with this name already exists. Please use a different organization name.");
                     return View(organizationVm);
                 }
                 var entity = MapToEntity(organizationVm);
                 var org = await _organizationService.CreateOrganizationAsync(entity, organizationVm.LogoFile);
                 return RedirectToAction(nameof(CreateAddress), new { id = org.OrganizationId });
             }
-            await PopulateOrganizationTypesDropdown(organizationVm.OrganizationTypeId);
             return View(organizationVm);
         }
 
@@ -383,7 +351,6 @@ namespace TpaSodManagement.Controllers
             if (organization == null)
                 return NotFound();
 
-            await PopulateOrganizationTypesDropdown(organization.OrganizationTypeId);
             var vm = MapToEditViewModel(organization);
             return View(vm);
         }
@@ -406,11 +373,10 @@ namespace TpaSodManagement.Controllers
 
             if (ModelState.IsValid)
             {
-                var isDuplicate = await _organizationService.ExistsDuplicateNameAndTypeAsync(updatedOrgVm.OrganizationName!, updatedOrgVm.OrganizationTypeId, id);
+                var isDuplicate = await _organizationService.ExistsDuplicateNameAsync(updatedOrgVm.OrganizationName!, id);
                 if (isDuplicate)
                 {
-                    ModelState.AddModelError("", "An organization with this name already exists for the selected organization type. Please use a different name or select a different organization type.");
-                    await PopulateOrganizationTypesDropdown(updatedOrgVm.OrganizationTypeId);
+                    ModelState.AddModelError("", "An organization with this name already exists. Please use a different organization name.");
                     return View(updatedOrgVm);
                 }
                 try
@@ -420,7 +386,6 @@ namespace TpaSodManagement.Controllers
                     if (result == null)
                     {
                         TempData["ErrorMessage"] = "Organization not found.";
-                        await PopulateOrganizationTypesDropdown(updatedOrgVm.OrganizationTypeId);
                         return View(updatedOrgVm);
                     }
 
@@ -432,27 +397,23 @@ namespace TpaSodManagement.Controllers
                     if (!await _organizationService.OrganizationExistsAsync(updatedOrgVm.OrganizationId))
                     {
                         TempData["ErrorMessage"] = "Organization not found.";
-                        await PopulateOrganizationTypesDropdown(updatedOrgVm.OrganizationTypeId);
                         return View(updatedOrgVm);
                     }
                     else
                     {
                         TempData["ErrorMessage"] = "The organization was modified by another user. Please refresh and try again.";
-                        await PopulateOrganizationTypesDropdown(updatedOrgVm.OrganizationTypeId);
                         return View(updatedOrgVm);
                     }
                 }
                 catch (Exception ex)
                 {
                     TempData["ErrorMessage"] = $"An error occurred while updating the organization: {ex.Message}";
-                    await PopulateOrganizationTypesDropdown(updatedOrgVm.OrganizationTypeId);
                     return View(updatedOrgVm);
                 }
             }
 
             // ModelState is invalid - return view with errors
             TempData["ErrorMessage"] = "Please correct the validation errors below.";
-            await PopulateOrganizationTypesDropdown(updatedOrgVm.OrganizationTypeId);
             return View(updatedOrgVm);
         }
 
@@ -565,24 +526,12 @@ namespace TpaSodManagement.Controllers
             return "data:" + GetImageContentTypeStatic(logoBytes) + ";base64," + Convert.ToBase64String(logoBytes);
         }
 
-        private async Task PopulateOrganizationTypesDropdown(long? selectedId = null)
-        {
-            var organizationTypes = await _organizationService.GetAllOrganizationTypesAsync();
-            ViewBag.OrganizationTypes = organizationTypes.Select(ot => new SelectListItem
-            {
-                Value = ot.OrganizationTypeId.ToString(),
-                Text = ot.OrganizationTypeName,
-                Selected = selectedId.HasValue && ot.OrganizationTypeId == selectedId.Value
-            }).ToList();
-        }
-
         private static OrganizationEditViewModel MapToEditViewModel(Organization entity, bool isDetailsView = false)
         {
             return new OrganizationEditViewModel
             {
                 OrganizationId = entity.OrganizationId,
                 OrganizationName = entity.OrganizationName,
-                OrganizationTypeId = entity.OrganizationTypeId,
                 OrganizationCode = entity.OrganizationCode,
                 TaxIdentificationNumber = entity.TaxIdentificationNumber,
                 RegistrationNumber = entity.RegistrationNumber,
@@ -602,7 +551,6 @@ namespace TpaSodManagement.Controllers
             {
                 OrganizationId = vm.OrganizationId,
                 OrganizationName = vm.OrganizationName ?? string.Empty,
-                OrganizationTypeId = vm.OrganizationTypeId,
                 OrganizationCode = vm.OrganizationCode,
                 TaxIdentificationNumber = vm.TaxIdentificationNumber,
                 RegistrationNumber = vm.RegistrationNumber,

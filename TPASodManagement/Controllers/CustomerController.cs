@@ -118,17 +118,16 @@ namespace TpaSodManagement.Controllers
                 if (currentUser != null && currentUser.OrganizationId.HasValue)
                 {
                     var org = await _context.Organizations
-                        .Include(o => o.OrganizationType)
                         .FirstOrDefaultAsync(o => o.OrganizationId == currentUser.OrganizationId.Value);
                     if (org != null)
                     {
                         vm.OrganizationId = org.OrganizationId;
-                        var orgTypeName = org.OrganizationType?.OrganizationTypeName;
-                        if (!string.IsNullOrEmpty(orgTypeName))
+                        var fieldTypeName = await GetOrganizationFieldTypeNameAsync(org.OrganizationId);
+                        if (!string.IsNullOrEmpty(fieldTypeName))
                         {
                             var customerType = await _context.CustomerTypes
                                 .Where(ct => ct.DeletedDate == null && ct.IsActive)
-                                .FirstOrDefaultAsync(ct => MapOrgTypeToCustomerTypeName(orgTypeName) == ct.CustomerTypeName);
+                                .FirstOrDefaultAsync(ct => MapFieldTypeToCustomerTypeName(fieldTypeName) == ct.CustomerTypeName);
                             if (customerType != null)
                                 vm.CustomerTypeId = customerType.CustomerTypeId;
                         }
@@ -141,12 +140,22 @@ namespace TpaSodManagement.Controllers
         }
 
         /// <summary>
-        /// Maps OrganizationTypeName to CustomerTypeName (e.g. HGT_Sod -> HGTSod, RTF_HGT_Sod -> RTFHGTSod).
+        /// Maps FieldTypeName to CustomerTypeName (e.g. HGT_Sod -> HGTSod, RTF_HGT_Sod -> RTFHGTSod).
         /// </summary>
-        private static string MapOrgTypeToCustomerTypeName(string orgTypeName)
+        private static string MapFieldTypeToCustomerTypeName(string fieldTypeName)
         {
-            var normalized = orgTypeName?.Replace("_", "").Replace(" ", "") ?? "";
+            var normalized = fieldTypeName?.Replace("_", "").Replace(" ", "") ?? "";
             return normalized;
+        }
+
+        private async Task<string> GetOrganizationFieldTypeNameAsync(long organizationId)
+        {
+            return await _context.Fields
+                .Where(f => f.DeletedDate == null && f.Farm != null && f.Farm.OrganizationId == organizationId)
+                .Include(f => f.FieldType)
+                .OrderBy(f => f.FieldId)
+                .Select(f => f.FieldType.FieldTypeName)
+                .FirstOrDefaultAsync() ?? string.Empty;
         }
 
         private async Task SetCreateReadOnlyViewBagAsync(CustomerEditViewModel vm)
@@ -157,22 +166,21 @@ namespace TpaSodManagement.Controllers
                 if (currentUser != null && currentUser.OrganizationId.HasValue)
                 {
                     var org = await _context.Organizations
-                        .Include(o => o.OrganizationType)
                         .FirstOrDefaultAsync(o => o.OrganizationId == currentUser.OrganizationId.Value);
                     if (org != null)
                     {
                         ViewBag.CurrentOrganizationDisplayName = org.OrganizationName ?? $"Organization #{org.OrganizationId}";
-                        var orgTypeName = org.OrganizationType?.OrganizationTypeName;
-                        if (!string.IsNullOrEmpty(orgTypeName))
+                        var fieldTypeName = await GetOrganizationFieldTypeNameAsync(org.OrganizationId);
+                        if (!string.IsNullOrEmpty(fieldTypeName))
                         {
                             var customerType = await _context.CustomerTypes
                                 .Where(ct => ct.DeletedDate == null && ct.IsActive)
-                                .FirstOrDefaultAsync(ct => MapOrgTypeToCustomerTypeName(orgTypeName) == ct.CustomerTypeName);
-                            ViewBag.CurrentCustomerTypeDisplayName = customerType?.CustomerTypeName ?? orgTypeName;
+                                .FirstOrDefaultAsync(ct => MapFieldTypeToCustomerTypeName(fieldTypeName) == ct.CustomerTypeName);
+                            ViewBag.CurrentCustomerTypeDisplayName = customerType?.CustomerTypeName ?? fieldTypeName;
                         }
                         else
                         {
-                            ViewBag.CurrentCustomerTypeDisplayName = "-- No Organization Type --";
+                            ViewBag.CurrentCustomerTypeDisplayName = "-- No Field Type --";
                         }
                         ViewBag.IsCustomerTypeOrgReadOnly = true;
                         return;
@@ -194,13 +202,13 @@ namespace TpaSodManagement.Controllers
                 {
                     customerVm.OrganizationId = currentUser.OrganizationId.Value;
                     var org = await _context.Organizations
-                        .Include(o => o.OrganizationType)
                         .FirstOrDefaultAsync(o => o.OrganizationId == currentUser.OrganizationId.Value);
-                    if (org?.OrganizationType != null)
+                    if (org != null)
                     {
+                        var fieldTypeName = await GetOrganizationFieldTypeNameAsync(org.OrganizationId);
                         var customerType = await _context.CustomerTypes
                             .Where(ct => ct.DeletedDate == null && ct.IsActive)
-                            .FirstOrDefaultAsync(ct => MapOrgTypeToCustomerTypeName(org.OrganizationType.OrganizationTypeName ?? "") == ct.CustomerTypeName);
+                            .FirstOrDefaultAsync(ct => MapFieldTypeToCustomerTypeName(fieldTypeName) == ct.CustomerTypeName);
                         if (customerType != null)
                             customerVm.CustomerTypeId = customerType.CustomerTypeId;
                     }

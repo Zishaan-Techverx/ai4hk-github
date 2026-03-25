@@ -638,11 +638,12 @@ namespace TpaSodManagement.Controllers
         {
             var farm = sale.Farm;
             var customer = sale.Customer;
-            var orgTypeName = farm?.Organization?.OrganizationType?.OrganizationTypeName
-                ?? farm?.Organization?.OrganizationTypeName
-                ?? string.Empty;
+            var fieldTypeName = farm?.Fields?
+                .Where(f => f.DeletedDate == null && f.FieldType != null)
+                .Select(f => f.FieldType.FieldTypeName)
+                .FirstOrDefault() ?? string.Empty;
             var orgName = farm?.Organization?.OrganizationName ?? string.Empty;
-            var orgIdentifier = !string.IsNullOrWhiteSpace(orgName) ? orgName : orgTypeName;
+            var orgIdentifier = !string.IsNullOrWhiteSpace(orgName) ? orgName : fieldTypeName;
             var normalizedOrgIdentifier = NormalizeCertificateIdentifier(orgIdentifier);
 
             // Licensed grower: farm name only

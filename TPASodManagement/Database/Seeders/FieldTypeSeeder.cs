@@ -5,13 +5,13 @@ using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.Database.Seeders;
 
-public static class OrganizationTypeSeeder
+public static class FieldTypeSeeder
 {
-    private static readonly string[] OrganizationTypeNames = { "TPA", "RTF_Sod", "RTF_HGT_Sod", "HGT_Sod" };
+    private static readonly string[] FieldTypeNames = { "RTF_Sod", "RTF_HGT_Sod", "HGT_Sod" };
 
     public static async Task SeedAsync(ApplicationDbContext context, UserManager<TpaSodManagementUser> userManager)
     {
-        if (await context.OrganizationTypes.AnyAsync())
+        if (await context.FieldTypes.AnyAsync())
             return;
 
         var createdDate = DateTimeOffset.UtcNow;
@@ -22,14 +22,14 @@ public static class OrganizationTypeSeeder
         if (superAdmin != null)
             createdByUserId = superAdmin.Id;
 
-        var organizationTypes = OrganizationTypeNames.Select(name => new OrganizationType
+        var fieldTypes = FieldTypeNames.Select(name => new FieldType
         {
-            OrganizationTypeName = name,
+            FieldTypeName = name,
             CreatedDate = createdDate,
             CreatedByUserId = createdByUserId
         }).ToList();
 
-        await context.OrganizationTypes.AddRangeAsync(organizationTypes);
+        await context.FieldTypes.AddRangeAsync(fieldTypes);
         await context.SaveChangesAsync();
     }
 }
