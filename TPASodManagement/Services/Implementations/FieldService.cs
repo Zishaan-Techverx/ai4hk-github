@@ -31,6 +31,7 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(f => f.Farm)
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
+                    .Include(f => f.FieldType)
                     .AsQueryable();
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
@@ -61,6 +62,7 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(f => f.Farm)
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
+                    .Include(f => f.FieldType)
                     .AsQueryable();
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
@@ -99,6 +101,12 @@ namespace TpaSodManagement.Services.Implementations
                     {
                         var filterValue = FilterHelper.NormalizeSearchText(filters["AreaTypeName"]);
                         query = query.Where(f => f.AreaType != null && f.AreaType.AreaTypeName.Contains(filterValue));
+                    }
+
+                    if (filters.ContainsKey("FieldTypeName") && !string.IsNullOrWhiteSpace(filters["FieldTypeName"]))
+                    {
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FieldTypeName"]);
+                        query = query.Where(f => f.FieldType != null && f.FieldType.FieldTypeName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
@@ -149,6 +157,7 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(f => f.Farm)
                         .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
+                    .Include(f => f.FieldType)
                     .FirstOrDefaultAsync(f => f.FieldId == id);
 
                 if (field == null)
@@ -212,6 +221,7 @@ namespace TpaSodManagement.Services.Implementations
                 existingField.FarmId = field.FarmId;
                 existingField.AreaAmount = field.AreaAmount;
                 existingField.AreaTypeId = field.AreaTypeId;
+                existingField.FieldTypeId = field.FieldTypeId;
                 existingField.SoilType = field.SoilType;
                 existingField.IrrigationAvailable = field.IrrigationAvailable;
                 existingField.IsActive = field.IsActive;
@@ -271,9 +281,9 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<(SelectList Farms, SelectList AreaTypes, SelectList Users)>> GetDropdownDataAsync()
+        public async Task<ServiceResponse<(SelectList Farms, SelectList AreaTypes, SelectList FieldTypes, SelectList Users)>> GetDropdownDataAsync()
         {
-            var response = new ServiceResponse<(SelectList, SelectList, SelectList)>();
+            var response = new ServiceResponse<(SelectList, SelectList, SelectList, SelectList)>();
             try
             {
                 var farmsQuery = _context.Farms
@@ -294,6 +304,11 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(a => a.AreaTypeName)
                     .ToListAsync();
 
+                var fieldTypes = await _context.FieldTypes
+                    .Where(ft => ft.DeletedDate == null && ft.IsActive)
+                    .OrderBy(ft => ft.FieldTypeName)
+                    .ToListAsync();
+
                 // Users: filter by org for non-SuperAdmin
                 var usersQuery = _userManager.Users.AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
@@ -306,7 +321,7 @@ namespace TpaSodManagement.Services.Implementations
                 }
                 var users = await usersQuery.OrderBy(u => u.UserName).ToListAsync();
 
-                var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId.Value).ToList();
+                var userIds = users.Where(u => u.PersonId.HasValue).Select(u => u.PersonId!.Value).ToList();
                 var people = await _context.People
                     .Where(p => userIds.Contains(p.PersonId))
                     .ToDictionaryAsync(p => p.PersonId);
@@ -344,9 +359,16 @@ namespace TpaSodManagement.Services.Implementations
                     };
                 }).ToList();
 
+                var fieldTypeItems = fieldTypes.Select(ft => new SelectListItem
+                {
+                    Value = ft.FieldTypeId.ToString(),
+                    Text = ft.FieldTypeName
+                }).ToList();
+
                 response.Data = (
                     new SelectList(farmItems, "Value", "Text"),
                     new SelectList(areaTypeItems, "Value", "Text"),
+                    new SelectList(fieldTypeItems, "Value", "Text"),
                     new SelectList(userItems, "Value", "Text")
                 );
             }

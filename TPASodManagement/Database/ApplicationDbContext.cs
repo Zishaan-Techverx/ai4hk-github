@@ -27,6 +27,7 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
     public virtual DbSet<CustomerType> CustomerTypes { get; set; }
     public virtual DbSet<Farm> Farms { get; set; }
     public virtual DbSet<Field> Fields { get; set; }
+    public virtual DbSet<FieldType> FieldTypes { get; set; }
     public virtual DbSet<Organization> Organizations { get; set; }
     public virtual DbSet<OrganizationType> OrganizationTypes { get; set; }
     public virtual DbSet<Person> People { get; set; }
@@ -312,6 +313,20 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
 
         builder.Entity<Field>(entity =>
         {
+            entity.HasOne(f => f.FieldType)
+                .WithMany(ft => ft.Fields)
+                .HasForeignKey(f => f.FieldTypeId)
+                .OnDelete(DeleteBehavior.Restrict)
+                .HasConstraintName("FK_Fields_FieldType");
+            entity.Property(e => e.DeletedByUserId);
+            entity.Property(e => e.DeletedDate);
+        });
+
+        builder.Entity<FieldType>(entity =>
+        {
+            entity.ToTable("FieldType");
+            entity.HasKey(e => e.FieldTypeId);
+            entity.Property(e => e.FieldTypeName).IsRequired().HasMaxLength(100);
             entity.Property(e => e.DeletedByUserId);
             entity.Property(e => e.DeletedDate);
         });

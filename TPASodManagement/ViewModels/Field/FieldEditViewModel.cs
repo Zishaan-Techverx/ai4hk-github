@@ -23,6 +23,10 @@ namespace TpaSodManagement.ViewModels.Field
         [Display(Name = "Area Type")]
         public long? AreaTypeId { get; set; }
 
+        [Required(ErrorMessage = "Field Type is required")]
+        [Display(Name = "Field Type")]
+        public long? FieldTypeId { get; set; }
+
         [Required(ErrorMessage = "Area Amount is required")]
         [Display(Name = "Area Amount")]
         public decimal? AreaAmount { get; set; }
@@ -49,6 +53,7 @@ namespace TpaSodManagement.ViewModels.Field
 
         public IEnumerable<SelectListItem> Farms { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> AreaTypes { get; set; } = Enumerable.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> FieldTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Users { get; set; } = Enumerable.Empty<SelectListItem>();
 
         public bool IsDetailsView { get; set; }

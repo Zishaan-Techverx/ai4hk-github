@@ -41,6 +41,7 @@ namespace TpaSodManagement.Controllers
                 { "FieldCode", "Field Code" },
                 { "AreaAmount", "Area Amount" },
                 { "AreaTypeName", "Area Type" },
+                { "FieldTypeName", "Field Type" },
                 { "FarmName", "Farm" },
                 { "SoilType", "Soil Type" },
                 { "IrrigationAvailable", "Irrigation Available" },
@@ -49,6 +50,28 @@ namespace TpaSodManagement.Controllers
             ViewBag.ModuleName = "Fields";
             ViewBag.BooleanColumns = new HashSet<string> { "IrrigationAvailable" };
             ViewBag.TriStateColumns = new HashSet<string> { "IsActive" };
+
+            var dropdownData = await _fieldService.GetDropdownDataAsync();
+            var fieldTypeOptions = new List<SelectListItem>
+            {
+                new SelectListItem { Value = "", Text = "-- Select Field Type --", Selected = true }
+            };
+            if (dropdownData.Success)
+            {
+                var fieldTypeItems = dropdownData.Data.FieldTypes as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+                // Use FieldTypeName as value so existing name-based filter works as-is.
+                fieldTypeOptions.AddRange(fieldTypeItems
+                    .Where(x => !string.IsNullOrWhiteSpace(x.Text))
+                    .Select(x => new SelectListItem
+                    {
+                        Value = x.Text!,
+                        Text = x.Text!
+                    }));
+            }
+            ViewBag.DropdownFilterColumns = new Dictionary<string, IEnumerable<SelectListItem>>
+            {
+                { "FieldTypeName", fieldTypeOptions }
+            };
 
             var result = await _fieldService.GetAllAsync();
             if (!result.Success)
@@ -239,6 +262,7 @@ namespace TpaSodManagement.Controllers
                     ("Field Code", "FieldCode"),
                     ("Area Amount", "AreaAmount"),
                     ("Area Type", "AreaType"),
+                    ("Field Type", "FieldType"),
                     ("Farm", "Farm"),
                     ("Soil Type", "SoilType"),
                     ("Irrigation Available", "IrrigationAvailable"),
@@ -262,6 +286,7 @@ namespace TpaSodManagement.Controllers
                             item.FieldCode ?? "",
                             item.AreaAmount?.ToString("N2") ?? "",
                             item.AreaTypeName ?? "N/A",
+                            item.FieldTypeName ?? "",
                             !string.IsNullOrEmpty(item.FarmName) ? item.FarmName : $"Farm #{item.FarmId}",
                             item.SoilType ?? "",
                             item.IrrigationAvailable ? "Yes" : "No",
@@ -322,6 +347,7 @@ namespace TpaSodManagement.Controllers
                     ("Field Code", "FieldCode"),
                     ("Area Amount", "AreaAmount"),
                     ("Area Type", "AreaType"),
+                    ("Field Type", "FieldType"),
                     ("Farm", "Farm"),
                     ("Soil Type", "SoilType"),
                     ("Irrigation Available", "IrrigationAvailable"),
@@ -338,6 +364,7 @@ namespace TpaSodManagement.Controllers
                         item.FieldCode ?? "",
                         item.AreaAmount?.ToString("N2") ?? "",
                         item.AreaTypeName ?? "N/A",
+                        item.FieldTypeName ?? "",
                         !string.IsNullOrEmpty(item.FarmName) ? item.FarmName : $"Farm #{item.FarmId}",
                         item.SoilType ?? "",
                         item.IrrigationAvailable ? "Yes" : "No",
@@ -364,6 +391,7 @@ namespace TpaSodManagement.Controllers
                 FieldCode = entity.FieldCode,
                 AreaAmount = entity.AreaAmount,
                 AreaTypeName = entity.AreaType?.AreaTypeName,
+                FieldTypeName = entity.FieldType?.FieldTypeName,
                 FarmId = entity.FarmId,
                 FarmName = entity.Farm?.FarmName,
                 SoilType = entity.SoilType,
@@ -381,6 +409,7 @@ namespace TpaSodManagement.Controllers
                 FieldCode = entity.FieldCode,
                 FarmId = entity.FarmId,
                 AreaTypeId = entity.AreaTypeId,
+                FieldTypeId = entity.FieldTypeId,
                 AreaAmount = entity.AreaAmount,
                 CreatedByUserId = entity.CreatedByUserId,
                 SoilType = entity.SoilType,
@@ -400,10 +429,11 @@ namespace TpaSodManagement.Controllers
             return new Field
             {
                 FieldId = vm.FieldId,
-                FieldName = vm.FieldName,
+                FieldName = vm.FieldName ?? string.Empty,
                 FieldCode = vm.FieldCode,
                 FarmId = vm.FarmId ?? 0,
                 AreaTypeId = vm.AreaTypeId.HasValue ? (int)vm.AreaTypeId.Value : 0,
+                FieldTypeId = vm.FieldTypeId ?? 0,
                 AreaAmount = vm.AreaAmount ?? 0,
                 CreatedByUserId = vm.CreatedByUserId,
                 SoilType = vm.SoilType,
@@ -424,12 +454,14 @@ namespace TpaSodManagement.Controllers
             {
                 vm.Farms = dropdowns.Data.Farms as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
                 vm.AreaTypes = dropdowns.Data.AreaTypes as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
+                vm.FieldTypes = dropdowns.Data.FieldTypes as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
                 vm.Users = dropdowns.Data.Users as IEnumerable<SelectListItem> ?? Enumerable.Empty<SelectListItem>();
             }
             else
             {
                 vm.Farms = Enumerable.Empty<SelectListItem>();
                 vm.AreaTypes = Enumerable.Empty<SelectListItem>();
+                vm.FieldTypes = Enumerable.Empty<SelectListItem>();
                 vm.Users = Enumerable.Empty<SelectListItem>();
                 TempData["Error"] = dropdowns.Message;
             }
