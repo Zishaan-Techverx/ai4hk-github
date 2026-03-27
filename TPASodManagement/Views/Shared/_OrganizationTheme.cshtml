@@ -1,4 +1,4 @@
-@* Organization Theme Partial - Handles Navbar Colors and Footer *@
+@* Organization Theme Partial - Fixed TPA theme, dynamic org logo *@
 
 @using Microsoft.AspNetCore.Identity
 @using TpaSodManagement.Areas.Identity.Data
@@ -8,62 +8,23 @@
 @inject IOrganizationService OrganizationService
 
 @{
-    string userOrganizationName = null;
-    string userOrganizationTypeName = null;
-    Organization userOrganization = null;
-    
-    if (User.Identity.IsAuthenticated)
+    Organization? userOrganization = null;
+    if (User.Identity != null && User.Identity.IsAuthenticated)
     {
         var user = await UserManager.GetUserAsync(User);
         if (user != null && user.OrganizationId.HasValue)
         {
-            var organization = await OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value);
-            if (organization != null)
-            {
-                userOrganization = organization;
-                userOrganizationName = organization.OrganizationName?.Trim();
-                // Get OrganizationTypeName - prefer from OrganizationType navigation, fallback to OrganizationTypeName property
-                userOrganizationTypeName = organization.OrganizationType?.OrganizationTypeName?.Trim() 
-                    ?? organization.OrganizationTypeName?.Trim();
-            }
+            userOrganization = await OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value);
         }
     }
-    bool hasFooterLogo = userOrganization != null && ((userOrganization.LogoBytes != null && userOrganization.LogoBytes.Length > 0) || !string.IsNullOrEmpty(userOrganization.LogoFilePath));
-    
-    // Normalize organization type name for comparison (case-insensitive)
-    var orgTypeUpper = userOrganizationTypeName?.ToUpper() ?? "";
-    var orgNameUpper = userOrganizationName?.ToUpper() ?? "";
-    
-    // Set navbar colors based on organization TYPE
-    string navbarBgColor = "#212529"; // Default dark
-    string navbarTextColor = "#ffffff"; // Default white
-    
-    if (!string.IsNullOrWhiteSpace(orgTypeUpper))
-    {
-        if (orgTypeUpper == "TPA")
-        {
-            navbarBgColor = "#2B2B2B"; // TPA Dark Gray
-            navbarTextColor = "#F6F4EE"; // TPA Off-White
-        }
-        else if (orgTypeUpper == "HGT_SOD")
-        {
-            navbarBgColor = "#FFDB00"; // HGT Yellow
-            navbarTextColor = "#1E1E1E"; // HGT Black
-        }
-        else if (orgTypeUpper == "RTF_SOD")
-        {
-            navbarBgColor = "#34B233"; // RTF Green
-            navbarTextColor = "#1E1E1E"; // RTF Black
-        }
-        else if (orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD")
-        {
-            navbarBgColor = "#00A8E2"; // RTF+HGT Blue
-            navbarTextColor = "Black"; // Black text
-        }
-    }
-    
-    // Determine which section to render (Styles or Footer)
-    string renderSection = ViewBag.RenderSection?.ToString() ?? "Footer"; // Default to Footer
+
+    var hasFooterLogo = userOrganization != null &&
+        ((userOrganization.LogoBytes != null && userOrganization.LogoBytes.Length > 0) ||
+         !string.IsNullOrEmpty(userOrganization.LogoFilePath));
+
+    const string navbarBgColor = "#2B2B2B";
+    const string navbarTextColor = "#F6F4EE";
+    string renderSection = ViewBag.RenderSection?.ToString() ?? "Footer";
 }
 
 @* NAVBAR STYLES SECTION - Render when ViewBag.RenderSection = "Styles" *@
@@ -131,332 +92,53 @@
 @if (renderSection == "Footer")
 {
     <footer id="pdfFooterCapture" class="organizations-footer">
-        @* TPA Footer *@
-        @if (orgTypeUpper == "TPA")
-        {
-            <!-- TPA Section -->
-            <div class="footer-section" style="background-color: #2B2B2B; color: #F6F4EE;">
-                <div class="container-fluid px-4 py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <!-- Part 1: Heading -->
-                            <h5 class="mb-2" style="color: #F6F4EE; font-weight: bold; font-size: 16px; margin-bottom: 8px !important;">TURF PRODUCERS ASSOCIATION</h5>
-                            
-                            <!-- Part 2: Email and Phone -->
-                            <div class="mb-1" style="margin-bottom: 6px !important; font-size: 14px;">
-                                <span style="color: #F6F4EE;">
-                                    <i class="fas fa-envelope me-2" style="color: #AC9C7C;"></i>
-                                    <a href="mailto:jenny@turfproducers.com" style="color: #F6F4EE; text-decoration: none;">jenny@turfproducers.com</a>
-                                </span>
-                                <span style="color: #F6F4EE; margin-left: 20px;">
-                                    <i class="fas fa-phone me-2" style="color: #AC9C7C;"></i>
-                                    402-480-4936
-                                </span>
-                            </div>
-                            
-                            <!-- Part 3: Address and Website -->
-                            <div style="font-size: 14px;">
-                                <span style="color: #F6F4EE;">
-                                    <i class="fas fa-map-marker-alt me-2" style="color: #AC9C7C;"></i>
-                                    2617 Tepee Circle, Fremont, NE
-                                </span>
-                                <span style="color: #F6F4EE; margin-left: 20px;">
-                                    <i class="fas fa-globe me-2" style="color: #AC9C7C;"></i>
-                                    <a href="http://www.turfproducers.com" target="_blank" style="color: #F6F4EE; text-decoration: none;">www.turfproducers.com</a>
-                                </span>
-                            </div>
+        <div class="footer-section" style="background-color: #2B2B2B; color: #F6F4EE;">
+            <div class="container-fluid px-4 py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5 class="mb-2" style="color: #F6F4EE; font-weight: bold; font-size: 16px; margin-bottom: 8px !important;">TURF PRODUCERS ASSOCIATION</h5>
+                        <div class="mb-1" style="margin-bottom: 6px !important; font-size: 14px;">
+                            <span style="color: #F6F4EE;">
+                                <i class="fas fa-envelope me-2" style="color: #AC9C7C;"></i>
+                                <a href="mailto:jenny@turfproducers.com" style="color: #F6F4EE; text-decoration: none;">jenny@turfproducers.com</a>
+                            </span>
+                            <span style="color: #F6F4EE; margin-left: 20px;">
+                                <i class="fas fa-phone me-2" style="color: #AC9C7C;"></i>
+                                402-480-4936
+                            </span>
                         </div>
-                        <div class="col-md-4 text-md-end">
-                            <div class="footer-logo-box" style="display: inline-block; padding: 10px 18px; background-color: transparent; text-align: center;">
-                                @if (hasFooterLogo)
-                                {
-                                    <img src="@Url.Action("GetLogo", "Organization", new { id = userOrganization.OrganizationId })" alt="Organization Logo" style="height: 50px; width: auto; max-width: 180px; object-fit: contain; display: block;" />
-                                }
-                                else
-                                {
-                                    <span style="color: #F6F4EE; font-size: 13px; font-weight: bold; line-height: 1.3; display: block;">TURF PRODUCERS<br>ASSOCIATION</span>
-                                }
-                            </div>
+                        <div style="font-size: 14px;">
+                            <span style="color: #F6F4EE;">
+                                <i class="fas fa-map-marker-alt me-2" style="color: #AC9C7C;"></i>
+                                2617 Tepee Circle, Fremont, NE
+                            </span>
+                            <span style="color: #F6F4EE; margin-left: 20px;">
+                                <i class="fas fa-globe me-2" style="color: #AC9C7C;"></i>
+                                <a href="http://www.turfproducers.com" target="_blank" style="color: #F6F4EE; text-decoration: none;">www.turfproducers.com</a>
+                            </span>
+                        </div>
+                    </div>
+                    <div class="col-md-4 text-md-end">
+                        <div class="footer-logo-box" style="display: inline-block; padding: 10px 18px; background-color: transparent; text-align: center;">
+                            @if (hasFooterLogo && userOrganization != null)
+                            {
+                                <img src="@Url.Action("GetLogo", "Organization", new { id = userOrganization.OrganizationId })" alt="Organization Logo" style="height: 50px; width: auto; max-width: 180px; object-fit: contain; display: block;" />
+                            }
+                            else
+                            {
+                                <span style="color: #F6F4EE; font-size: 13px; font-weight: bold; line-height: 1.3; display: block;">TURF PRODUCERS<br>ASSOCIATION</span>
+                            }
                         </div>
                     </div>
                 </div>
             </div>
-        }
-        
-        @* HGT Footer *@
-        @if (orgTypeUpper == "HGT_SOD")
-        {
-            <!-- HGT Section -->
-            <div class="footer-section" style="background-color: #FFDB00; color: #1E1E1E;">
-                <div class="container-fluid px-4 py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <!-- Part 1: Heading -->
-                            <h5 class="mb-2" style="color: #1E1E1E; font-weight: bold; font-size: 16px; margin-bottom: 8px !important;">HEALTHY GRASS TECHNOLOGY®</h5>
-                            
-                            <!-- Part 2: Email and Phone -->
-                            <div class="mb-1" style="margin-bottom: 6px !important; font-size: 14px;">
-                                <span style="color: #1E1E1E;">
-                                    <i class="fas fa-envelope me-2" style="color: #34B233;"></i>
-                                    <a href="mailto:jenny@turfproducers.com" style="color: #1E1E1E; text-decoration: none;">jenny@turfproducers.com</a>
-                                </span>
-                                <span style="color: #1E1E1E; margin-left: 20px;">
-                                    <i class="fas fa-phone me-2" style="color: #34B233;"></i>
-                                    402-480-4936
-                                </span>
-                            </div>
-                            
-                            <!-- Part 3: Address and Website -->
-                            <div style="font-size: 14px;">
-                                <span style="color: #1E1E1E;">
-                                    <i class="fas fa-map-marker-alt me-2" style="color: #34B233;"></i>
-                                    2617 Tepee Circle, Fremont, NE
-                                </span>
-                                <span style="color: #1E1E1E; margin-left: 20px;">
-                                    <i class="fas fa-globe me-2" style="color: #34B233;"></i>
-                                    <a href="http://www.turfproducers.com" target="_blank" style="color: #1E1E1E; text-decoration: none;">www.turfproducers.com</a>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-md-end">
-                            <div class="footer-logo-box" style="display: inline-block; padding: 10px 18px; background-color: transparent; text-align: center;">
-                                @if (hasFooterLogo)
-                                {
-                                    <img src="@Url.Action("GetLogo", "Organization", new { id = userOrganization.OrganizationId })" alt="Organization Logo" style="height: 50px; width: auto; max-width: 180px; object-fit: contain; display: block;" />
-                                }
-                                else
-                                {
-                                    <span style="color: #1E1E1E; font-size: 13px; font-weight: bold; line-height: 1.3; display: block;">HEALTHY GRASS<br>TECHNOLOGY®</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-        
-        @* RTF Footer (not combined) *@
-        @if (orgTypeUpper == "RTF_SOD")
-        {
-            <!-- RTF Section -->
-            <div class="footer-section" style="background-color: #34B233; color: #1E1E1E;">
-                <div class="container-fluid px-4 py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <!-- Part 1: Heading -->
-                            <h5 class="mb-2" style="color: #1E1E1E; font-weight: bold; font-size: 16px; margin-bottom: 8px !important;">RTF®</h5>
-                            
-                            <!-- Part 2: Email and Phone -->
-                            <div class="mb-1" style="margin-bottom: 6px !important; font-size: 14px;">
-                                <span style="color: #1E1E1E;">
-                                    <i class="fas fa-envelope me-2" style="color: #FFDB00;"></i>
-                                    <a href="mailto:jenny@turfproducers.com" style="color: #1E1E1E; text-decoration: none;">jenny@turfproducers.com</a>
-                                </span>
-                                <span style="color: #1E1E1E; margin-left: 20px;">
-                                    <i class="fas fa-phone me-2" style="color: #FFDB00;"></i>
-                                    402-480-4936
-                                </span>
-                            </div>
-                            
-                            <!-- Part 3: Address and Website -->
-                            <div style="font-size: 14px;">
-                                <span style="color: #1E1E1E;">
-                                    <i class="fas fa-map-marker-alt me-2" style="color: #FFDB00;"></i>
-                                    2617 Tepee Circle, Fremont, NE
-                                </span>
-                                <span style="color: #1E1E1E; margin-left: 20px;">
-                                    <i class="fas fa-globe me-2" style="color: #FFDB00;"></i>
-                                    <a href="http://www.turfproducers.com" target="_blank" style="color: #1E1E1E; text-decoration: none;">www.turfproducers.com</a>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-md-end">
-                            <div class="footer-logo-box" style="display: inline-block; padding: 10px 18px; background-color: transparent; text-align: center;">
-                                @if (hasFooterLogo)
-                                {
-                                    <img src="@Url.Action("GetLogo", "Organization", new { id = userOrganization.OrganizationId })" alt="Organization Logo" style="height: 50px; width: auto; max-width: 180px; object-fit: contain; display: block;" />
-                                }
-                                else
-                                {
-                                    <span style="color: #1E1E1E; font-size: 13px; font-weight: bold; line-height: 1.3; display: block;">RTF®</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-        
-        @* RTF + HGT Combined Footer *@
-        @if (orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD")
-        {
-            <!-- RTF + HGT Combined Section -->
-            <div class="footer-section" style="background-color: #00A8E2; color: black;">
-                <div class="container-fluid px-4 py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <!-- Part 1: Heading -->
-                            <h5 class="mb-2" style="color: black; font-weight: bold; font-size: 16px; margin-bottom: 8px !important;">RTF® + HGT®</h5>
-                            
-                            <!-- Part 2: Email and Phone -->
-                            <div class="mb-1" style="margin-bottom: 6px !important; font-size: 14px;">
-                                <span style="color: black;">
-                                    <i class="fas fa-envelope me-2" style="color: yellow;"></i>
-                                    <a href="mailto:jenny@turfproducers.com" style="color: black; text-decoration: none;">jenny@turfproducers.com</a>
-                                </span>
-                                <span style="color: black; margin-left: 20px;">
-                                    <i class="fas fa-phone me-2" style="color: yellow;"></i>
-                                    402-480-4936
-                                </span>
-                            </div>
-                            
-                            <!-- Part 3: Address and Website -->
-                            <div style="font-size: 14px;">
-                                <span style="color: black;">
-                                    <i class="fas fa-map-marker-alt me-2" style="color: yellow;"></i>
-                                    2617 Tepee Circle, Fremont, NE
-                                </span>
-                                <span style="color: black; margin-left: 20px;">
-                                    <i class="fas fa-globe me-2" style="color: yellow;"></i>
-                                    <a href="http://www.turfproducers.com" target="_blank" style="color: black; text-decoration: none;">www.turfproducers.com</a>
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-md-end">
-                            <div class="footer-logo-box" style="display: inline-block; padding: 10px 18px; background-color: transparent; text-align: center;">
-                                @if (hasFooterLogo)
-                                {
-                                    <img src="@Url.Action("GetLogo", "Organization", new { id = userOrganization.OrganizationId })" alt="Organization Logo" style="height: 50px; width: auto; max-width: 180px; object-fit: contain; display: block;" />
-                                }
-                                else
-                                {
-                                    <span style="color: black; font-size: 13px; font-weight: bold; line-height: 1.3; display: block;">RTF® + HGT®</span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
+        </div>
 
-        <!-- Generic footer for other organizations -->
-        @if (userOrganizationName != null && 
-             !(orgTypeUpper == "TPA" || orgTypeUpper == "HGT_SOD" || orgTypeUpper == "RTF_SOD" ||
-               orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD"))
-        {
-            var orgWords = userOrganizationName.Split(' ');
-            string logoLine1 = "";
-            string logoLine2 = "";
-            if (orgWords.Length >= 2)
-            {
-                int midPoint = orgWords.Length / 2;
-                logoLine1 = string.Join(" ", orgWords.Take(midPoint)).ToUpper();
-                logoLine2 = string.Join(" ", orgWords.Skip(midPoint)).ToUpper();
-            }
-            else
-            {
-                if (userOrganizationName.Length > 15)
-                {
-                    int mid = userOrganizationName.Length / 2;
-                    logoLine1 = userOrganizationName.Substring(0, mid).ToUpper();
-                    logoLine2 = userOrganizationName.Substring(mid).ToUpper();
-                }
-                else
-                {
-                    logoLine1 = userOrganizationName.ToUpper();
-                }
-            }
-            
-            <!-- Generic Organization Section -->
-            <div class="footer-section" style="background-color: #2B2B2B; color: #F6F4EE;">
-                <div class="container-fluid px-4 py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <!-- Part 1: Heading -->
-                            <h5 class="mb-2" style="color: #F6F4EE; font-weight: bold; font-size: 16px; margin-bottom: 8px !important;">@userOrganizationName.ToUpper()</h5>
-                            
-                            <!-- Part 2: Email and Phone -->
-                            <div class="mb-1" style="margin-bottom: 6px !important; font-size: 14px;">
-                                <span style="color: #F6F4EE;">
-                                    <i class="fas fa-envelope me-2" style="color: #AC9C7C;"></i>
-                                    Contact us
-                                </span>
-                            </div>
-                            
-                            <!-- Part 3: Address and Website -->
-                            <div style="font-size: 14px;">
-                                <span style="color: #F6F4EE;">
-                                    <i class="fas fa-map-marker-alt me-2" style="color: #AC9C7C;"></i>
-                                    Address
-                                </span>
-                                <span style="color: #F6F4EE; margin-left: 20px;">
-                                    <i class="fas fa-globe me-2" style="color: #AC9C7C;"></i>
-                                    Website
-                                </span>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-md-end">
-                            <div class="footer-logo-box" style="display: inline-block; padding: 10px 18px; background-color: transparent; border: 2px solid #F6F4EE; text-align: center;">
-                                @if (hasFooterLogo)
-                                {
-                                    <img src="@Url.Action("GetLogo", "Organization", new { id = userOrganization.OrganizationId })" alt="Organization Logo" style="height: 50px; width: auto; max-width: 180px; object-fit: contain; display: block;" />
-                                }
-                                else
-                                {
-                                    <span style="color: #F6F4EE; font-size: 13px; font-weight: bold; line-height: 1.3; display: block;">
-                                        @logoLine1@if (!string.IsNullOrEmpty(logoLine2)) { <br />@logoLine2 }
-                                    </span>
-                                }
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        <div class="copyright-bar text-center py-2" style="background-color: #1E1E1E; color: #FFFFFF;">
+            <div class="container">
+                <p class="mb-0" style="font-size: 14px;">&copy; @DateTime.Now.Year - All Rights Reserved | TPA™</p>
             </div>
-        }
-
-        <!-- Default footer if user is not logged in or has no organization -->
-        @if (userOrganizationName == null)
-        {
-            <div class="footer-section text-center py-3" style="background-color: #1E1E1E; color: #FFFFFF;">
-                <div class="container">
-                    <p class="mb-0">&copy; @DateTime.Now.Year - Sod Management System</p>
-                </div>
-            </div>
-        }
-
-        <!-- Copyright Bar - Hide for defined organization types (TPA, HGT_SOD, RTF_SOD, RTF_HGT_SOD) -->
-        @* Only show copyright bar if user is not logged in or doesn't belong to defined organization types *@
-        @if (userOrganizationName == null || 
-             !(orgTypeUpper == "TPA" || orgTypeUpper == "HGT_SOD" || orgTypeUpper == "RTF_SOD" ||
-               orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD"))
-        {
-            <div class="copyright-bar text-center py-2" style="background-color: #1E1E1E; color: #FFFFFF;">
-                <div class="container">
-                    <p class="mb-0" style="font-size: 14px;">
-                        &copy; @DateTime.Now.Year - All Rights Reserved
-                        @if (userOrganizationTypeName != null)
-                        {
-                            if (orgTypeUpper == "TPA")
-                            {
-                                <text>| TPA™</text>
-                            }
-                            if (orgTypeUpper == "HGT_SOD")
-                            {
-                                <text>| HGT®</text>
-                            }
-                            if (orgTypeUpper == "RTF_SOD" || orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD")
-                            {
-                                <text>| RTF®</text>
-                            }
-                            if (orgTypeUpper == "RTF_HGT_SOD" || orgTypeUpper == "RTF+HGT_SOD")
-                            {
-                                <text>| HGT®</text>
-                            }
-                        }
-                    </p>
-                </div>
-            </div>
-        }
+        </div>
     </footer>
 
     <style>

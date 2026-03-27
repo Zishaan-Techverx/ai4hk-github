@@ -4,19 +4,22 @@
 @if (Model != null)
 {
     <a class="navbar-brand d-flex align-items-center text-white text-decoration-none" href="/">
-        @if (Model.LogoBytes != null && Model.LogoBytes.Length > 0)
+        @if ((Model.LogoBytes != null && Model.LogoBytes.Length > 0) || !string.IsNullOrEmpty(Model.LogoFilePath))
         {
             <img src="@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })" 
                  alt="Organization Logo" 
                  style="height: 40px; width: auto; max-width: 200px; object-fit: contain;" 
                  class="me-2" />
         }
-        <span class="fw-bold">@Model.OrganizationName</span>
+        else
+        {
+            <span class="fw-bold">TPA</span>
+        }
     </a>
 }
 else
 {
     <a class="navbar-brand text-white text-decoration-none" href="/">
-        <span>Sod Management</span>
+        <span>TPA</span>
     </a>
 }

@@ -38,6 +38,8 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.Customer)
                         .ThenInclude(c => c.Organization)
                     .Include(s => s.Farm)
+                    .Include(s => s.Field)
+                        .ThenInclude(f => f!.FieldType)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
                     .Include(s => s.UpdatedByUser)
@@ -77,6 +79,8 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.Customer)
                         .ThenInclude(c => c.Organization)
                     .Include(s => s.Farm)
+                    .Include(s => s.Field)
+                        .ThenInclude(f => f!.FieldType)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
                     .Include(s => s.UpdatedByUser)
@@ -309,6 +313,8 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.Currency)
                     .Include(s => s.Customer)
                     .Include(s => s.Farm)
+                    .Include(s => s.Field)
+                        .ThenInclude(f => f!.FieldType)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
                     .Include(s => s.UpdatedByUser)
@@ -346,7 +352,8 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.Customer).ThenInclude(c => c!.Organization)
                     .Include(s => s.Customer).ThenInclude(c => c!.Address).ThenInclude(a => a!.StateProvince)
                     .Include(s => s.Farm).ThenInclude(f => f.Address).ThenInclude(a => a!.StateProvince)
-                    .Include(s => s.Farm).ThenInclude(f => f.Organization).ThenInclude(o => o!.OrganizationType)
+                    .Include(s => s.Farm).ThenInclude(f => f.Organization)
+                    .Include(s => s.Field).ThenInclude(f => f!.FieldType)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
                     .FirstOrDefaultAsync(s => s.SaleId == id);
@@ -410,6 +417,7 @@ namespace TpaSodManagement.Services.Implementations
                 existingSale.UserId = sale.UserId;
                 existingSale.FarmId = sale.FarmId;
                 existingSale.CustomerId = sale.CustomerId;
+                existingSale.FieldId = sale.FieldId;
                 existingSale.SaleTypeId = sale.SaleTypeId;
                 existingSale.SaleNumber = sale.SaleNumber;
                 existingSale.InvoiceNumber = sale.InvoiceNumber;
@@ -587,6 +595,21 @@ namespace TpaSodManagement.Services.Implementations
                 }
                 var customers = await customersQuery.ToListAsync();
 
+                var fieldsQuery = _context.Fields
+                    .Include(f => f.Farm)
+                    .Where(f => f.IsActive)
+                    .OrderBy(f => f.FieldName)
+                    .AsQueryable();
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    if (orgId.HasValue)
+                        fieldsQuery = fieldsQuery.Where(f => f.Farm.OrganizationId == orgId.Value);
+                    else
+                        fieldsQuery = fieldsQuery.Where(f => false);
+                }
+                var fields = await fieldsQuery.ToListAsync();
+
                 // Create SelectList for Customers with display name (use Person/Organization to decide)
                 var customerItems = customers.Select(c =>
                 {
@@ -652,6 +675,11 @@ namespace TpaSodManagement.Services.Implementations
                     ["CustomerId"] = customerItems, 
 
                     ["FarmId"] = farmItems,
+                    ["FieldId"] = fields.Select(f => new SelectListItem
+                    {
+                        Value = f.FieldId.ToString(),
+                        Text = string.IsNullOrWhiteSpace(f.FieldName) ? $"Field #{f.FieldId}" : f.FieldName
+                    }).ToList(),
 
                     ["SaleTypeId"] = await _context.SaleTypes
                         .Where(x => x.IsActive) // Optional: only show active sale types

@@ -43,18 +43,9 @@ namespace TpaSodManagement.Services.Implementations
             return (true, null);
         }
 
-        public async Task<List<OrganizationType>> GetAllOrganizationTypesAsync()
-        {
-            return await _context.OrganizationTypes
-                .Where(ot => ot.DeletedDate == null && ot.IsActive)
-                .OrderBy(ot => ot.OrganizationTypeName)
-                .ToListAsync();
-        }
-
         public async Task<List<Organization>> GetAllOrganizationsAsync()
         {
             var query = _context.Organizations
-                .Include(o => o.OrganizationType)
                 .Include(o => o.Address).ThenInclude(a => a!.StateProvince)
                 .AsQueryable();
 
@@ -73,7 +64,6 @@ namespace TpaSodManagement.Services.Implementations
         public async Task<Organization> GetOrganizationByIdAsync(long id)
         {
             return await _context.Organizations
-                .Include(o => o.OrganizationType)
                 .Include(o => o.Address).ThenInclude(a => a!.StateProvince)
                 .FirstOrDefaultAsync(m => m.OrganizationId == id);
         }
@@ -98,8 +88,6 @@ namespace TpaSodManagement.Services.Implementations
                     organization.LogoBytes = await ConvertFileToBytesAsync(logoFile);
                 }
             }
-
-            await SetOrganizationTypeNameFromTypeIdAsync(organization);
 
             var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
             organization.CreatedDate = DateTimeOffset.UtcNow;
@@ -133,8 +121,6 @@ namespace TpaSodManagement.Services.Implementations
 
             // Update all fields
             orgDb.OrganizationName = updatedOrg.OrganizationName;
-            orgDb.OrganizationTypeId = updatedOrg.OrganizationTypeId;
-            await SetOrganizationTypeNameFromTypeIdAsync(orgDb);
             orgDb.OrganizationCode = updatedOrg.OrganizationCode;
             orgDb.TaxIdentificationNumber = updatedOrg.TaxIdentificationNumber;
             orgDb.RegistrationNumber = updatedOrg.RegistrationNumber;
@@ -185,11 +171,7 @@ namespace TpaSodManagement.Services.Implementations
             return await _context.Organizations.AnyAsync(e => e.OrganizationId == id);
         }
 
-        /// <summary>
-        /// Queries the database for any existing organization (non-deleted) with the same name and same organization type.
-        /// Used for Create/Edit validation so duplicate name+type is rejected. Edit: pass excludeOrganizationId so current record is excluded.
-        /// </summary>
-        public async Task<bool> ExistsDuplicateNameAndTypeAsync(string organizationName, long? organizationTypeId, long? excludeOrganizationId = null)
+        public async Task<bool> ExistsDuplicateNameAsync(string organizationName, long? excludeOrganizationId = null)
         {
             if (string.IsNullOrWhiteSpace(organizationName))
                 return false;
@@ -201,8 +183,7 @@ namespace TpaSodManagement.Services.Implementations
                 .AsNoTracking()
                 .Where(o => o.DeletedDate == null
                     && o.OrganizationName != null
-                    && o.OrganizationName.ToLower() == nameLower
-                    && o.OrganizationTypeId == organizationTypeId);
+                    && o.OrganizationName.ToLower() == nameLower);
 
             if (excludeOrganizationId.HasValue)
                 query = query.Where(o => o.OrganizationId != excludeOrganizationId.Value);
@@ -216,7 +197,6 @@ namespace TpaSodManagement.Services.Implementations
             try
             {
                 var query = _context.Organizations
-                    .Include(o => o.OrganizationType)
                     .Include(o => o.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
 
@@ -236,11 +216,6 @@ namespace TpaSodManagement.Services.Implementations
                     {
                         var filterValue = FilterHelper.NormalizeSearchText(filters["OrganizationName"]);
                         query = query.Where(o => o.OrganizationName != null && o.OrganizationName.Contains(filterValue));
-                    }
-
-                    if (filters.ContainsKey("OrganizationType") && !string.IsNullOrWhiteSpace(filters["OrganizationType"]) && long.TryParse(filters["OrganizationType"].Trim(), out var organizationTypeId))
-                    {
-                        query = query.Where(o => o.OrganizationTypeId == organizationTypeId);
                     }
 
                     if (filters.ContainsKey("OrganizationCode") && !string.IsNullOrWhiteSpace(filters["OrganizationCode"]))
@@ -283,21 +258,6 @@ namespace TpaSodManagement.Services.Implementations
                 response.Message = $"Error fetching filtered organizations: {ex.Message}";
             }
             return response;
-        }
-
-        private async Task SetOrganizationTypeNameFromTypeIdAsync(Organization organization)
-        {
-            if (organization.OrganizationTypeId.HasValue)
-            {
-                var orgType = await _context.OrganizationTypes
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(t => t.OrganizationTypeId == organization.OrganizationTypeId.Value);
-                organization.OrganizationTypeName = orgType?.OrganizationTypeName ?? string.Empty;
-            }
-            else
-            {
-                organization.OrganizationTypeName = string.Empty;
-            }
         }
 
         private async Task<byte[]> ConvertFileToBytesAsync(IFormFile file)

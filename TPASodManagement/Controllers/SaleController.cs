@@ -132,6 +132,11 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null) return NotFound();
 
             var vm = MapToCertificateViewModel(result.Data);
+            if (!vm.HasSelectedField)
+            {
+                TempData["ErrorMessage"] = "This sale has no field selected. Please edit the sale and select a field first.";
+                return RedirectToAction(nameof(Edit), new { id });
+            }
             return View(vm);
         }
 
@@ -144,9 +149,14 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null) return NotFound();
 
             var vm = MapToCertificateViewModel(result.Data);
+            if (!vm.HasSelectedField)
+            {
+                TempData["ErrorMessage"] = "This sale has no field selected. Please edit the sale and select a field first.";
+                return RedirectToAction(nameof(Edit), new { id });
+            }
             if (!vm.HasCertificateTemplate)
             {
-                TempData["ErrorMessage"] = "No certificate template is configured for the selected organization's farm.";
+                TempData["ErrorMessage"] = "No certificate template is configured for the selected field type.";
                 return RedirectToAction(nameof(Certificate), new { id });
             }
 
@@ -276,10 +286,12 @@ namespace TpaSodManagement.Controllers
                 }
             }
             
-            // Remove all ModelState errors - validations removed (same as ProductController)
-            ModelState.Clear();
-            
-            // Validations removed - directly save
+            if (!ModelState.IsValid)
+            {
+                await PopulateDropdowns(saleVm);
+                return View(saleVm);
+            }
+
             var entity = MapToEntity(saleVm);
             var result = await _saleService.CreateAsync(entity);
             if (!result.Success)
@@ -623,6 +635,7 @@ namespace TpaSodManagement.Controllers
                 UserId = entity.UserId,
                 FarmId = entity.FarmId,
                 CustomerId = entity.CustomerId,
+                FieldId = entity.FieldId,
                 SaleTypeId = entity.SaleTypeId,
                 StatusId = entity.StatusId,
                 CurrencyId = entity.CurrencyId,
@@ -638,12 +651,8 @@ namespace TpaSodManagement.Controllers
         {
             var farm = sale.Farm;
             var customer = sale.Customer;
-            var orgTypeName = farm?.Organization?.OrganizationType?.OrganizationTypeName
-                ?? farm?.Organization?.OrganizationTypeName
-                ?? string.Empty;
-            var orgName = farm?.Organization?.OrganizationName ?? string.Empty;
-            var orgIdentifier = !string.IsNullOrWhiteSpace(orgName) ? orgName : orgTypeName;
-            var normalizedOrgIdentifier = NormalizeCertificateIdentifier(orgIdentifier);
+            var fieldTypeName = sale.Field?.FieldType?.FieldTypeName ?? string.Empty;
+            var normalizedFieldTypeIdentifier = NormalizeCertificateIdentifier(fieldTypeName);
 
             // Licensed grower: farm name only
             var licensedGrower = !string.IsNullOrWhiteSpace(farm?.FarmName) ? farm.FarmName.Trim() : "—";
@@ -697,11 +706,11 @@ namespace TpaSodManagement.Controllers
             const string certHgt = "HGT Sod Certificate.jpg";
             const string certRtfHgt = "RTF+HGT Sod Certificate.jpg";
 
-            string? certFile = normalizedOrgIdentifier.Contains("RTFHGT")
+            string? certFile = normalizedFieldTypeIdentifier.Contains("RTFHGT")
                 ? certRtfHgt
-                : normalizedOrgIdentifier.Contains("HGT")
+                : normalizedFieldTypeIdentifier.Contains("HGT")
                     ? certHgt
-                    : normalizedOrgIdentifier.Contains("RTF")
+                    : normalizedFieldTypeIdentifier.Contains("RTF")
                         ? certRtf
                         : null;
             var hasCertificateTemplate = !string.IsNullOrEmpty(certFile);
@@ -720,7 +729,8 @@ namespace TpaSodManagement.Controllers
                 CustomerAddress = customerAddress,
                 CertificateImagePath = certPath,
                 CertificateImageFileName = certFile ?? string.Empty,
-                HasCertificateTemplate = hasCertificateTemplate
+                HasCertificateTemplate = hasCertificateTemplate,
+                HasSelectedField = sale.FieldId.HasValue
             };
         }
 
@@ -759,6 +769,7 @@ namespace TpaSodManagement.Controllers
                 UserId = vm.UserId ?? 0,
                 FarmId = vm.FarmId ?? 0,
                 CustomerId = vm.CustomerId ?? 0,
+                FieldId = vm.FieldId,
                 SaleTypeId = vm.SaleTypeId ?? 0,
                 StatusId = vm.StatusId ?? 0,
                 CurrencyId = vm.CurrencyId ?? 0,
@@ -777,6 +788,7 @@ namespace TpaSodManagement.Controllers
                 vm.Users = dropdowns.Data.ContainsKey("UserId") ? dropdowns.Data["UserId"] : Enumerable.Empty<SelectListItem>();
                 vm.Farms = dropdowns.Data.ContainsKey("FarmId") ? dropdowns.Data["FarmId"] : Enumerable.Empty<SelectListItem>();
                 vm.Customers = dropdowns.Data.ContainsKey("CustomerId") ? dropdowns.Data["CustomerId"] : Enumerable.Empty<SelectListItem>();
+                vm.Fields = dropdowns.Data.ContainsKey("FieldId") ? dropdowns.Data["FieldId"] : Enumerable.Empty<SelectListItem>();
                 vm.SaleTypes = dropdowns.Data.ContainsKey("SaleTypeId") ? dropdowns.Data["SaleTypeId"] : Enumerable.Empty<SelectListItem>();
                 vm.Statuses = dropdowns.Data.ContainsKey("StatusId") ? dropdowns.Data["StatusId"] : Enumerable.Empty<SelectListItem>();
                 vm.Currencies = dropdowns.Data.ContainsKey("CurrencyId") ? dropdowns.Data["CurrencyId"] : Enumerable.Empty<SelectListItem>();
@@ -786,6 +798,7 @@ namespace TpaSodManagement.Controllers
                 vm.Users = vm.Users ?? Enumerable.Empty<SelectListItem>();
                 vm.Farms = vm.Farms ?? Enumerable.Empty<SelectListItem>();
                 vm.Customers = vm.Customers ?? Enumerable.Empty<SelectListItem>();
+                vm.Fields = vm.Fields ?? Enumerable.Empty<SelectListItem>();
                 vm.SaleTypes = vm.SaleTypes ?? Enumerable.Empty<SelectListItem>();
                 vm.Statuses = vm.Statuses ?? Enumerable.Empty<SelectListItem>();
                 vm.Currencies = vm.Currencies ?? Enumerable.Empty<SelectListItem>();

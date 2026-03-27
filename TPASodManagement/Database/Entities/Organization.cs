@@ -10,13 +10,7 @@ public partial class Organization : AuditBaseEntity
 {
     public long OrganizationId { get; set; }
 
-    public string? OrganizationTypeName { get; set; }
-
     public string OrganizationName { get; set; } = null!;
-
-    public long? OrganizationTypeId { get; set; }
-
-    public virtual OrganizationType? OrganizationType { get; set; }
 
     public string? OrganizationCode { get; set; }
 

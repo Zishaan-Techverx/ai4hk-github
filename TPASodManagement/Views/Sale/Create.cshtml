@@ -84,7 +84,16 @@
                                 </select>
                                 <span asp-validation-for="CustomerId" class="text-danger"></span>
                             </div>
+                            <div class="col-md-6 mb-3">
+                                <label asp-for="FieldId" class="form-label">Field <span class="text-danger">*</span></label>
+                                <select asp-for="FieldId" class="form-select" asp-items="Model.Fields" required>
+                                    <option value="">-- Select Field --</option>
+                                </select>
+                                <span asp-validation-for="FieldId" class="text-danger"></span>
+                            </div>
+                        </div>
 
+                        <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="SaleTypeId" class="form-label">Sale Type <span class="text-danger">*</span></label>
                                 <select asp-for="SaleTypeId" class="form-select" asp-items="Model.SaleTypes" required>

@@ -49,6 +49,10 @@ namespace TpaSodManagement.ViewModels.Sale
         [Required(ErrorMessage = "Customer is required")]
         [Display(Name = "Customer")]
         public long? CustomerId { get; set; }
+
+        [Required(ErrorMessage = "Field is required")]
+        [Display(Name = "Field")]
+        public long? FieldId { get; set; }
         
         [Required(ErrorMessage = "Sale Type is required")]
         [Display(Name = "Sale Type")]
@@ -71,6 +75,7 @@ namespace TpaSodManagement.ViewModels.Sale
         public IEnumerable<SelectListItem> Users { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Farms { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Customers { get; set; } = Enumerable.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> Fields { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> SaleTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Statuses { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Currencies { get; set; } = Enumerable.Empty<SelectListItem>();

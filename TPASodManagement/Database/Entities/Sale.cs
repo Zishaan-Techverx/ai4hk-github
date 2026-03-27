@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Base_Entities;
@@ -14,6 +14,8 @@ public partial class Sale : AuditBaseEntity
     public long FarmId { get; set; }
 
     public long CustomerId { get; set; }
+
+    public long? FieldId { get; set; }
 
     public int SaleTypeId { get; set; }
 
@@ -50,6 +52,8 @@ public partial class Sale : AuditBaseEntity
     public virtual Customer Customer { get; set; } = null!;
 
     public virtual Farm Farm { get; set; } = null!;
+
+    public virtual Field? Field { get; set; }
 
     public virtual ICollection<SaleLineItem> SaleLineItems { get; set; } = new List<SaleLineItem>();
 

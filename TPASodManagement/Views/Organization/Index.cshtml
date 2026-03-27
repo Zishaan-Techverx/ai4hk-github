@@ -96,7 +96,6 @@
         <thead>
             <tr>
                 <th data-column="OrganizationName">Organization Name</th>
-                <th data-column="OrganizationType">Organization Type</th>
                 <th data-column="Address">Address</th>
                 <th data-column="Logo">Logo</th>
                 <th data-column="IsActive">Is Active</th>
@@ -108,7 +107,6 @@
             {
                 <tr id="row-@item.OrganizationId">
                     <td data-column="OrganizationName">@Html.DisplayFor(modelItem => item.OrganizationName)</td>
-                    <td data-column="OrganizationType">@Html.DisplayFor(modelItem => item.OrganizationTypeName)</td>
                     <td data-column="Address">@Html.DisplayFor(modelItem => item.Address)</td>
                     <td data-column="Logo">
                         @if (item.HasLogo)
@@ -1205,7 +1203,6 @@
             const isActiveHtml = item.isActive ? '<input type="checkbox" class="form-check-input" disabled checked style="accent-color: #0d6efd;">' : '<input type="checkbox" class="form-check-input" disabled style="accent-color: #0d6efd;">';
             row.innerHTML = `
                 <td data-column="OrganizationName">${escapeHtml(item.organizationName || '')}</td>
-                <td data-column="OrganizationType">${escapeHtml(item.organizationTypeName || '')}</td>
                 <td data-column="Address">${escapeHtml(item.address || '')}</td>
                 <td data-column="Logo">${logoHtml}</td>
                 <td data-column="IsActive">${isActiveHtml}</td>

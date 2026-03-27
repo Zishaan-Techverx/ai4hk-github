@@ -34,4 +34,7 @@ public class SaleCertificateViewModel
 
     /// <summary>Indicates if a certificate template/image exists for this sale.</summary>
     public bool HasCertificateTemplate { get; set; }
+
+    /// <summary>True when sale has a selected field.</summary>
+    public bool HasSelectedField { get; set; }
 }
