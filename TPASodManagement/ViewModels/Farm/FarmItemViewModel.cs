@@ -16,7 +16,7 @@ namespace TpaSodManagement.ViewModels.Farm
         public string? IrrigationType { get; set; }
         public string? ClimateZone { get; set; }
         public string? AreaTypeName { get; set; }
-        public string? OrganizationName { get; set; }
+        public string? LogoFilePath { get; set; }
         public bool IsActive { get; set; }
     }
 }

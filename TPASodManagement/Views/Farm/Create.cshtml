@@ -37,7 +37,7 @@
                         </div>
                     }
 
-                    <form asp-action="Create" method="post">
+                    <form asp-action="Create" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
 
                         <div class="row">
@@ -48,16 +48,10 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationId" class="form-label">Organization <span class="text-danger">*</span></label>
-                                <select asp-for="OrganizationId" 
-                                        class="form-select" 
-                                        asp-items="Model.Organizations"
-                                        name="OrganizationId"
-                                        id="OrganizationId"
-                                        required>
-                                    <option value="">-- Select Organization --</option>
-                                </select>
-                                <span asp-validation-for="OrganizationId" class="text-danger"></span>
+                                <label asp-for="LogoFile" class="form-label">Farm Logo</label>
+                                <input asp-for="LogoFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.svg" />
+                                <small class="text-muted">Allowed: JPG, JPEG, PNG, SVG (max 2MB)</small>
+                                <span asp-validation-for="LogoFile" class="text-danger"></span>
                             </div>
                         </div>
 

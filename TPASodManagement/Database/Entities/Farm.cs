@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Base_Entities;
 
@@ -40,6 +42,16 @@ public partial class Farm : AuditBaseEntity
     public string? IrrigationType { get; set; }
 
     public string? ClimateZone { get; set; }
+
+    public byte[]? LogoBytes { get; set; }
+
+    /// <summary>
+    /// Relative path under wwwroot, e.g. "uploads/logos/farm_1.png".
+    /// </summary>
+    public string? LogoFilePath { get; set; }
+
+    [NotMapped]
+    public IFormFile? LogoFile { get; set; }
 
     public virtual AreaType? AreaType { get; set; }
 

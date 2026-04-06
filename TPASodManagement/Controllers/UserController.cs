@@ -18,7 +18,6 @@ namespace TpaSodManagement.Controllers
     {
         private readonly IUserService _userService;
         private readonly IAdminService _adminService;
-        private readonly IOrganizationService _organizationService;
         private readonly IRegistrationService _registrationService;
         private readonly ApplicationDbContext _context;
         private readonly ILogger<UserController> _logger;
@@ -29,7 +28,6 @@ namespace TpaSodManagement.Controllers
         public UserController(
             IUserService userService,
             IAdminService adminService,
-            IOrganizationService organizationService,
             IRegistrationService registrationService,
             ApplicationDbContext context,
             ILogger<UserController> logger,
@@ -39,7 +37,6 @@ namespace TpaSodManagement.Controllers
         {
             _userService = userService;
             _adminService = adminService;
-            _organizationService = organizationService;
             _registrationService = registrationService;
             _context = context;
             _logger = logger;
@@ -70,12 +67,11 @@ namespace TpaSodManagement.Controllers
                 var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
                 bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
 
-                // If SuperAdmin, show all users (pass null to get all organizations)
-                // Otherwise, filter by current user's organization
-                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
+                // If SuperAdmin, show all users; otherwise filter by current user's farm.
+                long? farmFilter = isSuperAdmin ? null : currentUser.FarmId;
 
-                // Get users filtered by organization (or all if SuperAdmin)
-                var users = await _userService.GetAllUsersAsync(organizationFilter);
+                // Get users filtered by farm (or all if SuperAdmin)
+                var users = await _userService.GetAllUsersAsync(farmFilter);
                 var allUsers = users?.ToList() ?? new List<TpaSodManagementUser>();
                 var totalCount = allUsers.Count;
                 var totalPages = totalCount == 0 ? 1 : (int)Math.Ceiling(totalCount / (double)pageSize);
@@ -213,22 +209,24 @@ namespace TpaSodManagement.Controllers
 
             try
             {
-                if (!model.OrganizationId.HasValue)
+                if (!model.FarmId.HasValue)
                 {
-                    TempData["ErrorMessage"] = "Please select an organization.";
+                    TempData["ErrorMessage"] = "Please select a farm.";
                     await PopulateDropdowns(model);
                     return View(model);
                 }
 
-                var organization = await _organizationService.GetOrganizationByIdAsync(model.OrganizationId.Value);
-                if (organization == null)
+                var farm = await _context.Farms
+                    .Include(f => f.Organization)
+                    .FirstOrDefaultAsync(f => f.FarmId == model.FarmId.Value);
+                if (farm == null || farm.Organization == null)
                 {
-                    TempData["ErrorMessage"] = "Selected organization not found.";
+                    TempData["ErrorMessage"] = "Selected farm or its organization not found.";
                     await PopulateDropdowns(model);
                     return View(model);
                 }
 
-                var finalUsername = await _registrationService.GenerateUsernameAsync(organization, model.FirstName ?? string.Empty);
+                var finalUsername = await _registrationService.GenerateUsernameAsync(farm.Organization, model.FirstName ?? string.Empty);
 
                 var user = new TpaSodManagementUser
                 {
@@ -236,7 +234,7 @@ namespace TpaSodManagement.Controllers
                     NormalizedUserName = finalUsername.ToUpperInvariant(),
                     Email = model.Email,
                     NormalizedEmail = model.Email?.ToUpperInvariant(),
-                    OrganizationId = model.OrganizationId.Value,
+                    FarmId = model.FarmId.Value,
                     PrimaryContact = model.PrimaryContact,
                     PhoneNumber = model.PhoneNumber ?? string.Empty,
                     IsActive = model.IsActive,
@@ -510,7 +508,7 @@ namespace TpaSodManagement.Controllers
                 Id = user.Id,
                 UserName = user.UserName,
                 Email = user.Email,
-                OrganizationId = user.OrganizationId,
+                FarmId = user.FarmId,
                 PrimaryContact = user.PrimaryContact,
                 PhoneNumber = user.PhoneNumber,
                 IsActive = user.IsActive,
@@ -535,7 +533,7 @@ namespace TpaSodManagement.Controllers
                 PhoneNumber = model.PhoneNumber ?? string.Empty,
                 IsActive = model.IsActive,
                 PrimaryContact = model.PrimaryContact,
-                OrganizationId = model.OrganizationId,
+                FarmId = model.FarmId,
                 UserName = model.UserName
             };
         }
@@ -556,11 +554,10 @@ namespace TpaSodManagement.Controllers
                 var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
                 bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
                 
-                // If SuperAdmin, show all users (pass null to get all organizations)
-                // Otherwise, filter by current user's organization
-                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
+                // If SuperAdmin, show all users; otherwise filter by current user's farm.
+                long? farmFilter = isSuperAdmin ? null : currentUser.FarmId;
 
-                var result = await _userService.GetFilteredAsync(filters ?? new Dictionary<string, string>(), organizationFilter);
+                var result = await _userService.GetFilteredAsync(filters ?? new Dictionary<string, string>(), farmFilter);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -628,11 +625,10 @@ namespace TpaSodManagement.Controllers
                 var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
                 bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
                 
-                // If SuperAdmin, show all users (pass null to get all organizations)
-                // Otherwise, filter by current user's organization
-                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
+                // If SuperAdmin, show all users; otherwise filter by current user's farm.
+                long? farmFilter = isSuperAdmin ? null : currentUser.FarmId;
 
-                var result = await _userService.GetFilteredAsync(filters, organizationFilter);
+                var result = await _userService.GetFilteredAsync(filters, farmFilter);
                 if (!result.Success)
                 {
                     return Json(new { success = false, message = result.Message });
@@ -735,8 +731,8 @@ namespace TpaSodManagement.Controllers
                     return Json(new { success = false, message = "User not found." });
                 var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
                 bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
-                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
-                var result = await _userService.GetFilteredAsync(filters, organizationFilter);
+                long? farmFilter = isSuperAdmin ? null : currentUser.FarmId;
+                var result = await _userService.GetFilteredAsync(filters, farmFilter);
                 if (!result.Success)
                     return Json(new { success = false, message = result.Message });
                 var users = result.Data ?? new List<TpaSodManagementUser>();
@@ -793,8 +789,15 @@ namespace TpaSodManagement.Controllers
 
         private async Task PopulateDropdowns(UserEditViewModel vm)
         {
-            var organizations = await _organizationService.GetAllOrganizationsAsync();
-            vm.Organizations = new SelectList(organizations, "OrganizationId", "OrganizationName", vm.OrganizationId);
+            var farms = await _context.Farms
+                .Include(f => f.Organization)
+                .OrderBy(f => f.FarmName)
+                .ToListAsync();
+            vm.Farms = new SelectList(farms.Select(f => new
+            {
+                f.FarmId,
+                FarmDisplayName = f.Organization != null ? $"{f.FarmName} ({f.Organization.OrganizationName})" : f.FarmName
+            }), "FarmId", "FarmDisplayName", vm.FarmId);
 
             var addressTypes = await _context.AddressTypes
                 .Where(at => at.DeletedDate == null && at.IsActive)

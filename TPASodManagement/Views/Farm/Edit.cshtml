@@ -20,7 +20,6 @@
                     @if (TempData["SuccessMessage"] != null)
                     {
                         <div class="alert alert-success alert-dismissible fade show">
-                            <a href="c:\users\ahtisham ul haq\documents\github\ai4hk-github\tpasodmanagement\views\farm\edit.cshtml">c:\users\ahtisham ul haq\documents\github\ai4hk-github\tpasodmanagement\views\farm\edit.cshtml</a>
                             <strong>Success!</strong> @TempData["SuccessMessage"]
                             <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                         </div>
@@ -48,7 +47,7 @@
                         </div>
                     }
 
-                    <form asp-action="Edit" method="post">
+                    <form asp-action="Edit" method="post" enctype="multipart/form-data">
                         @Html.AntiForgeryToken()
                         
                         <input type="hidden" asp-for="FarmId" />
@@ -62,16 +61,16 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationId" class="form-label">Organization <span class="text-danger">*</span></label>
-                                <select asp-for="OrganizationId" class="form-select" asp-items="Model.Organizations" disabled="@disabledAttr" required>
-                                    <option value="">-- Select Organization --</option>
-                                </select>
-                                @* Hidden field sirf Details view mein rakhein, Edit view mein bilkul nahi *@
-                                @if (isDetailsView)
+                                <label asp-for="LogoFile" class="form-label">Farm Logo</label>
+                                @if (!string.IsNullOrWhiteSpace(Model.LogoFilePath))
                                 {
-                                    <input type="hidden" asp-for="OrganizationId" />
+                                    <div class="mb-2">
+                                        <img src="/@Model.LogoFilePath" alt="Farm logo" class="img-thumbnail" style="max-height: 80px;" />
+                                    </div>
                                 }
-                                <span asp-validation-for="OrganizationId" class="text-danger"></span>
+                                <input asp-for="LogoFile" type="file" class="form-control" accept=".jpg,.jpeg,.png,.svg" disabled="@disabledAttr" />
+                                <small class="text-muted">Allowed: JPG, JPEG, PNG, SVG (max 2MB)</small>
+                                <span asp-validation-for="LogoFile" class="text-danger"></span>
                             </div>
                         </div>
 

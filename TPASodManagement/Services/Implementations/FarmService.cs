@@ -4,18 +4,26 @@ using TpaSodManagement.Database;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
 using TpaSodManagement.Services.Interfaces;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 
 namespace TpaSodManagement.Services.Implementations
 {
     public class FarmService : IFarmService
     {
+        private const string LogoFolderRelativePath = "uploads/logos";
+        private const int LogoMaxSizeBytes = 2 * 1024 * 1024; // 2MB
+        private static readonly string[] AllowedLogoExtensions = { ".jpg", ".jpeg", ".png", ".svg" };
+
         private readonly ApplicationDbContext _context;
         private readonly ICurrentUserService _currentUserService;
+        private readonly IWebHostEnvironment _env;
 
-        public FarmService(ApplicationDbContext context, ICurrentUserService currentUserService)
+        public FarmService(ApplicationDbContext context, ICurrentUserService currentUserService, IWebHostEnvironment env)
         {
             _context = context;
             _currentUserService = currentUserService;
+            _env = env;
         }
 
         public async Task<ServiceResponse<List<Farm>>> GetAllAsync()
@@ -25,15 +33,19 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var query = _context.Farms
                     .Include(f => f.AreaType)
-                    .Include(f => f.Organization)
                     .Include(f => f.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        query = query.Where(f => f.OrganizationId == orgId.Value);
+                    var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                    var currentUserFarmId = await _context.Users
+                        .Where(u => u.Id == currentUserId)
+                        .Select(u => u.FarmId)
+                        .FirstOrDefaultAsync();
+
+                    if (currentUserFarmId.HasValue)
+                        query = query.Where(f => f.FarmId == currentUserFarmId.Value);
                     else
                         query = query.Where(f => false);
                 }
@@ -55,15 +67,19 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var query = _context.Farms
                     .Include(f => f.AreaType)
-                    .Include(f => f.Organization)
                     .Include(f => f.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        query = query.Where(f => f.OrganizationId == orgId.Value);
+                    var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
+                    var currentUserFarmId = await _context.Users
+                        .Where(u => u.Id == currentUserId)
+                        .Select(u => u.FarmId)
+                        .FirstOrDefaultAsync();
+
+                    if (currentUserFarmId.HasValue)
+                        query = query.Where(f => f.FarmId == currentUserFarmId.Value);
                     else
                         query = query.Where(f => false);
                 }
@@ -199,7 +215,6 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var farm = await _context.Farms
                     .Include(f => f.AreaType)
-                    .Include(f => f.Organization)
                     .Include(f => f.Address).ThenInclude(a => a!.StateProvince)
                     .FirstOrDefaultAsync(f => f.FarmId == id);
 
@@ -226,11 +241,40 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Farm>();
             try
             {
+                var organizationId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                if (!organizationId.HasValue)
+                {
+                    response.Success = false;
+                    response.Message = "Current user organization is not available.";
+                    return response;
+                }
+
+                farm.OrganizationId = organizationId.Value;
+
+                if (farm.LogoFile != null)
+                {
+                    var logoValidationError = ValidateLogoFile(farm.LogoFile);
+                    if (logoValidationError != null)
+                    {
+                        response.Success = false;
+                        response.Message = logoValidationError;
+                        return response;
+                    }
+                }
+
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
                 farm.CreatedDate = DateTimeOffset.UtcNow;
                 farm.CreatedByUserId = currentUserId;
                 _context.Add(farm);
                 await _context.SaveChangesAsync();
+
+                if (farm.LogoFile != null)
+                {
+                    var filePath = await SaveLogoFileAsync(farm.FarmId, farm.LogoFile);
+                    farm.LogoFilePath = filePath;
+                    await _context.SaveChangesAsync();
+                }
+
                 response.Data = farm;
             }
             catch (System.Exception ex)
@@ -259,7 +303,6 @@ namespace TpaSodManagement.Services.Implementations
                 // Update only the properties that are provided
                 existingFarm.FarmName = farm.FarmName;
                 existingFarm.AddressId = farm.AddressId;
-                existingFarm.OrganizationId = farm.OrganizationId;
                 existingFarm.TotalArea = farm.TotalArea;
                 existingFarm.AreaTypeId = farm.AreaTypeId;
                 existingFarm.LicenseNumber = farm.LicenseNumber;
@@ -272,6 +315,19 @@ namespace TpaSodManagement.Services.Implementations
                 existingFarm.IrrigationType = farm.IrrigationType;
                 existingFarm.ClimateZone = farm.ClimateZone;
                 existingFarm.IsActive = farm.IsActive;
+
+                if (farm.LogoFile != null)
+                {
+                    var logoValidationError = ValidateLogoFile(farm.LogoFile);
+                    if (logoValidationError != null)
+                    {
+                        response.Success = false;
+                        response.Message = logoValidationError;
+                        return response;
+                    }
+
+                    existingFarm.LogoFilePath = await SaveLogoFileAsync(existingFarm.FarmId, farm.LogoFile);
+                }
 
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
                 existingFarm.UpdatedDate = DateTimeOffset.UtcNow;
@@ -325,32 +381,15 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>> GetDropdownDataAsync(long? selectedOrganizationId = null, int? selectedAreaTypeId = null)
+        public async Task<ServiceResponse<SelectList>> GetAreaTypeDropdownAsync(int? selectedAreaTypeId = null)
         {
-            var response = new ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>();
+            var response = new ServiceResponse<SelectList>();
             try
             {
                 var areaTypes = await _context.AreaTypes
                     .OrderBy(a => a.AreaTypeName)
                     .ToListAsync();
-
-                var orgsQuery = _context.Organizations
-                    .OrderBy(o => o.OrganizationName)
-                    .AsQueryable();
-                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
-                {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        orgsQuery = orgsQuery.Where(o => o.OrganizationId == orgId.Value);
-                    else
-                        orgsQuery = orgsQuery.Where(o => false);
-                }
-                var orgs = await orgsQuery.ToListAsync();
-
-                response.Data = (
-                    new SelectList(areaTypes, "AreaTypeId", "AreaTypeName", selectedAreaTypeId), 
-                    new SelectList(orgs, "OrganizationId", "OrganizationName", selectedOrganizationId) 
-                );
+                response.Data = new SelectList(areaTypes, "AreaTypeId", "AreaTypeName", selectedAreaTypeId);
             }
             catch (System.Exception ex)
             {
@@ -358,6 +397,41 @@ namespace TpaSodManagement.Services.Implementations
                 response.Message = $"Error fetching dropdowns: {ex.Message}";
             }
             return response;
+        }
+
+        private static string? ValidateLogoFile(IFormFile logoFile)
+        {
+            if (logoFile.Length <= 0)
+            {
+                return "Please select a valid logo file.";
+            }
+
+            if (logoFile.Length > LogoMaxSizeBytes)
+            {
+                return "Logo size must be 2MB or less.";
+            }
+
+            var extension = Path.GetExtension(logoFile.FileName)?.ToLowerInvariant();
+            if (string.IsNullOrWhiteSpace(extension) || !AllowedLogoExtensions.Contains(extension))
+            {
+                return "Only JPG, JPEG, PNG, or SVG files are allowed for logo.";
+            }
+
+            return null;
+        }
+
+        private async Task<string> SaveLogoFileAsync(long farmId, IFormFile logoFile)
+        {
+            var extension = Path.GetExtension(logoFile.FileName).ToLowerInvariant();
+            var fileName = $"farm_{farmId}_{DateTimeOffset.UtcNow.ToUnixTimeMilliseconds()}{extension}";
+            var logosDirectory = Path.Combine(_env.WebRootPath, LogoFolderRelativePath);
+            Directory.CreateDirectory(logosDirectory);
+
+            var absolutePath = Path.Combine(logosDirectory, fileName);
+            await using var stream = new FileStream(absolutePath, FileMode.Create);
+            await logoFile.CopyToAsync(stream);
+
+            return $"{LogoFolderRelativePath}/{fileName}";
         }
     }
 }

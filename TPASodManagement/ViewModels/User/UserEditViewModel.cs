@@ -15,9 +15,9 @@ namespace TpaSodManagement.ViewModels.User
         [Display(Name = "Email")]
         public string? Email { get; set; }
 
-        [Required(ErrorMessage = "Organization is required")]
-        [Display(Name = "Organization")]
-        public long? OrganizationId { get; set; }
+        [Required(ErrorMessage = "Farm is required")]
+        [Display(Name = "Farm")]
+        public long? FarmId { get; set; }
 
         [Display(Name = "Primary Contact")]
         public string? PrimaryContact { get; set; }
@@ -61,7 +61,7 @@ namespace TpaSodManagement.ViewModels.User
         [Compare("Password", ErrorMessage = "Passwords do not match.")]
         public string? ConfirmPassword { get; set; }
 
-        public IEnumerable<SelectListItem> Organizations { get; set; } = Enumerable.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> Farms { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> AddressTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> StateProvinces { get; set; } = Enumerable.Empty<SelectListItem>();
 

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace TpaSodManagement.ViewModels.Farm
@@ -35,17 +36,17 @@ namespace TpaSodManagement.ViewModels.Farm
         public string? ClimateZone { get; set; }
 
         public long? AreaTypeId { get; set; }
-        
-        [Required(ErrorMessage = "Organization is required")]
-        [Display(Name = "Organization")]
-        public long? OrganizationId { get; set; }
 
         public long? AddressId { get; set; }
+
+        [Display(Name = "Farm Logo")]
+        public IFormFile? LogoFile { get; set; }
+
+        public string? LogoFilePath { get; set; }
 
         public bool IsActive { get; set; } = true;
 
         public IEnumerable<SelectListItem> AreaTypes { get; set; } = Enumerable.Empty<SelectListItem>();
-        public IEnumerable<SelectListItem> Organizations { get; set; } = Enumerable.Empty<SelectListItem>();
 
         public bool IsDetailsView { get; set; }
     }

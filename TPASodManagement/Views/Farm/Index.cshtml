@@ -107,8 +107,8 @@
                 <th data-column="SoilType">Soil Type</th>
                 <th data-column="IrrigationType">Irrigation Type</th>
                 <th data-column="ClimateZone">Climate Zone</th>
+                <th data-column="Logo">Logo</th>
                 <th data-column="IsActive">Is Active</th>
-                @* <th data-column="Organization">Organization</th> *@
                 <th data-column="Actions" class="no-hide-column">Actions</th>
             </tr>
         </thead>
@@ -129,8 +129,17 @@
                     <td data-column="SoilType">@Html.DisplayFor(modelItem => item.SoilType)</td>
                     <td data-column="IrrigationType">@Html.DisplayFor(modelItem => item.IrrigationType)</td>
                     <td data-column="ClimateZone">@Html.DisplayFor(modelItem => item.ClimateZone)</td>
+                    <td data-column="Logo">
+                        @if (!string.IsNullOrWhiteSpace(item.LogoFilePath))
+                        {
+                            <img src="@item.LogoFilePath" alt="Farm logo" style="max-height: 34px;" />
+                        }
+                        else
+                        {
+                            <span class="text-muted">N/A</span>
+                        }
+                    </td>
                     <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
-                    @* <td data-column="Organization">@(item.OrganizationName ?? "N/A")</td> *@
                     <td data-column="Actions">
                         <div class="btn-group btn-group-sm">
                             @if (User.HasPermission("Farm.Detail"))
@@ -1205,6 +1214,7 @@
                 <td data-column="SoilType">${escapeHtml(item.soilType || '')}</td>
                 <td data-column="IrrigationType">${escapeHtml(item.irrigationType || '')}</td>
                 <td data-column="ClimateZone">${escapeHtml(item.climateZone || '')}</td>
+                <td data-column="Logo">${item.logoFilePath ? `<img src="${escapeHtml(item.logoFilePath)}" alt="Farm logo" style="max-height: 34px;" />` : '<span class="text-muted">N/A</span>'}</td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td data-column="Actions">
                     <div class="btn-group btn-group-sm">

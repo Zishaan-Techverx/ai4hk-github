@@ -13,7 +13,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning)));
 
 // Configure Identity
 builder.Services.AddDefaultIdentity<TpaSodManagementUser>(options =>
@@ -155,6 +156,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TpaSodManagementUser>>();
     await context.Database.MigrateAsync();
+    await TpaSodManagement.Database.Seeders.UserFarmBackfillSeeder.SeedAsync(context);
     await TpaSodManagement.Database.Seeders.FieldTypeSeeder.SeedAsync(context, userManager);
     await TpaSodManagement.Database.Seeders.AddressTypeSeeder.SeedAsync(context);
     await TpaSodManagement.Database.Seeders.CustomerTypeSeeder.SeedAsync(context);

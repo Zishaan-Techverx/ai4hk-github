@@ -92,11 +92,11 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationId" class="form-label">Organization <span class="text-danger">*</span></label>
-                                <select asp-for="OrganizationId" class="form-select" asp-items="Model.Organizations" disabled="@disabledAttr" required>
-                                    <option value="">-- Select Organization --</option>
+                                <label asp-for="FarmId" class="form-label">Farm <span class="text-danger">*</span></label>
+                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms" disabled="@disabledAttr" required>
+                                    <option value="">-- Select Farm --</option>
                                 </select>
-                                <span asp-validation-for="OrganizationId" class="text-danger"></span>
+                                <span asp-validation-for="FarmId" class="text-danger"></span>
                             </div>
                         </div>
 
@@ -236,22 +236,22 @@
                     });
                 }
 
-                const organizationSelect = document.querySelector('select[name="OrganizationId"]');
+                const farmSelect = document.querySelector('select[name="FarmId"]');
                 const firstNameInput = document.querySelector('input[name="FirstName"]');
                 const userNameInput = document.querySelector('input[name="UserName"]');
                 
                 const originalUsername = userNameInput ? userNameInput.value : '';
                 
-                function generateUsername(organizationName, firstName) {
-                    if (!organizationName || !firstName) {
+                function generateUsername(farmName, firstName) {
+                    if (!farmName || !firstName) {
                         return originalUsername;
                     }
                     
-                    const rawOrgName = organizationName.replace(/\s+/g, '');
-                    const orgPrefixLength = 5;
-                    const orgPrefix = rawOrgName.length >= orgPrefixLength 
-                        ? rawOrgName.substring(0, orgPrefixLength).toUpperCase()
-                        : rawOrgName.toUpperCase();
+                    const rawFarmName = farmName.replace(/\s+/g, '');
+                    const farmPrefixLength = 5;
+                    const farmPrefix = rawFarmName.length >= farmPrefixLength 
+                        ? rawFarmName.substring(0, farmPrefixLength).toUpperCase()
+                        : rawFarmName.toUpperCase();
                     
                     const nameParts = firstName.trim().split(/\s+/);
                     let userInitials;
@@ -264,27 +264,27 @@
                         userInitials = firstName.toUpperCase();
                     }
                     
-                    const baseUsername = `${orgPrefix}-${userInitials}`;
+                    const baseUsername = `${farmPrefix}-${userInitials}`;
                     
                     return baseUsername;
                 }
                 
                 function updateUsername() {
-                    if (!organizationSelect || !firstNameInput || !userNameInput) return;
+                    if (!farmSelect || !firstNameInput || !userNameInput) return;
                     
-                    // Get organization name from selected option text
-                    const selectedOption = organizationSelect.options[organizationSelect.selectedIndex];
-                    const orgName = selectedOption ? selectedOption.text : '';
+                    // Get farm name from selected option text
+                    const selectedOption = farmSelect.options[farmSelect.selectedIndex];
+                    const farmName = selectedOption ? selectedOption.text : '';
                     const firstName = firstNameInput.value;
                     
-                    if (orgName && firstName) {
-                        const newUsername = generateUsername(orgName, firstName);
+                    if (farmName && firstName) {
+                        const newUsername = generateUsername(farmName, firstName);
                         userNameInput.value = newUsername;
                     }
                 }
                 
-                if (organizationSelect) {
-                    organizationSelect.addEventListener('change', updateUsername);
+                if (farmSelect) {
+                    farmSelect.addEventListener('change', updateUsername);
                 }
                 
                 if (firstNameInput) {

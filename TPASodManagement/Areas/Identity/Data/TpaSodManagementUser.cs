@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -18,6 +18,7 @@ public class TpaSodManagementUser : IdentityUser<long>
     public long? PersonId { get; set; }
     public long? WebsiteId { get; set; }
     public long? FarmId { get; set; }
+    public Farm? Farm { get; set; }
 
     // Audit properties (same as AuditBaseEntity - cannot inherit due to IdentityUser<long> inheritance)
     public DateTimeOffset CreatedDate { get; set; }

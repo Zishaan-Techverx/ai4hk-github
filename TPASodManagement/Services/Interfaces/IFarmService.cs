@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TpaSodManagement.Database.Entities;
@@ -13,6 +13,6 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<Farm>> CreateAsync(Farm farm);
         Task<ServiceResponse<Farm>> UpdateAsync(Farm farm);
         Task<ServiceResponse<bool>> DeleteAsync(long id, long? deletedByUserId);
-        Task<ServiceResponse<(SelectList AreaTypes, SelectList Organizations)>> GetDropdownDataAsync(long? selectedOrganizationId = null, int? selectedAreaTypeId = null);
+        Task<ServiceResponse<SelectList>> GetAreaTypeDropdownAsync(int? selectedAreaTypeId = null);
     }
 }

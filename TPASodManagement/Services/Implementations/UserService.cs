@@ -31,18 +31,18 @@ namespace TpaSodManagement.Services.Implementations
             _emailService = emailService;
         }
 
-        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(long? organizationId = null)
+        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(long? farmId = null)
         {
             // Get all users
             var allUsers = await _userManager.Users
-                .Include(u => u.Organization)
+                .Include(u => u.Farm)
                 .ToListAsync();
             
-            // Filter by organization if provided
-            if (organizationId.HasValue)
+            // Filter by farm if provided
+            if (farmId.HasValue)
             {
                 allUsers = allUsers
-                    .Where(u => u.OrganizationId == organizationId.Value)
+                    .Where(u => u.FarmId == farmId.Value)
                     .ToList();
             }
             
@@ -68,15 +68,15 @@ namespace TpaSodManagement.Services.Implementations
         }
 
         // Helper method to generate username (same logic as registration)
-        private async Task<string> GenerateUsernameAsync(Organization organization, string firstName, long? excludeUserId = null)
+        private async Task<string> GenerateUsernameAsync(Farm farm, string firstName, long? excludeUserId = null)
         {
-            string rawOrgName = organization?.OrganizationName?.Replace(" ", "") ?? "";
-            const int OrgPrefixLength = 5;
-            string orgPrefix = rawOrgName.Length >= OrgPrefixLength
-                               ? rawOrgName.Substring(0, OrgPrefixLength)
-                               : rawOrgName;
+            string rawFarmName = farm?.FarmName?.Replace(" ", "") ?? "";
+            const int FarmPrefixLength = 5;
+            string farmPrefix = rawFarmName.Length >= FarmPrefixLength
+                               ? rawFarmName.Substring(0, FarmPrefixLength)
+                               : rawFarmName;
 
-            orgPrefix = orgPrefix.ToUpper();
+            farmPrefix = farmPrefix.ToUpper();
 
             string userInitials;
             string[] nameParts = firstName?.Split(' ', System.StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
@@ -98,7 +98,7 @@ namespace TpaSodManagement.Services.Implementations
                 userInitials = "XX"; // Fallback if no first name
             }
 
-            string baseUsername = $"{orgPrefix}-{userInitials}";
+            string baseUsername = $"{farmPrefix}-{userInitials}";
             string finalUsername = baseUsername;
             int counter = 1;
 
@@ -134,8 +134,8 @@ namespace TpaSodManagement.Services.Implementations
                 // Store existing roles before update (to preserve them)
                 var existingRoles = await _userManager.GetRolesAsync(existingUser);
 
-                // Check if OrganizationId changed
-                bool organizationChanged = existingUser.OrganizationId != user.OrganizationId;
+                // Check if FarmId changed
+                bool farmChanged = existingUser.FarmId != user.FarmId;
                 
                 // Check if Email changed
                 bool emailChanged = !string.Equals(existingUser.Email, user.Email, StringComparison.OrdinalIgnoreCase);
@@ -148,7 +148,7 @@ namespace TpaSodManagement.Services.Implementations
                 existingUser.PhoneNumber = user.PhoneNumber;
                 existingUser.IsActive = user.IsActive;
                 existingUser.PrimaryContact = user.PrimaryContact;
-                existingUser.OrganizationId = user.OrganizationId;
+                existingUser.FarmId = user.FarmId;
 
                 // Update NormalizedEmail if Email changed
                 if (emailChanged)
@@ -156,19 +156,19 @@ namespace TpaSodManagement.Services.Implementations
                     existingUser.NormalizedEmail = user.Email?.ToUpperInvariant();
                 }
 
-                // Regenerate username if OrganizationId changed - Get FirstName from Person table and Organization
-                if (organizationChanged && user.OrganizationId.HasValue)
+                // Regenerate username if FarmId changed - Get FirstName from Person table and Farm
+                if (farmChanged && user.FarmId.HasValue)
                 {
                     // Get Person to get FirstName
                     var person = await _registrationService.GetUserPersonAsync(user.Id.ToString());
                     var firstName = person?.FirstName ?? "";
                     
-                    // Get Organization to get OrganizationName for username generation
-                    var organization = await _context.Organizations
-                        .FirstOrDefaultAsync(o => o.OrganizationId == user.OrganizationId.Value);
-                    if (organization != null)
+                    // Get Farm to get FarmName for username generation
+                    var farm = await _context.Farms
+                        .FirstOrDefaultAsync(f => f.FarmId == user.FarmId.Value);
+                    if (farm != null)
                     {
-                        var newUsername = await GenerateUsernameAsync(organization, firstName, user.Id);
+                        var newUsername = await GenerateUsernameAsync(farm, firstName, user.Id);
                         existingUser.UserName = newUsername;
                         existingUser.NormalizedUserName = newUsername?.ToUpperInvariant();
                         _logger.LogInformation("Username regenerated for user {UserId}: {OldUsername} -> {NewUsername}", 
@@ -193,7 +193,7 @@ namespace TpaSodManagement.Services.Implementations
                     _logger.LogInformation("User {UserId} roles preserved: {Roles}", user.Id, string.Join(", ", rolesAfterUpdate));
                 }
 
-                return (true, "User updated successfully." + (organizationChanged ? " Username has been regenerated." : ""));
+                return (true, "User updated successfully." + (farmChanged ? " Username has been regenerated." : ""));
             }
             catch (Exception ex)
             {
@@ -418,21 +418,21 @@ namespace TpaSodManagement.Services.Implementations
         </html>";
         }
 
-        public async Task<ServiceResponse<List<TpaSodManagementUser>>> GetFilteredAsync(Dictionary<string, string> filters, long? organizationId = null)
+        public async Task<ServiceResponse<List<TpaSodManagementUser>>> GetFilteredAsync(Dictionary<string, string> filters, long? farmId = null)
         {
             var response = new ServiceResponse<List<TpaSodManagementUser>>();
             try
             {
                 // Get all users with includes
                 var allUsers = await _userManager.Users
-                    .Include(u => u.Organization)
+                    .Include(u => u.Farm)
                     .ToListAsync();
 
-                // Filter by organization if provided
-                if (organizationId.HasValue)
+                // Filter by farm if provided
+                if (farmId.HasValue)
                 {
                     allUsers = allUsers
-                        .Where(u => u.OrganizationId == organizationId.Value)
+                        .Where(u => u.FarmId == farmId.Value)
                         .ToList();
                 }
 
@@ -494,13 +494,13 @@ namespace TpaSodManagement.Services.Implementations
                         }
                     }
 
-                    // Filter by OrganizationName
-                    if (filters.ContainsKey("OrganizationName") && !string.IsNullOrWhiteSpace(filters["OrganizationName"]))
+                    // Filter by FarmName
+                    if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["OrganizationName"]);
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmName"]);
                         filteredUsers = filteredUsers
-                            .Where(u => u.Organization != null && u.Organization.OrganizationName != null && 
-                                       u.Organization.OrganizationName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+                            .Where(u => u.Farm != null && u.Farm.FarmName != null &&
+                                       u.Farm.FarmName.Contains(filterValue, StringComparison.OrdinalIgnoreCase))
                             .ToList();
                     }
 

@@ -101,7 +101,7 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null) return NotFound();
 
             var vm = MapToEditViewModel(result.Data, isDetailsView: true);
-            await PopulateDropdowns(vm, result.Data.OrganizationId, result.Data.AreaTypeId);
+            await PopulateDropdowns(vm, result.Data.AreaTypeId);
             ViewBag.AddressFormatted = FormatAddress(result.Data.Address);
             ViewBag.IsDetailsView = true;
             ViewBag.Title = "Farm Details";
@@ -149,7 +149,7 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null) return NotFound();
 
             var vm = MapToEditViewModel(result.Data);
-            await PopulateDropdowns(vm, result.Data.OrganizationId, result.Data.AreaTypeId);
+            await PopulateDropdowns(vm, result.Data.AreaTypeId);
             return View(vm);
         }
 
@@ -161,7 +161,7 @@ namespace TpaSodManagement.Controllers
 
             if (!ModelState.IsValid)
             {
-                await PopulateDropdowns(farmVm, farmVm.OrganizationId, farmVm.AreaTypeId);
+                await PopulateDropdowns(farmVm, farmVm.AreaTypeId);
                 return View(farmVm);
             }
 
@@ -170,7 +170,7 @@ namespace TpaSodManagement.Controllers
             if (!result.Success)
             {
                 TempData["Error"] = result.Message;
-                await PopulateDropdowns(farmVm, farmVm.OrganizationId, farmVm.AreaTypeId);
+                await PopulateDropdowns(farmVm, farmVm.AreaTypeId);
                 return View(farmVm);
             }
 
@@ -434,7 +434,7 @@ namespace TpaSodManagement.Controllers
                 IrrigationType = entity.IrrigationType,
                 ClimateZone = entity.ClimateZone,
                 AreaTypeName = entity.AreaType?.AreaTypeName,
-                OrganizationName = entity.Organization?.OrganizationName
+                LogoFilePath = string.IsNullOrWhiteSpace(entity.LogoFilePath) ? null : $"/{entity.LogoFilePath.Replace("\\", "/")}"
             };
         }
 
@@ -455,8 +455,8 @@ namespace TpaSodManagement.Controllers
                 IrrigationType = entity.IrrigationType,
                 ClimateZone = entity.ClimateZone,
                 AreaTypeId = entity.AreaTypeId,
-                OrganizationId = entity.OrganizationId,
                 AddressId = entity.AddressId,
+                LogoFilePath = entity.LogoFilePath,
                 IsActive = entity.IsActive,
                 IsDetailsView = isDetailsView
             };
@@ -480,24 +480,22 @@ namespace TpaSodManagement.Controllers
                 IrrigationType = vm.IrrigationType,
                 ClimateZone = vm.ClimateZone,
                 AreaTypeId = vm.AreaTypeId.HasValue ? (int?)vm.AreaTypeId.Value : null,
-                OrganizationId = vm.OrganizationId ?? 0,
+                LogoFile = vm.LogoFile,
                 IsActive = vm.IsActive
             };
         }
 
-        private async Task PopulateDropdowns(FarmEditViewModel vm, long? organizationId = null, long? areaTypeId = null)
+        private async Task PopulateDropdowns(FarmEditViewModel vm, long? areaTypeId = null)
         {
-            var dropdowns = await _farmService.GetDropdownDataAsync(organizationId, areaTypeId.HasValue ? (int?)areaTypeId.Value : null);
-            if (dropdowns.Success && dropdowns.Data.AreaTypes != null && dropdowns.Data.Organizations != null)
+            var areaTypes = await _farmService.GetAreaTypeDropdownAsync(areaTypeId.HasValue ? (int?)areaTypeId.Value : null);
+            if (areaTypes.Success && areaTypes.Data != null)
             {
-                vm.AreaTypes = dropdowns.Data.AreaTypes;
-                vm.Organizations = dropdowns.Data.Organizations;
+                vm.AreaTypes = areaTypes.Data;
             }
             else
             {
                 vm.AreaTypes = Enumerable.Empty<SelectListItem>();
-                vm.Organizations = Enumerable.Empty<SelectListItem>();
-                TempData["Error"] = dropdowns.Message;
+                TempData["Error"] = areaTypes.Message;
             }
         }
 
