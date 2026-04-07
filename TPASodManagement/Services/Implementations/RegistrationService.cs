@@ -30,6 +30,14 @@ namespace TpaSodManagement.Services.Implementations
                 .ToListAsync();
         }
 
+        public async Task<List<Farm>> GetAllFarmsAsync()
+        {
+            return await _context.Farms
+                .Where(f => f.DeletedDate == null && f.IsActive)
+                .OrderBy(f => f.FarmName)
+                .ToListAsync();
+        }
+
         public async Task<Organization?> GetOrganizationByNameAsync(string organizationName)
         {
             return await _context.Organizations
@@ -71,6 +79,44 @@ namespace TpaSodManagement.Services.Implementations
             string baseUsername = $"{orgPrefix}-{userInitials}";
             string finalUsername = baseUsername;
             int counter = 1;
+
+            while (await _userManager.FindByNameAsync(finalUsername) != null)
+            {
+                finalUsername = $"{baseUsername}{counter++}";
+            }
+
+            return finalUsername;
+        }
+
+        public async Task<string> GenerateUsernameFromFarmAsync(Farm farm, string firstName)
+        {
+            var rawFarmName = farm?.FarmName?.Replace(" ", "") ?? "";
+            const int PrefixLength = 5;
+            var farmPrefix = rawFarmName.Length >= PrefixLength
+                ? rawFarmName.Substring(0, PrefixLength)
+                : rawFarmName;
+
+            farmPrefix = farmPrefix.ToUpper();
+
+            string userInitials;
+            var nameParts = firstName.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            if (nameParts.Length >= 2)
+            {
+                userInitials = (nameParts[0][0].ToString() + nameParts[^1][0].ToString()).ToUpper();
+            }
+            else if (firstName.Length >= 2)
+            {
+                userInitials = firstName.Substring(0, 2).ToUpper();
+            }
+            else
+            {
+                userInitials = firstName.ToUpper();
+            }
+
+            var baseUsername = $"{farmPrefix}-{userInitials}";
+            var finalUsername = baseUsername;
+            var counter = 1;
 
             while (await _userManager.FindByNameAsync(finalUsername) != null)
             {

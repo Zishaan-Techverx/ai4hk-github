@@ -48,8 +48,8 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
             public string Email { get; set; }
 
             [Required]
-            [Display(Name = "Organization")]
-            public long OrganizationId { get; set; }
+            [Display(Name = "Farm")]
+            public long FarmId { get; set; }
 
             [Required]
             [StringLength(100, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
@@ -67,10 +67,8 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
         {
             ReturnUrl = returnUrl;
             
-            // Load ALL organizations for dropdown (no IsActive filter)
-            var organizations = await _registrationService.GetAllOrganizationsAsync();
-            
-            ViewData["Organizations"] = new SelectList(organizations, "OrganizationId", "OrganizationName");
+            var farms = await _registrationService.GetAllFarmsAsync();
+            ViewData["Farms"] = new SelectList(farms, "FarmId", "FarmName");
         }
 
         public async Task<IActionResult> OnPostAsync(string returnUrl = null)
@@ -79,15 +77,12 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
 
             if (ModelState.IsValid)
             {
-                // Validate Organization exists
-                var organizations = await _registrationService.GetAllOrganizationsAsync();
-                var organization = organizations.FirstOrDefault(o => o.OrganizationId == Input.OrganizationId);
-
-                if (organization == null)
+                var farms = await _registrationService.GetAllFarmsAsync();
+                var farm = farms.FirstOrDefault(f => f.FarmId == Input.FarmId);
+                if (farm == null)
                 {
-                    ModelState.AddModelError("Input.OrganizationId", "Organization does not exist. Please select a valid organization.");
-                    
-                    ViewData["Organizations"] = new SelectList(organizations, "OrganizationId", "OrganizationName", Input.OrganizationId);
+                    ModelState.AddModelError("Input.FarmId", "Farm does not exist. Please select a valid farm.");
+                    ViewData["Farms"] = new SelectList(farms, "FarmId", "FarmName", Input.FarmId);
                     return Page();
                 }
 
@@ -96,18 +91,18 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
                 {
                     ModelState.AddModelError("Input.Email", $"An account with the email '{Input.Email}' already exists. Please use a different email address.");
                     
-                    ViewData["Organizations"] = new SelectList(organizations, "OrganizationId", "OrganizationName", Input.OrganizationId);
+                    ViewData["Farms"] = new SelectList(farms, "FarmId", "FarmName", Input.FarmId);
                     return Page();
                 }
 
-                // Generate username
-                string finalUsername = await _registrationService.GenerateUsernameAsync(organization, Input.FirstName);
+                string finalUsername = await _registrationService.GenerateUsernameFromFarmAsync(farm, Input.FirstName);
 
                 var user = new TpaSodManagementUser
                 {
                     UserName = finalUsername,
                     Email = Input.Email,
-                    OrganizationId = organization.OrganizationId,
+                    FarmId = farm.FarmId,
+                    OrganizationId = farm.OrganizationId,
                     IsActive = true, 
                     PhoneNumber = string.Empty,
                     EmailConfirmed = false,
@@ -135,9 +130,6 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
                         // Create Website record
                         await _registrationService.CreateWebsiteForUserAsync(user, finalUsername);
                         
-                        // Create or Get Farm for Organization
-                        var farm = await _registrationService.CreateOrGetFarmForOrganizationAsync(organization.OrganizationId);
-                        user.FarmId = farm.FarmId;
                         await _userManager.UpdateAsync(user);
                     }
                     catch (Exception ex)
@@ -167,9 +159,8 @@ namespace TpaSodManagement.Areas.Identity.Pages.Account
                 }
             }
 
-            // Reload organizations if validation fails
-            var orgs = await _registrationService.GetAllOrganizationsAsync();
-            ViewData["Organizations"] = new SelectList(orgs, "OrganizationId", "OrganizationName", Input?.OrganizationId);
+            var fallbackFarms = await _registrationService.GetAllFarmsAsync();
+            ViewData["Farms"] = new SelectList(fallbackFarms, "FarmId", "FarmName", Input?.FarmId);
             
             return Page();
         }

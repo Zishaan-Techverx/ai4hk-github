@@ -38,7 +38,7 @@ public class NotificationService : INotificationService
         return await _context.Notifications
             .Include(n => n.NotificationUsers)
             .ThenInclude(nu => nu.User)
-            .ThenInclude(u => u.Organization)
+            .ThenInclude(u => u.Farm)
             .FirstOrDefaultAsync(n => n.NotificationId == id);
     }
 
@@ -283,7 +283,7 @@ public class NotificationService : INotificationService
         return await _context.NotificationUsers
             .Include(nu => nu.User)
             .Include(nu => nu.Notification)
-            .Where(nu => nu.User.OrganizationId == organizationId.Value && nu.DeletedDate == null)
+            .Where(nu => nu.User.FarmId == organizationId.Value && nu.DeletedDate == null)
             .Where(nu => nu.Notification.DeletedDate == null && nu.Notification.IsActive)
             .Select(nu => nu.Notification)
             .Distinct()

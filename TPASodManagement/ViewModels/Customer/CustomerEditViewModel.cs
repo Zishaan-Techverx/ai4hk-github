@@ -28,7 +28,7 @@ namespace TpaSodManagement.ViewModels.Customer
         public DateTimeOffset? CreatedDate { get; set; }
         public DateTimeOffset? UpdatedDate { get; set; }
 
-        public long? OrganizationId { get; set; }
+        public long? FarmId { get; set; }
         public long? PersonId { get; set; }
         public long? AddressId { get; set; }
 
@@ -44,7 +44,7 @@ namespace TpaSodManagement.ViewModels.Customer
         public string? NewPersonLastName { get; set; }
 
         public IEnumerable<SelectListItem> CustomerTypes { get; set; } = Enumerable.Empty<SelectListItem>();
-        public IEnumerable<SelectListItem> Organizations { get; set; } = Enumerable.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> Farms { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> People { get; set; } = Enumerable.Empty<SelectListItem>();
 
         public bool IsDetailsView { get; set; }

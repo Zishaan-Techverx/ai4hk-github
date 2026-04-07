@@ -84,11 +84,11 @@
                             </div>
 
                             <div class="col-md-6 mb-3">
-                                <label asp-for="OrganizationId" class="form-label">Organization</label>
-                                <select asp-for="OrganizationId" class="form-select" asp-items="Model.Organizations" disabled="@disabledAttr">
-                                    <option value="">-- Select Organization --</option>
+                                <label asp-for="FarmId" class="form-label">Farm</label>
+                                <select asp-for="FarmId" class="form-select" asp-items="Model.Farms" disabled="@disabledAttr">
+                                    <option value="">-- Select Farm --</option>
                                 </select>
-                                <span asp-validation-for="OrganizationId" class="text-danger"></span>
+                                <span asp-validation-for="FarmId" class="text-danger"></span>
                             </div>
                         </div>
 

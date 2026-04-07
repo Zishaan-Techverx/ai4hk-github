@@ -1,19 +1,24 @@
 @using TpaSodManagement.Database.Entities
-@model Organization
+@model Farm
 
 @if (Model != null)
 {
     <a class="navbar-brand d-flex align-items-center text-white text-decoration-none" href="/">
         @if ((Model.LogoBytes != null && Model.LogoBytes.Length > 0) || !string.IsNullOrEmpty(Model.LogoFilePath))
         {
-            <img src="@Url.Action("GetLogo", "Organization", new { id = Model.OrganizationId })" 
-                 alt="Organization Logo" 
+            <img src="@Url.Action("GetLogo", "Farm", new { id = Model.FarmId })" 
+                 alt="Farm Logo" 
                  style="height: 40px; width: auto; max-width: 200px; object-fit: contain;" 
                  class="me-2" />
         }
         else
         {
             <span class="fw-bold">TPA</span>
+        }
+
+        @if (!string.IsNullOrWhiteSpace(Model.FarmName))
+        {
+            <span class="ms-2 fw-semibold">@Model.FarmName</span>
         }
     </a>
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Services.Interfaces;
@@ -28,18 +28,18 @@ namespace TpaSodManagement.Services.Implementations
             return await _roleManager.Roles.ToListAsync();
         }
 
-        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(long? organizationId = null)
+        public async Task<List<TpaSodManagementUser>> GetAllUsersAsync(long? farmId = null)
         {
             // Get all users
             var allUsers = await _userManager.Users
-                .Include(u => u.Organization)
+                .Include(u => u.Farm)
                 .ToListAsync();
             
-            // Filter by organization if provided
-            if (organizationId.HasValue)
+            // Filter by farm if provided
+            if (farmId.HasValue)
             {
                 allUsers = allUsers
-                    .Where(u => u.OrganizationId == organizationId.Value)
+                    .Where(u => u.FarmId == farmId.Value)
                     .ToList();
             }
             
@@ -275,10 +275,10 @@ namespace TpaSodManagement.Services.Implementations
             }
         }
 
-        public async Task<AdminIndexViewModel> GetAdminIndexViewModelAsync(long? organizationId = null)
+        public async Task<AdminIndexViewModel> GetAdminIndexViewModelAsync(long? farmId = null)
         {
             var roles = await GetAllRolesAsync();
-            var users = await GetAllUsersAsync(organizationId);
+            var users = await GetAllUsersAsync(farmId);
 
             var roleViewModels = roles
                 .Select(r => new RoleItemViewModel

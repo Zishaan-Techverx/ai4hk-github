@@ -1,7 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using TpaSodManagement.Areas.Identity.Data;
-using TpaSodManagement.Services.Interfaces;
+using TpaSodManagement.Database;
 using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.ViewComponents
@@ -9,31 +10,30 @@ namespace TpaSodManagement.ViewComponents
     public class OrganizationLogoViewComponent : ViewComponent
     {
         private readonly UserManager<TpaSodManagementUser> _userManager;
-        private readonly IOrganizationService _organizationService;
+        private readonly ApplicationDbContext _context;
 
         public OrganizationLogoViewComponent(
             UserManager<TpaSodManagementUser> userManager,
-            IOrganizationService organizationService)
+            ApplicationDbContext context)
         {
             _userManager = userManager;
-            _organizationService = organizationService;
+            _context = context;
         }
 
         public async Task<IViewComponentResult> InvokeAsync()
         {
-            Organization organization = null;
+            Farm? farm = null;
 
             if (User.Identity.IsAuthenticated)
             {
                 var user = await _userManager.GetUserAsync(HttpContext.User);
-                if (user != null && user.OrganizationId.HasValue)
+                if (user != null && user.FarmId.HasValue)
                 {
-                    organization = await _organizationService.GetOrganizationByIdAsync(user.OrganizationId.Value);
+                    farm = await _context.Farms.FirstOrDefaultAsync(f => f.FarmId == user.FarmId.Value);
                 }
             }
 
-            // Return with explicit model type
-            return View("Default", organization);
+            return View("Default", farm);
         }
     }
 }

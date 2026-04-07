@@ -42,7 +42,7 @@ public class HomeController : Controller
         var vm = await _homeService.GetHomeIndexViewModelAsync(User.Identity?.IsAuthenticated ?? false);
 
         // Preserve existing ViewData/ViewBag usage to avoid view changes
-        ViewData["Organizations"] = vm.Organizations;
+        ViewData["Farms"] = vm.Farms;
 
         if (vm.IsAuthenticated)
         {

@@ -83,17 +83,17 @@
                                 </div>
 
                                 <div class="mb-3">
-                                    <label asp-for="Input.OrganizationId" class="form-label" style="color:#2B2B2B;">Organization</label>
-                                    <select asp-for="Input.OrganizationId" 
+                                    <label asp-for="Input.FarmId" class="form-label" style="color:#2B2B2B;">Farm</label>
+                                    <select asp-for="Input.FarmId" 
                                             class="form-select" 
-                                            asp-items='@(ViewData["Organizations"] as SelectList)' 
-                                            id="registerOrganization" 
+                                            asp-items='@(ViewData["Farms"] as SelectList)' 
+                                            id="registerFarm" 
                                             required>
-                                        <option value="">-- Select Organization --</option>
+                                        <option value="">-- Select Farm --</option>
                                     </select>
-                                    <span asp-validation-for="Input.OrganizationId" class="text-danger"></span>
+                                    <span asp-validation-for="Input.FarmId" class="text-danger"></span>
                                     <div class="invalid-feedback">
-                                        Please select an organization.
+                                        Please select a farm.
                                     </div>
                                 </div>
 

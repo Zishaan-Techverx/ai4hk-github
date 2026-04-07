@@ -13,6 +13,6 @@ namespace TpaSodManagement.Services.Interfaces
         Task<ServiceResponse<Customer>> CreateAsync(Customer customer);
         Task<ServiceResponse<Customer>> UpdateAsync(Customer customer);
         Task<ServiceResponse<bool>> DeleteAsync(long id, long? deletedByUserId);
-        Task<ServiceResponse<(SelectList Organizations, SelectList People, SelectList CustomerTypes)>> GetCreateViewDataAsync();
+        Task<ServiceResponse<(SelectList Farms, SelectList People, SelectList CustomerTypes)>> GetCreateViewDataAsync();
     }
 }

@@ -42,7 +42,7 @@ namespace TpaSodManagement.Controllers
             // Set filter columns for the partial view
             ViewBag.FilterColumns = new Dictionary<string, string>
             {
-                { "Organization", "Organization" },
+                { "Organization", "Farm" },
                 { "CustomerType", "Customer Type" },
                 { "Person", "Person" },
                 { "Address", "Address" },
@@ -282,7 +282,7 @@ namespace TpaSodManagement.Controllers
 
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    ("Organization", "Organization"),
+                    ("Farm", "Organization"),
                     ("Customer Type", "CustomerTypeName"),
                     ("Person", "Person"),
                     ("Address", "Address"),
@@ -307,7 +307,7 @@ namespace TpaSodManagement.Controllers
                     {
                         var allValues = new List<object>
                         {
-                            item.OrganizationName ?? "",
+                            item.FarmName ?? "",
                             item.CustomerTypeName ?? "",
                             item.PersonFullName ?? "",
                             item.Address ?? "",
@@ -370,7 +370,7 @@ namespace TpaSodManagement.Controllers
                 var vm = customers.Select(MapToItemViewModel).ToList();
                 var allColumns = new List<(string Header, string PropertyName)>
                 {
-                    ("Organization", "Organization"),
+                    ("Farm", "Organization"),
                     ("Customer Type", "CustomerTypeName"),
                     ("Person", "Person"),
                     ("Address", "Address"),
@@ -388,7 +388,7 @@ namespace TpaSodManagement.Controllers
                 {
                     var allValues = new List<object>
                     {
-                        item.OrganizationName ?? "",
+                        item.FarmName ?? "",
                         item.CustomerTypeName ?? "",
                         item.PersonFullName ?? "",
                         item.Address ?? "",
@@ -416,7 +416,7 @@ namespace TpaSodManagement.Controllers
             return new CustomerItemViewModel
             {
                 CustomerId = entity.CustomerId,
-                OrganizationName = entity.Organization?.OrganizationName,
+                FarmName = entity.Farm?.FarmName,
                 CustomerTypeName = entity.CustomerTypeName,
                 PersonFullName = entity.Person != null
                     ? $"{entity.Person.FirstName} {entity.Person.LastName}".Trim()
@@ -438,7 +438,7 @@ namespace TpaSodManagement.Controllers
             return new CustomerEditViewModel
             {
                 CustomerId = entity.CustomerId,
-                OrganizationId = entity.OrganizationId,
+                FarmId = entity.FarmId,
                 CustomerTypeId = entity.CustomerTypeId,
                 PersonId = entity.PersonId,
                 AddressId = entity.AddressId,
@@ -459,7 +459,7 @@ namespace TpaSodManagement.Controllers
             return new Customer
             {
                 CustomerId = vm.CustomerId,
-                OrganizationId = vm.OrganizationId,
+                FarmId = vm.FarmId,
                 CustomerTypeId = vm.CustomerTypeId,
                 PersonId = vm.PersonId,
                 AddressId = vm.AddressId,
@@ -663,15 +663,15 @@ namespace TpaSodManagement.Controllers
         private async Task PopulateDropdowns(CustomerEditViewModel vm)
         {
             var viewData = await _customerService.GetCreateViewDataAsync();
-            if (viewData.Success && viewData.Data.Organizations != null && viewData.Data.People != null && viewData.Data.CustomerTypes != null)
+            if (viewData.Success && viewData.Data.Farms != null && viewData.Data.People != null && viewData.Data.CustomerTypes != null)
             {
-                vm.Organizations = viewData.Data.Organizations;
+                vm.Farms = viewData.Data.Farms;
                 vm.People = viewData.Data.People;
                 vm.CustomerTypes = viewData.Data.CustomerTypes;
             }
             else
             {
-                vm.Organizations = Enumerable.Empty<SelectListItem>();
+                vm.Farms = Enumerable.Empty<SelectListItem>();
                 vm.People = Enumerable.Empty<SelectListItem>();
                 vm.CustomerTypes = Enumerable.Empty<SelectListItem>();
                 TempData["Error"] = viewData.Message;

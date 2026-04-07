@@ -13,7 +13,6 @@ namespace TpaSodManagement.Controllers;
 public class NotificationController : Controller
 {
     private readonly INotificationService _notificationService;
-    private readonly IOrganizationService _organizationService;
     private readonly INotificationResponseService _notificationResponseService;
     private readonly UserManager<TpaSodManagementUser> _userManager;
     private readonly ApplicationDbContext _context;
@@ -21,14 +20,12 @@ public class NotificationController : Controller
 
     public NotificationController(
         INotificationService notificationService,
-        IOrganizationService organizationService,
         INotificationResponseService notificationResponseService,
         UserManager<TpaSodManagementUser> userManager,
         ApplicationDbContext context,
         ILogger<NotificationController> logger)
     {
         _notificationService = notificationService;
-        _organizationService = organizationService;
         _notificationResponseService = notificationResponseService;
         _userManager = userManager;
         _context = context;
@@ -57,15 +54,19 @@ public class NotificationController : Controller
         return View(notifications);
     }
 
-    // GET: Notification/GetOrganizations (AJAX)
+    // GET: Notification/GetOrganizations (AJAX - now farm list)
     [HttpGet]
     public async Task<IActionResult> GetOrganizations()
     {
-        var organizations = await _organizationService.GetAllOrganizationsAsync();
-        return Json(organizations.Select(o => new { o.OrganizationId, o.OrganizationName }));
+        var farms = await _context.Farms
+            .Where(f => f.DeletedDate == null && f.IsActive)
+            .OrderBy(f => f.FarmName)
+            .Select(f => new { OrganizationId = f.FarmId, OrganizationName = f.FarmName })
+            .ToListAsync();
+        return Json(farms);
     }
 
-    // GET: Notification/GetUsersByOrganization (AJAX)
+    // GET: Notification/GetUsersByOrganization (AJAX - now filtered by farm)
     [HttpGet]
     public async Task<IActionResult> GetUsersByOrganization(long? organizationId)
     {
@@ -73,7 +74,7 @@ public class NotificationController : Controller
         {
             // Get all users (excluding SuperAdmin)
             var allUsers = await _userManager.Users
-                .Include(u => u.Organization)
+                .Include(u => u.Farm)
                 .ToListAsync();
 
             var filteredUsers = new List<object>();
@@ -87,7 +88,7 @@ public class NotificationController : Controller
                         user.Id,
                         user.UserName,
                         user.Email,
-                        OrganizationName = user.Organization?.OrganizationName ?? "N/A"
+                        OrganizationName = user.Farm?.FarmName ?? "N/A"
                     });
                 }
             }
@@ -95,8 +96,8 @@ public class NotificationController : Controller
         }
 
         var users = await _userManager.Users
-            .Include(u => u.Organization)
-            .Where(u => u.OrganizationId == organizationId.Value)
+            .Include(u => u.Farm)
+            .Where(u => u.FarmId == organizationId.Value)
             .ToListAsync();
 
         var result = new List<object>();
@@ -110,7 +111,7 @@ public class NotificationController : Controller
                     user.Id,
                     user.UserName,
                     user.Email,
-                    OrganizationName = user.Organization?.OrganizationName ?? "N/A"
+                    OrganizationName = user.Farm?.FarmName ?? "N/A"
                 });
             }
         }

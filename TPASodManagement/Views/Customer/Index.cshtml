@@ -95,7 +95,7 @@
         <table class="table" id="dataTable">
         <thead>
             <tr>
-                <th data-column="Organization">Organization</th>
+                <th data-column="Organization">Farm</th>
                 <th data-column="CustomerType">Customer Type</th>
                 <th data-column="Person">Person</th>
                 <th data-column="Address">Address</th>
@@ -114,7 +114,7 @@
             @foreach (var item in Model)
             {
                 <tr id="row-@item.CustomerId">
-                    <td data-column="Organization">@(item.OrganizationName ?? "N/A")</td>
+                    <td data-column="Organization">@(item.FarmName ?? "N/A")</td>
                                     <td data-column="CustomerType">@Html.DisplayFor(modelItem => item.CustomerTypeName)</td>
                     <td data-column="Person">
                         @if (!string.IsNullOrEmpty(item.PersonFullName))
@@ -1297,7 +1297,7 @@
             const row = document.createElement('tr');
             row.id = `row-${item.customerId}`;
             row.innerHTML = `
-                <td data-column="Organization">${escapeHtml(item.organizationName || '')}</td>
+                <td data-column="Organization">${escapeHtml(item.farmName || '')}</td>
                 <td data-column="CustomerType">${escapeHtml(item.customerTypeName || '')}</td>
                 <td data-column="Person">${escapeHtml(item.personFullName || '')}</td>
                 <td data-column="Address">${escapeHtml(item.address || '')}</td>

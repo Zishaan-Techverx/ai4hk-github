@@ -401,6 +401,43 @@ namespace TpaSodManagement.Controllers
             }
         }
 
+        [AllowAnonymous]
+        public async Task<IActionResult> GetLogo(long id)
+        {
+            var farm = await _context.Farms.AsNoTracking().FirstOrDefaultAsync(f => f.FarmId == id);
+            if (farm == null)
+            {
+                return NotFound();
+            }
+
+            if (!string.IsNullOrEmpty(farm.LogoFilePath))
+            {
+                var relativePath = farm.LogoFilePath.TrimStart('/').Replace("/", "\\");
+                var fullPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", relativePath);
+                if (System.IO.File.Exists(fullPath))
+                {
+                    var bytes = await System.IO.File.ReadAllBytesAsync(fullPath);
+                    var ext = Path.GetExtension(fullPath).ToLowerInvariant();
+                    var contentType = ext switch
+                    {
+                        ".png" => "image/png",
+                        ".jpg" => "image/jpeg",
+                        ".jpeg" => "image/jpeg",
+                        ".svg" => "image/svg+xml",
+                        _ => "application/octet-stream"
+                    };
+                    return File(bytes, contentType);
+                }
+            }
+
+            if (farm.LogoBytes != null && farm.LogoBytes.Length > 0)
+            {
+                return File(farm.LogoBytes, "image/png");
+            }
+
+            return NotFound();
+        }
+
         private static string FormatAddress(Address? a)
         {
             if (a == null) return string.Empty;

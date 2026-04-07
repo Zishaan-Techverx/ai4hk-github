@@ -51,7 +51,13 @@ namespace TpaSodManagement.Services.Implementations
 
             if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
             {
-                var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                var currentFarmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                var orgId = currentFarmId.HasValue
+                    ? await _context.Farms
+                        .Where(f => f.FarmId == currentFarmId.Value)
+                        .Select(f => (long?)f.OrganizationId)
+                        .FirstOrDefaultAsync()
+                    : null;
                 if (orgId.HasValue)
                     query = query.Where(o => o.OrganizationId == orgId.Value);
                 else
@@ -202,7 +208,13 @@ namespace TpaSodManagement.Services.Implementations
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    var currentFarmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    var orgId = currentFarmId.HasValue
+                        ? await _context.Farms
+                            .Where(f => f.FarmId == currentFarmId.Value)
+                            .Select(f => (long?)f.OrganizationId)
+                            .FirstOrDefaultAsync()
+                        : null;
                     if (orgId.HasValue)
                         query = query.Where(o => o.OrganizationId == orgId.Value);
                     else

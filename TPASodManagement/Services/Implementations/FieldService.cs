@@ -29,16 +29,15 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var query = _context.Fields
                     .Include(f => f.Farm)
-                        .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
                     .Include(f => f.FieldType)
                     .AsQueryable();
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        query = query.Where(f => f.Farm != null && f.Farm.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        query = query.Where(f => f.FarmId == farmId.Value);
                     else
                         query = query.Where(f => false);
                 }
@@ -60,16 +59,15 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var query = _context.Fields
                     .Include(f => f.Farm)
-                        .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
                     .Include(f => f.FieldType)
                     .AsQueryable();
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        query = query.Where(f => f.Farm != null && f.Farm.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        query = query.Where(f => f.FarmId == farmId.Value);
                     else
                         query = query.Where(f => false);
                 }
@@ -155,7 +153,6 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var field = await _context.Fields
                     .Include(f => f.Farm)
-                        .ThenInclude(f => f.Organization)
                     .Include(f => f.AreaType)
                     .Include(f => f.FieldType)
                     .FirstOrDefaultAsync(f => f.FieldId == id);
@@ -286,15 +283,12 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<(SelectList, SelectList, SelectList, SelectList)>();
             try
             {
-                var farmsQuery = _context.Farms
-                    .Include(f => f.Organization)
-                    .OrderBy(f => f.FarmId)
-                    .AsQueryable();
+                var farmsQuery = _context.Farms.OrderBy(f => f.FarmId).AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        farmsQuery = farmsQuery.Where(f => f.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        farmsQuery = farmsQuery.Where(f => f.FarmId == farmId.Value);
                     else
                         farmsQuery = farmsQuery.Where(f => false);
                 }
@@ -313,9 +307,9 @@ namespace TpaSodManagement.Services.Implementations
                 var usersQuery = _userManager.Users.AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        usersQuery = usersQuery.Where(u => u.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        usersQuery = usersQuery.Where(u => u.FarmId == farmId.Value);
                     else
                         usersQuery = usersQuery.Where(u => false);
                 }

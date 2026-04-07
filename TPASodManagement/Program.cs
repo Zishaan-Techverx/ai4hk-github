@@ -156,7 +156,7 @@ using (var scope = app.Services.CreateScope())
     var context = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<TpaSodManagementUser>>();
     await context.Database.MigrateAsync();
-    await TpaSodManagement.Database.Seeders.UserFarmBackfillSeeder.SeedAsync(context);
+    await TpaSodManagement.Database.Seeders.OrganizationEntityFarmBackfillSeeder.SeedAsync(context);
     await TpaSodManagement.Database.Seeders.FieldTypeSeeder.SeedAsync(context, userManager);
     await TpaSodManagement.Database.Seeders.AddressTypeSeeder.SeedAsync(context);
     await TpaSodManagement.Database.Seeders.CustomerTypeSeeder.SeedAsync(context);

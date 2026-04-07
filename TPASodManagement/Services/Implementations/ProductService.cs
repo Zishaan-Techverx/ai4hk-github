@@ -302,9 +302,9 @@ namespace TpaSodManagement.Services.Implementations
                 var usersQuery = _userManager.Users.AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        usersQuery = usersQuery.Where(u => u.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        usersQuery = usersQuery.Where(u => u.FarmId == farmId.Value);
                     else
                         usersQuery = usersQuery.Where(u => false);
                 }

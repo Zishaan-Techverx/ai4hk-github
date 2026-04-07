@@ -18,8 +18,9 @@ namespace TpaSodManagement.Services.Implementations
         {
             var vm = new HomeIndexViewModel
             {
-                Organizations = await _context.Organizations
-                    .OrderBy(o => o.OrganizationName)
+                Farms = await _context.Farms
+                    .Where(f => f.DeletedDate == null && f.IsActive)
+                    .OrderBy(f => f.FarmName)
                     .ToListAsync(),
                 IsAuthenticated = isAuthenticated
             };

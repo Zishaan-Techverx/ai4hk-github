@@ -1,14 +1,10 @@
-﻿@using System.Linq
+@using System.Linq
 @using TpaSodManagement.Database.Entities
-@using TpaSodManagement.Services.Interfaces
-
-@inject IOrganizationService OrganizationService
 
 @{
-    // Get ALL organizations from ViewData (loaded in HomeController)
-    var organizations = ViewData["Organizations"] as List<Organization> ?? new List<Organization>();
-    var allOrganizations = organizations
-        .OrderBy(o => o.OrganizationName)
+    var farms = ViewData["Farms"] as List<Farm> ?? new List<Farm>();
+    var allFarms = farms
+        .OrderBy(f => f.FarmName)
         .ToList();
 }
 
@@ -99,19 +95,19 @@
                     </div>
                     
                     <div class="mb-3">
-                        <label for="registerOrganization" class="form-label" style="color:#2B2B2B;">Organization Name</label>
-                        <select name="Input.OrganizationName" 
+                        <label for="registerFarm" class="form-label" style="color:#2B2B2B;">Farm</label>
+                        <select name="Input.FarmId" 
                                 class="form-select" 
-                                id="registerOrganization" 
+                                id="registerFarm" 
                                 required>
-                            <option value="">-- Select Organization --</option>
-                            @foreach (var org in allOrganizations)
+                            <option value="">-- Select Farm --</option>
+                            @foreach (var farm in allFarms)
                             {
-                                <option value="@org.OrganizationName">@org.OrganizationName</option>
+                                <option value="@farm.FarmId">@farm.FarmName</option>
                             }
                         </select>
                         <div class="invalid-feedback">
-                            Please select an organization.
+                            Please select a farm.
                         </div>
                     </div>
                     

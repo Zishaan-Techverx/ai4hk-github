@@ -25,16 +25,16 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var query = _context.Customers
                     .Include(c => c.CustomerType)
-                    .Include(c => c.Organization)
+                    .Include(c => c.Farm)
                     .Include(c => c.Person)
                     .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        query = query.Where(c => c.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        query = query.Where(c => c.FarmId == farmId.Value);
                     else
                         query = query.Where(c => false);
                 }
@@ -56,16 +56,16 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var query = _context.Customers
                     .Include(c => c.CustomerType)
-                    .Include(c => c.Organization)
+                    .Include(c => c.Farm)
                     .Include(c => c.Person)
                     .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
                     .AsQueryable();
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        query = query.Where(c => c.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        query = query.Where(c => c.FarmId == farmId.Value);
                     else
                         query = query.Where(c => false);
                 }
@@ -135,7 +135,7 @@ namespace TpaSodManagement.Services.Implementations
                     if (filters.ContainsKey("Organization") && !string.IsNullOrWhiteSpace(filters["Organization"]))
                     {
                         var filterValue = FilterHelper.NormalizeSearchText(filters["Organization"]);
-                        query = query.Where(c => c.Organization != null && c.Organization.OrganizationName.Contains(filterValue));
+                        query = query.Where(c => c.Farm != null && c.Farm.FarmName != null && c.Farm.FarmName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("Person") && !string.IsNullOrWhiteSpace(filters["Person"]))
@@ -210,7 +210,7 @@ namespace TpaSodManagement.Services.Implementations
             {
                 var customer = await _context.Customers
                     .Include(c => c.CustomerType)
-                    .Include(c => c.Organization)
+                    .Include(c => c.Farm)
                     .Include(c => c.Person)
                     .Include(c => c.Address).ThenInclude(a => a!.StateProvince)
                     .FirstOrDefaultAsync(c => c.CustomerId == id);
@@ -286,7 +286,7 @@ namespace TpaSodManagement.Services.Implementations
                 else
                     existingCustomer.CustomerTypeName = customer.CustomerTypeName;
                 existingCustomer.CustomerCode = customer.CustomerCode;
-                existingCustomer.OrganizationId = customer.OrganizationId;
+                existingCustomer.FarmId = customer.FarmId;
                 existingCustomer.PersonId = customer.PersonId;
                 existingCustomer.AddressId = customer.AddressId;
                 existingCustomer.CreditLimit = customer.CreditLimit;
@@ -350,25 +350,24 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<(SelectList Organizations, SelectList People, SelectList CustomerTypes)>> GetCreateViewDataAsync()
+        public async Task<ServiceResponse<(SelectList Farms, SelectList People, SelectList CustomerTypes)>> GetCreateViewDataAsync()
         {
-            var response = new ServiceResponse<(SelectList Organizations, SelectList People, SelectList CustomerTypes)>();
+            var response = new ServiceResponse<(SelectList Farms, SelectList People, SelectList CustomerTypes)>();
             try
             {
-                // Organizations: filter by org for non-SuperAdmin
-                var orgsQuery = _context.Organizations
-                    .Where(o => o.DeletedDate == null)
-                    .OrderBy(o => o.OrganizationName)
+                var farmsQuery = _context.Farms
+                    .Where(f => f.DeletedDate == null && f.IsActive)
+                    .OrderBy(f => f.FarmName)
                     .AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        orgsQuery = orgsQuery.Where(o => o.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        farmsQuery = farmsQuery.Where(f => f.FarmId == farmId.Value);
                     else
-                        orgsQuery = orgsQuery.Where(o => false);
+                        farmsQuery = farmsQuery.Where(f => false);
                 }
-                var orgs = await orgsQuery.ToListAsync();
+                var farms = await farmsQuery.ToListAsync();
 
                 IQueryable<Person> peopleQuery = _context.People
                     .Where(p => p.DeletedDate == null)
@@ -379,14 +378,14 @@ namespace TpaSodManagement.Services.Implementations
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
                     var currentUserPersonId = await _currentUserService.GetCurrentUserPersonIdAsync();
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
                     var allowedPersonIds = new List<long>();
                     if (currentUserPersonId.HasValue)
                         allowedPersonIds.Add(currentUserPersonId.Value);
-                    if (orgId.HasValue)
+                    if (farmId.HasValue)
                     {
                         var customerPersonIds = await _context.Customers
-                            .Where(c => c.OrganizationId == orgId.Value && c.PersonId.HasValue)
+                            .Where(c => c.FarmId == farmId.Value && c.PersonId.HasValue)
                             .Select(c => c.PersonId!.Value)
                             .Distinct()
                             .ToListAsync();
@@ -406,10 +405,10 @@ namespace TpaSodManagement.Services.Implementations
                     .OrderBy(ct => ct.CustomerTypeName)
                     .ToListAsync();
 
-                var orgItems = orgs.Select(o => new SelectListItem
+                var farmItems = farms.Select(f => new SelectListItem
                 {
-                    Value = o.OrganizationId.ToString(),
-                    Text = o.OrganizationName
+                    Value = f.FarmId.ToString(),
+                    Text = string.IsNullOrWhiteSpace(f.FarmName) ? $"Farm #{f.FarmId}" : f.FarmName
                 }).ToList();
 
                 var peopleItems = people.Select(p =>
@@ -432,7 +431,7 @@ namespace TpaSodManagement.Services.Implementations
                 }).ToList();
 
                 response.Data = (
-                    new SelectList(orgItems, "Value", "Text"),
+                    new SelectList(farmItems, "Value", "Text"),
                     new SelectList(peopleItems, "Value", "Text"),
                     new SelectList(customerTypeItems, "Value", "Text")
                 );
@@ -444,5 +443,6 @@ namespace TpaSodManagement.Services.Implementations
             }
             return response;
         }
+
     }
 }

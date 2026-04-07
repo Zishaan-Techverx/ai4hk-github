@@ -16,6 +16,8 @@ public partial class Customer : AuditBaseEntity
 
     public long? OrganizationId { get; set; }
 
+    public long? FarmId { get; set; }
+
     public string? CustomerCode { get; set; }
 
     public decimal? CreditLimit { get; set; }
@@ -33,6 +35,8 @@ public partial class Customer : AuditBaseEntity
     public virtual CustomerType? CustomerType { get; set; }
 
     public virtual Organization? Organization { get; set; }
+
+    public virtual Farm? Farm { get; set; }
 
     public virtual Person? Person { get; set; }
 

@@ -1,26 +1,28 @@
 @* Organization Theme Partial - Fixed TPA theme, dynamic org logo *@
 
 @using Microsoft.AspNetCore.Identity
+@using Microsoft.EntityFrameworkCore
 @using TpaSodManagement.Areas.Identity.Data
-@using TpaSodManagement.Services.Interfaces
+@using TpaSodManagement.Database
+@using TpaSodManagement.Database.Entities
 
 @inject UserManager<TpaSodManagementUser> UserManager
-@inject IOrganizationService OrganizationService
+@inject ApplicationDbContext DbContext
 
 @{
-    Organization? userOrganization = null;
+    Farm? userFarm = null;
     if (User.Identity != null && User.Identity.IsAuthenticated)
     {
         var user = await UserManager.GetUserAsync(User);
-        if (user != null && user.OrganizationId.HasValue)
+        if (user != null && user.FarmId.HasValue)
         {
-            userOrganization = await OrganizationService.GetOrganizationByIdAsync(user.OrganizationId.Value);
+            userFarm = await DbContext.Farms.FirstOrDefaultAsync(f => f.FarmId == user.FarmId.Value);
         }
     }
 
-    var hasFooterLogo = userOrganization != null &&
-        ((userOrganization.LogoBytes != null && userOrganization.LogoBytes.Length > 0) ||
-         !string.IsNullOrEmpty(userOrganization.LogoFilePath));
+    var hasFooterLogo = userFarm != null &&
+        ((userFarm.LogoBytes != null && userFarm.LogoBytes.Length > 0) ||
+         !string.IsNullOrEmpty(userFarm.LogoFilePath));
 
     const string navbarBgColor = "#2B2B2B";
     const string navbarTextColor = "#F6F4EE";
@@ -120,9 +122,9 @@
                     </div>
                     <div class="col-md-4 text-md-end">
                         <div class="footer-logo-box" style="display: inline-block; padding: 10px 18px; background-color: transparent; text-align: center;">
-                            @if (hasFooterLogo && userOrganization != null)
+                            @if (hasFooterLogo && userFarm != null)
                             {
-                                <img src="@Url.Action("GetLogo", "Organization", new { id = userOrganization.OrganizationId })" alt="Organization Logo" style="height: 50px; width: auto; max-width: 180px; object-fit: contain; display: block;" />
+                                <img src="@Url.Action("GetLogo", "Farm", new { id = userFarm.FarmId })" alt="Farm Logo" style="height: 50px; width: auto; max-width: 180px; object-fit: contain; display: block;" />
                             }
                             else
                             {

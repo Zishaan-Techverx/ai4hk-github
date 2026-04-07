@@ -48,9 +48,9 @@ namespace TpaSodManagement.Services.Implementations
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        query = query.Where(s => s.Farm != null && s.Farm.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        query = query.Where(s => s.FarmId == farmId.Value);
                     else
                         query = query.Where(s => false);
                 }
@@ -89,9 +89,9 @@ namespace TpaSodManagement.Services.Implementations
 
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        query = query.Where(s => s.Farm != null && s.Farm.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        query = query.Where(s => s.FarmId == farmId.Value);
                     else
                         query = query.Where(s => false);
                 }
@@ -493,9 +493,9 @@ namespace TpaSodManagement.Services.Implementations
                 var usersQuery = _userManager.Users.AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        usersQuery = usersQuery.Where(u => u.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        usersQuery = usersQuery.Where(u => u.FarmId == farmId.Value);
                     else
                         usersQuery = usersQuery.Where(u => false);
                 }
@@ -536,9 +536,9 @@ namespace TpaSodManagement.Services.Implementations
                     .AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        farmsQuery = farmsQuery.Where(f => f.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        farmsQuery = farmsQuery.Where(f => f.FarmId == farmId.Value);
                     else
                         farmsQuery = farmsQuery.Where(f => false);
                 }
@@ -587,9 +587,9 @@ namespace TpaSodManagement.Services.Implementations
                     .AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        customersQuery = customersQuery.Where(c => c.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        customersQuery = customersQuery.Where(c => c.Sales.Any(s => s.FarmId == farmId.Value));
                     else
                         customersQuery = customersQuery.Where(c => false);
                 }
@@ -602,9 +602,9 @@ namespace TpaSodManagement.Services.Implementations
                     .AsQueryable();
                 if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
                 {
-                    var orgId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
-                    if (orgId.HasValue)
-                        fieldsQuery = fieldsQuery.Where(f => f.Farm.OrganizationId == orgId.Value);
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        fieldsQuery = fieldsQuery.Where(f => f.FarmId == farmId.Value);
                     else
                         fieldsQuery = fieldsQuery.Where(f => false);
                 }

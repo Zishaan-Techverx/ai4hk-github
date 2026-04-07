@@ -30,6 +30,12 @@ namespace TpaSodManagement.Services.Implementations
             return user?.OrganizationId;
         }
 
+        public async Task<long?> GetCurrentUserFarmIdAsync()
+        {
+            var user = await GetCurrentUserAsync();
+            return user?.FarmId;
+        }
+
         public async Task<long?> GetCurrentUserPersonIdAsync()
         {
             var user = await GetCurrentUserAsync();

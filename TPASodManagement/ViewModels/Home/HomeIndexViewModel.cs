@@ -1,11 +1,11 @@
 using System.Collections.Generic;
-using OrgEntity = TpaSodManagement.Database.Entities.Organization;
+using FarmEntity = TpaSodManagement.Database.Entities.Farm;
 
 namespace TpaSodManagement.ViewModels.Home
 {
     public class HomeIndexViewModel
     {
-        public List<OrgEntity> Organizations { get; set; } = new();
+        public List<FarmEntity> Farms { get; set; } = new();
         public bool IsAuthenticated { get; set; }
         public int FarmCount { get; set; }
         public int CustomerCount { get; set; }

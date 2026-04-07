@@ -241,11 +241,17 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Farm>();
             try
             {
-                var organizationId = await _currentUserService.GetCurrentUserOrganizationIdAsync();
+                var currentFarmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                var organizationId = currentFarmId.HasValue
+                    ? await _context.Farms
+                        .Where(f => f.FarmId == currentFarmId.Value)
+                        .Select(f => (long?)f.OrganizationId)
+                        .FirstOrDefaultAsync()
+                    : null;
                 if (!organizationId.HasValue)
                 {
                     response.Success = false;
-                    response.Message = "Current user organization is not available.";
+                    response.Message = "Current user farm context is not available.";
                     return response;
                 }
 

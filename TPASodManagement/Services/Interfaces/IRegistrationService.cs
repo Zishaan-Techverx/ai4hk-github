@@ -6,9 +6,11 @@ namespace TpaSodManagement.Services.Interfaces
 {
     public interface IRegistrationService
     {
+        Task<List<Farm>> GetAllFarmsAsync();
         Task<List<Organization>> GetAllOrganizationsAsync();
         Task<Organization?> GetOrganizationByNameAsync(string organizationName);
         Task<bool> IsEmailExistsAsync(string email);
+        Task<string> GenerateUsernameFromFarmAsync(Farm farm, string firstName);
         Task<string> GenerateUsernameAsync(Organization organization, string firstName);
         Task<IdentityResult> CreateUserAsync(TpaSodManagementUser user, string password);
         Task<Person> CreatePersonForUserAsync(TpaSodManagementUser user, string firstName, string lastName);

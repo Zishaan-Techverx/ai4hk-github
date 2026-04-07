@@ -45,11 +45,9 @@ namespace TpaSodManagement.Controllers
                 var currentUserRoles = await _adminService.GetUserRolesAsync(currentUser.Id);
                 bool isSuperAdmin = currentUserRoles.Contains("SuperAdmin", StringComparer.OrdinalIgnoreCase);
 
-                // If SuperAdmin, show all users (pass null to get all organizations)
-                // Otherwise, filter by current user's organization
-                long? organizationFilter = isSuperAdmin ? null : currentUser.OrganizationId;
-
-                var model = await _adminService.GetAdminIndexViewModelAsync(organizationFilter);
+                // If SuperAdmin, show all users; otherwise filter by current user's farm
+                long? farmFilter = isSuperAdmin ? null : currentUser.FarmId;
+                var model = await _adminService.GetAdminIndexViewModelAsync(farmFilter);
                 return View("~/Views/AdminPanel/Index.cshtml", model);
             }
             catch (Exception ex)
