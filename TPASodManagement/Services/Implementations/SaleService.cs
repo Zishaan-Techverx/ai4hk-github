@@ -589,7 +589,7 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
                     if (farmId.HasValue)
-                        customersQuery = customersQuery.Where(c => c.Sales.Any(s => s.FarmId == farmId.Value));
+                        customersQuery = customersQuery.Where(c => c.FarmId == farmId.Value);
                     else
                         customersQuery = customersQuery.Where(c => false);
                 }
