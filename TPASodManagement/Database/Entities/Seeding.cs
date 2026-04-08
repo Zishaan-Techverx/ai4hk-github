@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using TpaSodManagement.Areas.Identity.Data;
 using TpaSodManagement.Database.Base_Entities;
@@ -17,7 +17,7 @@ public partial class Seeding : AuditBaseEntity
 
     public long TagRangeId { get; set; }
 
-    public decimal AreaAmount { get; set; }
+    public decimal? AreaAmount { get; set; }
 
     public int AreaTypeId { get; set; }
 

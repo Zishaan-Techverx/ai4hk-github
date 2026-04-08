@@ -185,7 +185,7 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
         builder.Entity<Farm>(entity =>
         {
             entity.HasMany(d => d.TpaUsers)
-                .WithOne()
+                .WithOne(u => u.Farm)
                 .HasForeignKey(u => u.FarmId)
                 .OnDelete(DeleteBehavior.NoAction);
         });
@@ -287,6 +287,11 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
             entity.HasOne(c => c.CustomerType)
                 .WithMany(ct => ct.Customers)
                 .HasForeignKey(c => c.CustomerTypeId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.SetNull);
+            entity.HasOne(c => c.Farm)
+                .WithMany()
+                .HasForeignKey(c => c.FarmId)
                 .IsRequired(false)
                 .OnDelete(DeleteBehavior.SetNull);
             entity.Property(e => e.DeletedByUserId);

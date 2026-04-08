@@ -3,6 +3,7 @@
 @{
     ViewData["Title"] = Model.AddressId.HasValue ? $"Edit {Model.ParentEntityName} Address" : $"Add {Model.ParentEntityName} Address";
     var isEdit = Model.AddressId.HasValue;
+    var showPrimaryVerified = !string.Equals(Model.ParentEntityName, "Customer", StringComparison.OrdinalIgnoreCase);
 }
 
 <br />
@@ -119,19 +120,22 @@
                             </div>
                         </div>
 
-                        <div class="mb-3 d-flex align-items-center">
-                            <label class="form-label mb-0 me-2">Primary</label>
-                            <div class="form-check form-switch mb-0">
-                                <input asp-for="IsPrimary" type="checkbox" class="form-check-input" />
+                        @if (showPrimaryVerified)
+                        {
+                            <div class="mb-3 d-flex align-items-center">
+                                <label class="form-label mb-0 me-2">Primary</label>
+                                <div class="form-check form-switch mb-0">
+                                    <input asp-for="IsPrimary" type="checkbox" class="form-check-input" />
+                                </div>
                             </div>
-                        </div>
 
-                        <div class="mb-3 d-flex align-items-center">
-                            <label class="form-label mb-0 me-2">Verified</label>
-                            <div class="form-check form-switch mb-0">
-                                <input asp-for="IsVerified" type="checkbox" class="form-check-input" />
+                            <div class="mb-3 d-flex align-items-center">
+                                <label class="form-label mb-0 me-2">Verified</label>
+                                <div class="form-check form-switch mb-0">
+                                    <input asp-for="IsVerified" type="checkbox" class="form-check-input" />
+                                </div>
                             </div>
-                        </div>
+                        }
 
                         <div class="mb-3 d-flex align-items-center">
                             <label class="form-label mb-0 me-2">Active</label>

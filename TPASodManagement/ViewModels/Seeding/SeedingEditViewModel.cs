@@ -7,7 +7,6 @@ namespace TpaSodManagement.ViewModels.Seeding
     {
         public long SeedingId { get; set; }
 
-        [Required(ErrorMessage = "Area Amount is required")]
         [Display(Name = "Area Amount")]
         public decimal? AreaAmount { get; set; }
 

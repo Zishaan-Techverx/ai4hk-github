@@ -447,7 +447,7 @@ namespace TpaSodManagement.Controllers
             return new Seeding
             {
                 SeedingId = vm.SeedingId,
-                AreaAmount = vm.AreaAmount ?? 0,
+                AreaAmount = vm.AreaAmount,
                 AreaTypeId = vm.AreaTypeId ?? 0,
                 FarmId = vm.FarmId ?? 0,
                 FieldId = vm.FieldId,
@@ -470,11 +470,42 @@ namespace TpaSodManagement.Controllers
             var dropdowns = await _seedingService.GetDropdownDataAsync();
             if (dropdowns.Success)
             {
-                vm.AreaTypes = dropdowns.Data.AreaTypes ?? Enumerable.Empty<SelectListItem>();
+                var areaTypeItems = (dropdowns.Data.AreaTypes ?? Enumerable.Empty<SelectListItem>()).ToList();
                 vm.Farms = dropdowns.Data.Farms ?? Enumerable.Empty<SelectListItem>();
                 vm.Fields = dropdowns.Data.Fields ?? Enumerable.Empty<SelectListItem>();
                 vm.TagRanges = dropdowns.Data.TagRanges ?? Enumerable.Empty<SelectListItem>();
                 vm.Users = dropdowns.Data.Users ?? Enumerable.Empty<SelectListItem>();
+
+                // Default prefill Area Type to "Acres" when no value is selected.
+                if (!vm.AreaTypeId.HasValue)
+                {
+                    var acresOption = areaTypeItems.FirstOrDefault(x =>
+                        !string.IsNullOrWhiteSpace(x.Text) &&
+                        x.Text.Trim().Contains("acre", StringComparison.OrdinalIgnoreCase));
+
+                    if (acresOption != null)
+                    {
+                        if (int.TryParse(acresOption.Value, out var acresId))
+                        {
+                            vm.AreaTypeId = acresId;
+                        }
+                        else if (long.TryParse(acresOption.Value, out var acresIdLong))
+                        {
+                            vm.AreaTypeId = (int)acresIdLong;
+                        }
+                    }
+                }
+
+                if (vm.AreaTypeId.HasValue)
+                {
+                    // Create/edit/details scenario: explicitly mark selected option.
+                    foreach (var item in areaTypeItems)
+                    {
+                        item.Selected = string.Equals(item.Value, vm.AreaTypeId.Value.ToString(), StringComparison.Ordinal);
+                    }
+                }
+
+                vm.AreaTypes = areaTypeItems;
             }
             else
             {

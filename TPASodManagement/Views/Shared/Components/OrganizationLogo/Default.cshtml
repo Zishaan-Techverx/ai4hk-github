@@ -11,20 +11,20 @@
                  style="height: 40px; width: auto; max-width: 200px; object-fit: contain;" 
                  class="me-2" />
         }
-        else
-        {
-            <span class="fw-bold">TPA</span>
-        }
 
         @if (!string.IsNullOrWhiteSpace(Model.FarmName))
         {
             <span class="ms-2 fw-semibold">@Model.FarmName</span>
+        }
+        else
+        {
+            <span class="fw-semibold">Farm</span>
         }
     </a>
 }
 else
 {
     <a class="navbar-brand text-white text-decoration-none" href="/">
-        <span>TPA</span>
+        <span>Farm</span>
     </a>
 }

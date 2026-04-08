@@ -538,8 +538,9 @@ namespace TpaSodManagement.Controllers
                     AddressTypeId = customerTypeId ?? vm.AddressTypeId,
                     Latitude = vm.Latitude,
                     Longitude = vm.Longitude,
-                    IsPrimary = vm.IsPrimary,
-                    IsVerified = vm.IsVerified,
+                    // Customer address form no longer exposes these toggles; keep controlled defaults.
+                    IsPrimary = true,
+                    IsVerified = false,
                     IsActive = vm.IsActive
                 };
                 _context.Addresses.Add(address);
@@ -587,8 +588,6 @@ namespace TpaSodManagement.Controllers
                 vm.AddressTypeId = customerTypeId ?? a.AddressTypeId;
                 vm.Latitude = a.Latitude;
                 vm.Longitude = a.Longitude;
-                vm.IsPrimary = a.IsPrimary;
-                vm.IsVerified = a.IsVerified;
                 vm.IsActive = a.IsActive;
             }
             await PopulateAddressDropdowns(vm);
@@ -620,8 +619,6 @@ namespace TpaSodManagement.Controllers
                     address.AddressTypeId = customerTypeId ?? vm.AddressTypeId;
                     address.Latitude = vm.Latitude;
                     address.Longitude = vm.Longitude;
-                    address.IsPrimary = vm.IsPrimary;
-                    address.IsVerified = vm.IsVerified;
                     address.IsActive = vm.IsActive;
                     _context.Addresses.Update(address);
                 }
@@ -638,8 +635,8 @@ namespace TpaSodManagement.Controllers
                         AddressTypeId = customerTypeId ?? vm.AddressTypeId,
                         Latitude = vm.Latitude,
                         Longitude = vm.Longitude,
-                        IsPrimary = vm.IsPrimary,
-                        IsVerified = vm.IsVerified,
+                        IsPrimary = true,
+                        IsVerified = false,
                         IsActive = vm.IsActive
                     };
                     _context.Addresses.Add(address);
