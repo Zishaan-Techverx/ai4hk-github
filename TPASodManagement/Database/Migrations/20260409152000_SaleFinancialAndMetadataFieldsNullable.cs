@@ -12,104 +12,112 @@ namespace TpaSodManagement.Database.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.Sql(@"
-DECLARE @fkCurrency nvarchar(200);
-DECLARE @fkStatus nvarchar(200);
+            migrationBuilder.DropForeignKey(
+                name: "FK_Sales_Currencies_CurrencyId",
+                table: "Sales");
 
-SELECT TOP 1 @fkCurrency = fk.name
-FROM sys.foreign_keys fk
-INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
-INNER JOIN sys.columns c ON c.object_id = fkc.parent_object_id AND c.column_id = fkc.parent_column_id
-INNER JOIN sys.tables t ON t.object_id = c.object_id
-WHERE t.name = 'Sales' AND c.name = 'CurrencyId';
+            migrationBuilder.DropForeignKey(
+                name: "FK_Sales_Statuses_StatusId",
+                table: "Sales");
 
-SELECT TOP 1 @fkStatus = fk.name
-FROM sys.foreign_keys fk
-INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
-INNER JOIN sys.columns c ON c.object_id = fkc.parent_object_id AND c.column_id = fkc.parent_column_id
-INNER JOIN sys.tables t ON t.object_id = c.object_id
-WHERE t.name = 'Sales' AND c.name = 'StatusId';
+            migrationBuilder.AlterColumn<string>(
+                name: "SaleNumber",
+                table: "Sales",
+                type: "nvarchar(max)",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(max)");
 
-IF @fkCurrency IS NOT NULL EXEC('ALTER TABLE [Sales] DROP CONSTRAINT [' + @fkCurrency + ']');
-IF @fkStatus IS NOT NULL EXEC('ALTER TABLE [Sales] DROP CONSTRAINT [' + @fkStatus + ']');
+            migrationBuilder.AlterColumn<string>(
+                name: "PurchaseOrderNumber",
+                table: "Sales",
+                type: "nvarchar(max)",
+                nullable: true,
+                oldClrType: typeof(string),
+                oldType: "nvarchar(max)",
+                oldNullable: true);
 
-DECLARE @defaultSql nvarchar(max) = N'';
-SELECT @defaultSql = @defaultSql + N'ALTER TABLE [Sales] DROP CONSTRAINT [' + dc.name + N'];'
-FROM sys.default_constraints dc
-INNER JOIN sys.columns c ON c.default_object_id = dc.object_id
-INNER JOIN sys.tables t ON t.object_id = c.object_id
-WHERE t.name = 'Sales'
-  AND c.name IN ('SaleNumber', 'PurchaseOrderNumber', 'DueDate', 'SubtotalAmount', 'TaxAmount', 'DiscountAmount', 'TotalAmount', 'CurrencyId', 'PaymentTermsDays', 'StatusId');
-IF LEN(@defaultSql) > 0 EXEC sp_executesql @defaultSql;
+            migrationBuilder.AlterColumn<DateOnly>(
+                name: "DueDate",
+                table: "Sales",
+                type: "date",
+                nullable: true,
+                oldClrType: typeof(DateOnly),
+                oldType: "date",
+                oldNullable: true);
 
-IF COL_LENGTH('Sales', 'SaleNumber') IS NOT NULL
-BEGIN
-    DECLARE @saleNumberType nvarchar(200);
-    SELECT @saleNumberType = TYPE_NAME(c.user_type_id) +
-        CASE
-            WHEN TYPE_NAME(c.user_type_id) IN ('nvarchar','nchar') THEN '(' + CASE WHEN c.max_length = -1 THEN 'max' ELSE CAST(c.max_length / 2 AS varchar(10)) END + ')'
-            WHEN TYPE_NAME(c.user_type_id) IN ('varchar','char') THEN '(' + CASE WHEN c.max_length = -1 THEN 'max' ELSE CAST(c.max_length AS varchar(10)) END + ')'
-            ELSE ''
-        END
-    FROM sys.columns c
-    INNER JOIN sys.tables t ON t.object_id = c.object_id
-    WHERE t.name = 'Sales' AND c.name = 'SaleNumber';
-    EXEC('ALTER TABLE [Sales] ALTER COLUMN [SaleNumber] ' + @saleNumberType + ' NULL');
-END;
+            migrationBuilder.AlterColumn<decimal>(
+                name: "SubtotalAmount",
+                table: "Sales",
+                type: "decimal(18,2)",
+                nullable: true,
+                oldClrType: typeof(decimal),
+                oldType: "decimal(18,2)");
 
-IF COL_LENGTH('Sales', 'PurchaseOrderNumber') IS NOT NULL
-BEGIN
-    DECLARE @poType nvarchar(200);
-    SELECT @poType = TYPE_NAME(c.user_type_id) +
-        CASE
-            WHEN TYPE_NAME(c.user_type_id) IN ('nvarchar','nchar') THEN '(' + CASE WHEN c.max_length = -1 THEN 'max' ELSE CAST(c.max_length / 2 AS varchar(10)) END + ')'
-            WHEN TYPE_NAME(c.user_type_id) IN ('varchar','char') THEN '(' + CASE WHEN c.max_length = -1 THEN 'max' ELSE CAST(c.max_length AS varchar(10)) END + ')'
-            ELSE ''
-        END
-    FROM sys.columns c
-    INNER JOIN sys.tables t ON t.object_id = c.object_id
-    WHERE t.name = 'Sales' AND c.name = 'PurchaseOrderNumber';
-    EXEC('ALTER TABLE [Sales] ALTER COLUMN [PurchaseOrderNumber] ' + @poType + ' NULL');
-END;
+            migrationBuilder.AlterColumn<decimal>(
+                name: "TaxAmount",
+                table: "Sales",
+                type: "decimal(18,2)",
+                nullable: true,
+                oldClrType: typeof(decimal),
+                oldType: "decimal(18,2)");
 
-IF COL_LENGTH('Sales', 'DueDate') IS NOT NULL
-    EXEC sp_executesql N'ALTER TABLE [Sales] ALTER COLUMN [DueDate] date NULL;';
+            migrationBuilder.AlterColumn<decimal>(
+                name: "DiscountAmount",
+                table: "Sales",
+                type: "decimal(18,2)",
+                nullable: true,
+                oldClrType: typeof(decimal),
+                oldType: "decimal(18,2)");
 
-IF COL_LENGTH('Sales', 'SubtotalAmount') IS NOT NULL
-    EXEC sp_executesql N'ALTER TABLE [Sales] ALTER COLUMN [SubtotalAmount] decimal(18,2) NULL;';
+            migrationBuilder.AlterColumn<decimal>(
+                name: "TotalAmount",
+                table: "Sales",
+                type: "decimal(18,2)",
+                nullable: true,
+                oldClrType: typeof(decimal),
+                oldType: "decimal(18,2)");
 
-IF COL_LENGTH('Sales', 'TaxAmount') IS NOT NULL
-    EXEC sp_executesql N'ALTER TABLE [Sales] ALTER COLUMN [TaxAmount] decimal(18,2) NULL;';
+            migrationBuilder.AlterColumn<int>(
+                name: "CurrencyId",
+                table: "Sales",
+                type: "int",
+                nullable: true,
+                oldClrType: typeof(int),
+                oldType: "int");
 
-IF COL_LENGTH('Sales', 'DiscountAmount') IS NOT NULL
-    EXEC sp_executesql N'ALTER TABLE [Sales] ALTER COLUMN [DiscountAmount] decimal(18,2) NULL;';
+            migrationBuilder.AlterColumn<int>(
+                name: "PaymentTermsDays",
+                table: "Sales",
+                type: "int",
+                nullable: true,
+                oldClrType: typeof(int),
+                oldType: "int",
+                oldNullable: true);
 
-IF COL_LENGTH('Sales', 'TotalAmount') IS NOT NULL
-    EXEC sp_executesql N'ALTER TABLE [Sales] ALTER COLUMN [TotalAmount] decimal(18,2) NULL;';
+            migrationBuilder.AlterColumn<int>(
+                name: "StatusId",
+                table: "Sales",
+                type: "int",
+                nullable: true,
+                oldClrType: typeof(int),
+                oldType: "int");
 
-IF COL_LENGTH('Sales', 'CurrencyId') IS NOT NULL
-    EXEC sp_executesql N'ALTER TABLE [Sales] ALTER COLUMN [CurrencyId] int NULL;';
+            migrationBuilder.AddForeignKey(
+                name: "FK_Sales_Currencies_CurrencyId",
+                table: "Sales",
+                column: "CurrencyId",
+                principalTable: "Currencies",
+                principalColumn: "CurrencyId",
+                onDelete: ReferentialAction.NoAction);
 
-IF COL_LENGTH('Sales', 'PaymentTermsDays') IS NOT NULL
-    EXEC sp_executesql N'ALTER TABLE [Sales] ALTER COLUMN [PaymentTermsDays] int NULL;';
-
-IF COL_LENGTH('Sales', 'StatusId') IS NOT NULL
-    EXEC sp_executesql N'ALTER TABLE [Sales] ALTER COLUMN [StatusId] int NULL;';
-
-IF COL_LENGTH('Sales', 'CurrencyId') IS NOT NULL AND OBJECT_ID('[Currencies]', 'U') IS NOT NULL
-AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Sales_Currencies_CurrencyId')
-BEGIN
-    ALTER TABLE [Sales] WITH CHECK ADD CONSTRAINT [FK_Sales_Currencies_CurrencyId]
-    FOREIGN KEY([CurrencyId]) REFERENCES [Currencies]([CurrencyId]) ON DELETE NO ACTION;
-END;
-
-IF COL_LENGTH('Sales', 'StatusId') IS NOT NULL AND OBJECT_ID('[Statuses]', 'U') IS NOT NULL
-AND NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Sales_Statuses_StatusId')
-BEGIN
-    ALTER TABLE [Sales] WITH CHECK ADD CONSTRAINT [FK_Sales_Statuses_StatusId]
-    FOREIGN KEY([StatusId]) REFERENCES [Statuses]([StatusId]) ON DELETE NO ACTION;
-END;
-");
+            migrationBuilder.AddForeignKey(
+                name: "FK_Sales_Statuses_StatusId",
+                table: "Sales",
+                column: "StatusId",
+                principalTable: "Statuses",
+                principalColumn: "StatusId",
+                onDelete: ReferentialAction.NoAction);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

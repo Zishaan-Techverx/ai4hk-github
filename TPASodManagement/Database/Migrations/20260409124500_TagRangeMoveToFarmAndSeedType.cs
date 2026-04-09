@@ -12,17 +12,19 @@ namespace TpaSodManagement.Database.Migrations
     {
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<long>(
+                name: "FarmId",
+                table: "TagRanges",
+                type: "bigint",
+                nullable: true);
+
+            migrationBuilder.AddColumn<int>(
+                name: "SeedType",
+                table: "TagRanges",
+                type: "int",
+                nullable: true);
+
             migrationBuilder.Sql(@"
-IF COL_LENGTH('TagRanges', 'FarmId') IS NULL
-BEGIN
-    ALTER TABLE [TagRanges] ADD [FarmId] BIGINT NULL;
-END
-
-IF COL_LENGTH('TagRanges', 'SeedType') IS NULL
-BEGIN
-    ALTER TABLE [TagRanges] ADD [SeedType] INT NULL;
-END
-
 DECLARE @firstFarmId BIGINT;
 SELECT TOP (1) @firstFarmId = [FarmId]
 FROM [Farms]
@@ -32,39 +34,41 @@ ORDER BY [FarmId];
 IF @firstFarmId IS NULL
 BEGIN
     THROW 50020, 'TagRange migration failed: no farm record exists for FarmId backfill.', 1;
-END
+END;
 
-DECLARE @sql NVARCHAR(MAX);
+UPDATE [TagRanges] SET [FarmId] = @firstFarmId WHERE [FarmId] IS NULL;
+UPDATE [TagRanges] SET [SeedType] = 1 WHERE [SeedType] IS NULL;");
 
-SET @sql = N'UPDATE [TagRanges] SET [FarmId] = ' + CAST(@firstFarmId AS NVARCHAR(20)) + N' WHERE [FarmId] IS NULL;';
-EXEC sp_executesql @sql;
+            migrationBuilder.AlterColumn<long>(
+                name: "FarmId",
+                table: "TagRanges",
+                type: "bigint",
+                nullable: false,
+                oldClrType: typeof(long),
+                oldType: "bigint",
+                oldNullable: true);
 
-EXEC sp_executesql N'UPDATE [TagRanges] SET [SeedType] = 1 WHERE [SeedType] IS NULL;';
+            migrationBuilder.AlterColumn<int>(
+                name: "SeedType",
+                table: "TagRanges",
+                type: "int",
+                nullable: false,
+                oldClrType: typeof(int),
+                oldType: "int",
+                oldNullable: true);
 
-EXEC sp_executesql N'ALTER TABLE [TagRanges] ALTER COLUMN [FarmId] BIGINT NOT NULL;';
-EXEC sp_executesql N'ALTER TABLE [TagRanges] ALTER COLUMN [SeedType] INT NOT NULL;';
+            migrationBuilder.CreateIndex(
+                name: "IX_TagRanges_FarmId",
+                table: "TagRanges",
+                column: "FarmId");
 
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE [name] = 'IX_TagRanges_FarmId' AND [object_id] = OBJECT_ID('[TagRanges]'))
-BEGIN
-    CREATE INDEX [IX_TagRanges_FarmId] ON [TagRanges]([FarmId]);
-END
-
-IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE [name] = 'FK_TagRanges_Farms_FarmId')
-BEGIN
-    ALTER TABLE [TagRanges] WITH CHECK
-    ADD CONSTRAINT [FK_TagRanges_Farms_FarmId] FOREIGN KEY([FarmId]) REFERENCES [Farms]([FarmId]);
-END
-
-IF COL_LENGTH('TagRanges', 'TagPrefix') IS NOT NULL
-BEGIN
-    ALTER TABLE [TagRanges] DROP COLUMN [TagPrefix];
-END
-
-IF COL_LENGTH('TagRanges', 'TagSuffix') IS NOT NULL
-BEGIN
-    ALTER TABLE [TagRanges] DROP COLUMN [TagSuffix];
-END
-");
+            migrationBuilder.AddForeignKey(
+                name: "FK_TagRanges_Farms_FarmId",
+                table: "TagRanges",
+                column: "FarmId",
+                principalTable: "Farms",
+                principalColumn: "FarmId",
+                onDelete: ReferentialAction.NoAction);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)

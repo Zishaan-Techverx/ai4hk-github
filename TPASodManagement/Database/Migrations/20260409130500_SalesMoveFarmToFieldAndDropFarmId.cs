@@ -13,13 +13,7 @@ namespace TpaSodManagement.Database.Migrations
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.Sql(@"
--- 1) Ensure Sales.FieldId exists.
-IF COL_LENGTH('Sales', 'FieldId') IS NULL
-BEGIN
-    ALTER TABLE [Sales] ADD [FieldId] BIGINT NULL;
-END
-
--- 2) Backfill Sales.FieldId from Sales.FarmId using first active Field (lowest FieldId).
+-- Backfill Sales.FieldId from Sales.FarmId using first active Field (lowest FieldId).
 IF COL_LENGTH('Sales', 'FarmId') IS NOT NULL
 BEGIN
     UPDATE s
@@ -111,77 +105,42 @@ BEGIN
       AND fmatch.FieldId IS NOT NULL;
 END
 
--- 4) Hard-stop if any Sales row still has NULL FieldId.
+-- Hard-stop if any Sales row still has NULL FieldId.
 IF EXISTS (SELECT 1 FROM Sales WHERE FieldId IS NULL)
 BEGIN
     THROW 50010, 'Sales migration failed: some Sales rows could not be mapped to a FieldId.', 1;
 END
-
--- 5) Drop FK/index dependencies on Sales.FieldId before altering nullability.
-DECLARE @dropFieldFkSql NVARCHAR(MAX) = N'';
-SELECT @dropFieldFkSql = @dropFieldFkSql +
-    N'ALTER TABLE [' + sch.name + N'].[' + t.name + N'] DROP CONSTRAINT [' + fk.name + N'];'
-FROM sys.foreign_keys fk
-INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
-INNER JOIN sys.tables t ON fk.parent_object_id = t.object_id
-INNER JOIN sys.schemas sch ON t.schema_id = sch.schema_id
-INNER JOIN sys.columns c ON c.object_id = t.object_id AND c.column_id = fkc.parent_column_id
-WHERE t.name = 'Sales' AND c.name = 'FieldId';
-IF (@dropFieldFkSql <> N'') EXEC sp_executesql @dropFieldFkSql;
-
-DECLARE @dropFieldIdxSql NVARCHAR(MAX) = N'';
-SELECT @dropFieldIdxSql = @dropFieldIdxSql +
-    N'DROP INDEX [' + i.name + N'] ON [' + sch.name + N'].[' + t.name + N'];'
-FROM sys.indexes i
-INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-INNER JOIN sys.tables t ON i.object_id = t.object_id
-INNER JOIN sys.schemas sch ON t.schema_id = sch.schema_id
-WHERE t.name = 'Sales' AND c.name = 'FieldId' AND i.is_primary_key = 0 AND i.is_unique_constraint = 0;
-IF (@dropFieldIdxSql <> N'') EXEC sp_executesql @dropFieldIdxSql;
-
--- 6) Make Sales.FieldId NOT NULL and recreate FK/index.
-ALTER TABLE [Sales] ALTER COLUMN [FieldId] BIGINT NOT NULL;
-
-IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name = 'IX_Sales_FieldId' AND object_id = OBJECT_ID('[Sales]'))
-BEGIN
-    CREATE INDEX [IX_Sales_FieldId] ON [Sales]([FieldId]);
-END
-
-IF NOT EXISTS (SELECT 1 FROM sys.foreign_keys WHERE name = 'FK_Sales_Fields_FieldId')
-BEGIN
-    ALTER TABLE [Sales] WITH CHECK
-    ADD CONSTRAINT [FK_Sales_Fields_FieldId] FOREIGN KEY([FieldId]) REFERENCES [Fields]([FieldId]);
-END
-
--- 7) Drop dependencies on Sales.FarmId then drop FarmId column.
-IF COL_LENGTH('Sales', 'FarmId') IS NOT NULL
-BEGIN
-    DECLARE @dropFarmFkSql NVARCHAR(MAX) = N'';
-    SELECT @dropFarmFkSql = @dropFarmFkSql +
-        N'ALTER TABLE [' + sch.name + N'].[' + t.name + N'] DROP CONSTRAINT [' + fk.name + N'];'
-    FROM sys.foreign_keys fk
-    INNER JOIN sys.foreign_key_columns fkc ON fk.object_id = fkc.constraint_object_id
-    INNER JOIN sys.tables t ON fk.parent_object_id = t.object_id
-    INNER JOIN sys.schemas sch ON t.schema_id = sch.schema_id
-    INNER JOIN sys.columns c ON c.object_id = t.object_id AND c.column_id = fkc.parent_column_id
-    WHERE t.name = 'Sales' AND c.name = 'FarmId';
-    IF (@dropFarmFkSql <> N'') EXEC sp_executesql @dropFarmFkSql;
-
-    DECLARE @dropFarmIdxSql NVARCHAR(MAX) = N'';
-    SELECT @dropFarmIdxSql = @dropFarmIdxSql +
-        N'DROP INDEX [' + i.name + N'] ON [' + sch.name + N'].[' + t.name + N'];'
-    FROM sys.indexes i
-    INNER JOIN sys.index_columns ic ON i.object_id = ic.object_id AND i.index_id = ic.index_id
-    INNER JOIN sys.columns c ON ic.object_id = c.object_id AND ic.column_id = c.column_id
-    INNER JOIN sys.tables t ON i.object_id = t.object_id
-    INNER JOIN sys.schemas sch ON t.schema_id = sch.schema_id
-    WHERE t.name = 'Sales' AND c.name = 'FarmId' AND i.is_primary_key = 0 AND i.is_unique_constraint = 0;
-    IF (@dropFarmIdxSql <> N'') EXEC sp_executesql @dropFarmIdxSql;
-
-    ALTER TABLE [Sales] DROP COLUMN [FarmId];
-END
 ");
+
+            migrationBuilder.DropForeignKey(
+                name: "FK_Sales_Fields_FieldId",
+                table: "Sales");
+
+            migrationBuilder.DropIndex(
+                name: "IX_Sales_FieldId",
+                table: "Sales");
+
+            migrationBuilder.AlterColumn<long>(
+                name: "FieldId",
+                table: "Sales",
+                type: "bigint",
+                nullable: false,
+                oldClrType: typeof(long),
+                oldType: "bigint",
+                oldNullable: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Sales_FieldId",
+                table: "Sales",
+                column: "FieldId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Sales_Fields_FieldId",
+                table: "Sales",
+                column: "FieldId",
+                principalTable: "Fields",
+                principalColumn: "FieldId",
+                onDelete: ReferentialAction.NoAction);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
