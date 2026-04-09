@@ -22,7 +22,20 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<TagRange>>();
             try
             {
-                response.Data = await _context.TagRanges
+                var query = _context.TagRanges
+                    .Include(t => t.Farm)
+                    .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        query = query.Where(t => t.FarmId == farmId.Value);
+                    else
+                        query = query.Where(_ => false);
+                }
+
+                response.Data = await query
                     .OrderBy(t => t.TagRangeCode)
                     .ToListAsync();
             }
@@ -39,7 +52,18 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<List<TagRange>>();
             try
             {
-                var query = _context.TagRanges.AsQueryable();
+                var query = _context.TagRanges
+                    .Include(t => t.Farm)
+                    .AsQueryable();
+
+                if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+                {
+                    var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                    if (farmId.HasValue)
+                        query = query.Where(t => t.FarmId == farmId.Value);
+                    else
+                        query = query.Where(_ => false);
+                }
 
                 if (filters != null && filters.Count > 0)
                 {
@@ -58,15 +82,15 @@ namespace TpaSodManagement.Services.Implementations
                         if (long.TryParse(filters["TagEndNumber"], out var val))
                             query = query.Where(t => t.TagEndNumber == val);
                     }
-                    if (filters.ContainsKey("TagPrefix") && !string.IsNullOrWhiteSpace(filters["TagPrefix"]))
+                    if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["TagPrefix"]);
-                        query = query.Where(t => t.TagPrefix != null && t.TagPrefix.Contains(filterValue));
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmName"]);
+                        query = query.Where(t => t.Farm != null && t.Farm.FarmName != null && t.Farm.FarmName.Contains(filterValue));
                     }
-                    if (filters.ContainsKey("TagSuffix") && !string.IsNullOrWhiteSpace(filters["TagSuffix"]))
+                    if (filters.ContainsKey("SeedType") && !string.IsNullOrWhiteSpace(filters["SeedType"]))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["TagSuffix"]);
-                        query = query.Where(t => t.TagSuffix != null && t.TagSuffix.Contains(filterValue));
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["SeedType"]);
+                        query = query.Where(t => t.SeedType.ToString().Contains(filterValue));
                     }
                     if (filters.ContainsKey("TotalTags") && !string.IsNullOrWhiteSpace(filters["TotalTags"]))
                     {
@@ -168,8 +192,8 @@ namespace TpaSodManagement.Services.Implementations
                 existing.TagRangeCode = tagRange.TagRangeCode;
                 existing.TagStartNumber = tagRange.TagStartNumber;
                 existing.TagEndNumber = tagRange.TagEndNumber;
-                existing.TagPrefix = tagRange.TagPrefix;
-                existing.TagSuffix = tagRange.TagSuffix;
+                existing.FarmId = tagRange.FarmId;
+                existing.SeedType = tagRange.SeedType;
                 existing.TotalTags = (int)Math.Max(0, tagRange.TagEndNumber - tagRange.TagStartNumber + 1);
                 existing.IsActive = tagRange.IsActive;
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();

@@ -18,8 +18,8 @@ namespace TpaSodManagement.ViewModels.Seeding
         public long? FarmId { get; set; }
         public string? FieldName { get; set; }
         public long? FieldId { get; set; }
-        public string? TagRangeCode { get; set; }
-        public long? TagRangeId { get; set; }
+        public int TagStartNumber { get; set; }
+        public int TagEndNumber { get; set; }
         public string? UserName { get; set; }
         public bool IsActive { get; set; }
     }

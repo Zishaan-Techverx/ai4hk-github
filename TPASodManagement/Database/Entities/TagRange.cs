@@ -14,13 +14,13 @@ public partial class TagRange : AuditBaseEntity
 
     public long TagEndNumber { get; set; }
 
-    public string? TagPrefix { get; set; }
+    public long FarmId { get; set; }
 
-    public string? TagSuffix { get; set; }
+    public TagSeedType SeedType { get; set; }
 
     public int TotalTags { get; set; }
 
-    public virtual ICollection<SaleLineItem> SaleLineItems { get; set; } = new List<SaleLineItem>();
+    public virtual Farm Farm { get; set; } = null!;
 
-    public virtual ICollection<Seeding> Seedings { get; set; } = new List<Seeding>();
+    public virtual ICollection<SaleLineItem> SaleLineItems { get; set; } = new List<SaleLineItem>();
 }

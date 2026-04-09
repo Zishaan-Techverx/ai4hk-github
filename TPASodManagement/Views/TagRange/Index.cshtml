@@ -101,8 +101,8 @@
                 <th data-column="TagRangeCode">Tag Range Code</th>
                 <th data-column="TagStartNumber">Tag Start Number</th>
                 <th data-column="TagEndNumber">Tag End Number</th>
-                <th data-column="TagPrefix">Tag Prefix</th>
-                <th data-column="TagSuffix">Tag Suffix</th>
+                <th data-column="FarmName">Farm</th>
+                <th data-column="SeedType">Type of Seed</th>
                 <th data-column="TotalTags">Total Tags</th>
                 <th data-column="IsActive">Is Active</th>
                 <th data-column="Actions" class="no-hide-column">Actions</th>
@@ -115,8 +115,8 @@
                     <td data-column="TagRangeCode">@Html.DisplayFor(modelItem => item.TagRangeCode)</td>
                     <td data-column="TagStartNumber">@Html.DisplayFor(modelItem => item.TagStartNumber)</td>
                     <td data-column="TagEndNumber">@Html.DisplayFor(modelItem => item.TagEndNumber)</td>
-                    <td data-column="TagPrefix">@Html.DisplayFor(modelItem => item.TagPrefix)</td>
-                    <td data-column="TagSuffix">@Html.DisplayFor(modelItem => item.TagSuffix)</td>
+                    <td data-column="FarmName">@(item.FarmName ?? $"Farm #{item.FarmId}")</td>
+                    <td data-column="SeedType">@item.SeedType</td>
                     <td data-column="TotalTags">@Html.DisplayFor(modelItem => item.TotalTags)</td>
                     <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled @(item.IsActive ? "checked" : "") style="accent-color: #0d6efd;"></td>
                     <td>
@@ -1216,8 +1216,8 @@
                 <td data-column="TagRangeCode">${escapeHtml(item.tagRangeCode || '')}</td>
                 <td data-column="TagStartNumber">${item.tagStartNumber ?? ''}</td>
                 <td data-column="TagEndNumber">${item.tagEndNumber ?? ''}</td>
-                <td data-column="TagPrefix">${escapeHtml(item.tagPrefix || '')}</td>
-                <td data-column="TagSuffix">${escapeHtml(item.tagSuffix || '')}</td>
+                <td data-column="FarmName">${escapeHtml(item.farmName || (item.farmId ? `Farm #${item.farmId}` : ''))}</td>
+                <td data-column="SeedType">${escapeHtml(item.seedType || '')}</td>
                 <td data-column="TotalTags">${item.totalTags ?? ''}</td>
                 <td data-column="IsActive"><input type="checkbox" class="form-check-input" disabled ${item.isActive ? 'checked' : ''} style="accent-color: #0d6efd;"></td>
                 <td>

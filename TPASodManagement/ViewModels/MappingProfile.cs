@@ -36,7 +36,6 @@ public class MappingProfile : Profile
         CreateMap<SeedingEntity, SeedingViewModel>()
             .ForMember(dest => dest.FarmName, opt => opt.MapFrom(src => src.Farm.Organization.OrganizationName))
             .ForMember(dest => dest.FieldName, opt => opt.MapFrom(src => src.Field.FieldName))
-            .ForMember(dest => dest.TagRangeCode, opt => opt.MapFrom(src => src.TagRange.TagRangeCode))
             .ForMember(dest => dest.AreaTypeName, opt => opt.MapFrom(src => src.AreaType.AreaTypeName));
 
         CreateMap<ProductEntity, ProductViewModel>()

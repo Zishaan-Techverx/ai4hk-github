@@ -3,7 +3,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace TpaSodManagement.ViewModels.Seeding
 {
-    public class SeedingEditViewModel
+    public class SeedingEditViewModel : IValidatableObject
     {
         public long SeedingId { get; set; }
 
@@ -20,9 +20,15 @@ namespace TpaSodManagement.ViewModels.Seeding
         
         public long? FieldId { get; set; }
         
-        [Required(ErrorMessage = "Tag Range is required")]
-        [Display(Name = "Tag Range")]
-        public long? TagRangeId { get; set; }
+        [Required(ErrorMessage = "Tag Start Number is required")]
+        [Range(0, int.MaxValue, ErrorMessage = "Tag Start Number must be a positive integer")]
+        [Display(Name = "Tag Start Number")]
+        public int? TagStartNumber { get; set; }
+
+        [Required(ErrorMessage = "Tag End Number is required")]
+        [Range(0, int.MaxValue, ErrorMessage = "Tag End Number must be a positive integer")]
+        [Display(Name = "Tag End Number")]
+        public int? TagEndNumber { get; set; }
         
         [Required(ErrorMessage = "User is required")]
         [Display(Name = "User")]
@@ -45,10 +51,19 @@ namespace TpaSodManagement.ViewModels.Seeding
         public IEnumerable<SelectListItem> AreaTypes { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Farms { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Fields { get; set; } = Enumerable.Empty<SelectListItem>();
-        public IEnumerable<SelectListItem> TagRanges { get; set; } = Enumerable.Empty<SelectListItem>();
         public IEnumerable<SelectListItem> Users { get; set; } = Enumerable.Empty<SelectListItem>();
 
         public bool IsDetailsView { get; set; }
+
+        public IEnumerable<ValidationResult> Validate(ValidationContext validationContext)
+        {
+            if (TagStartNumber.HasValue && TagEndNumber.HasValue && TagStartNumber.Value > TagEndNumber.Value)
+            {
+                yield return new ValidationResult(
+                    "Tag End Number must be greater than or equal to Tag Start Number.",
+                    new[] { nameof(TagEndNumber) });
+            }
+        }
     }
 }
 

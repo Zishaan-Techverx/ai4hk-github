@@ -88,7 +88,7 @@
                     <th data-column="Notes">Notes</th>
                     <th data-column="CurrencyName">Currency</th>
                     <th data-column="CustomerDisplay">Customer</th>
-                    <th data-column="FarmName">Farm</th>
+                    <th data-column="FieldName">Field</th>
                     <th data-column="SaleTypeName">Sale Type</th>
                     <th data-column="StatusName">Status</th>
                     <th data-column="UpdatedByUserName">Updated By User</th>
@@ -114,7 +114,7 @@
                         <td data-column="Notes">@Html.DisplayFor(modelItem => item.Notes)</td>
                         <td data-column="CurrencyName">@(item.CurrencyName ?? "N/A")</td>
                         <td data-column="CustomerDisplay">@(item.CustomerDisplay ?? $"Customer #{item.CustomerId}")</td>
-                        <td data-column="FarmName">@(item.FarmDisplay ?? "N/A")</td>
+                        <td data-column="FieldName">@(item.FieldDisplay ?? "N/A")</td>
                         <td data-column="SaleTypeName">@(item.SaleTypeName ?? "N/A")</td>
                         <td data-column="StatusName">@(item.StatusName ?? "N/A")</td>
                         <td data-column="UpdatedByUserName">@(item.UpdatedByUserName ?? "N/A")</td>
@@ -1214,7 +1214,7 @@
                 <td data-column="Notes">${escapeHtml(item.notes || '')}</td>
                 <td data-column="CurrencyName">${escapeHtml(item.currencyName || 'N/A')}</td>
                 <td data-column="CustomerDisplay">${escapeHtml(item.customerDisplay || `Customer #${item.customerId}`)}</td>
-                <td data-column="FarmName">${escapeHtml(item.farmDisplay || 'N/A')}</td>
+                <td data-column="FieldName">${escapeHtml(item.fieldDisplay || 'N/A')}</td>
                 <td data-column="SaleTypeName">${escapeHtml(item.saleTypeName || 'N/A')}</td>
                 <td data-column="StatusName">${escapeHtml(item.statusName || 'N/A')}</td>
                 <td data-column="UpdatedByUserName">${escapeHtml(item.updatedByUserName || 'N/A')}</td>

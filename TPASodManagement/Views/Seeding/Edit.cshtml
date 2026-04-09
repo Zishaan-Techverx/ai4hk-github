@@ -79,12 +79,16 @@
                                 <span asp-validation-for="FieldId" class="text-danger"></span>
                             </div>
 
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="TagRangeId" class="form-label">Tag Range <span class="text-danger">*</span></label>
-                                <select asp-for="TagRangeId" class="form-select" asp-items="Model.TagRanges" disabled="@disabledAttr" required>
-                                    <option value="">-- Select Tag Range --</option>
-                                </select>
-                                <span asp-validation-for="TagRangeId" class="text-danger"></span>
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="TagStartNumber" class="form-label">Tag Start Number <span class="text-danger">*</span></label>
+                                <input asp-for="TagStartNumber" type="number" min="0" step="1" class="form-control" disabled="@disabledAttr" required />
+                                <span asp-validation-for="TagStartNumber" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-md-3 mb-3">
+                                <label asp-for="TagEndNumber" class="form-label">Tag End Number <span class="text-danger">*</span></label>
+                                <input asp-for="TagEndNumber" type="number" min="0" step="1" class="form-control" disabled="@disabledAttr" required />
+                                <span asp-validation-for="TagEndNumber" class="text-danger"></span>
                             </div>
                         </div>
 

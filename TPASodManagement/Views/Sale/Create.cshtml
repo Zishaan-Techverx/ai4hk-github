@@ -49,12 +49,6 @@
                                     <input type="hidden" asp-for="UserId" />
                                     <span asp-validation-for="UserId" class="text-danger"></span>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="FarmId" class="form-label">Farm <span class="text-danger">*</span></label>
-                                    <input type="text" class="form-control" value="@ViewBag.CurrentFarmDisplayName" readonly />
-                                    <input type="hidden" asp-for="FarmId" />
-                                    <span asp-validation-for="FarmId" class="text-danger"></span>
-                                </div>
                             }
                             else
                             {
@@ -65,16 +59,8 @@
                                     </select>
                                     <span asp-validation-for="UserId" class="text-danger"></span>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="FarmId" class="form-label">Farm <span class="text-danger">*</span></label>
-                                    <select asp-for="FarmId" class="form-select" asp-items="Model.Farms" required>
-                                        <option value="">-- Select Farm --</option>
-                                    </select>
-                                    <span asp-validation-for="FarmId" class="text-danger"></span>
-                                </div>
                             }
                         </div>
-
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label asp-for="CustomerId" class="form-label">Customer <span class="text-danger">*</span></label>
@@ -101,15 +87,6 @@
                                 </select>
                                 <span asp-validation-for="SaleTypeId" class="text-danger"></span>
                             </div>
-                        </div>
-
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="SaleNumber" class="form-label">Sale Number <span class="text-danger">*</span></label>
-                                <input asp-for="SaleNumber" class="form-control" required />
-                                <span asp-validation-for="SaleNumber" class="text-danger"></span>
-                            </div>
-
                             <div class="col-md-6 mb-3">
                                 <label asp-for="InvoiceNumber" class="form-label">Invoice Number</label>
                                 <input asp-for="InvoiceNumber" class="form-control" />
@@ -117,107 +94,13 @@
                             </div>
                         </div>
 
-                        @if (User.IsInRole("SuperAdmin"))
-                        {
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="PurchaseOrderNumber" class="form-label">Purchase Order Number</label>
-                                    <input asp-for="PurchaseOrderNumber" class="form-control" />
-                                    <span asp-validation-for="PurchaseOrderNumber" class="text-danger"></span>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <input type="hidden" asp-for="PurchaseOrderNumber" />
-                        }
-
                         <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label asp-for="CurrencyId" class="form-label">Currency <span class="text-danger">*</span></label>
-                                <select asp-for="CurrencyId" class="form-select" asp-items="Model.Currencies" required>
-                                    <option value="">-- Select Currency --</option>
-                                </select>
-                                <span asp-validation-for="CurrencyId" class="text-danger"></span>
-                            </div>
-
                             <div class="col-md-6 mb-3">
                                 <label asp-for="SaleDate" class="form-label">Sale Date <span class="text-danger">*</span></label>
                                 <input asp-for="SaleDate" type="date" class="form-control" required />
                                 <span asp-validation-for="SaleDate" class="text-danger"></span>
                             </div>
                         </div>
-
-                        @if (User.IsInRole("SuperAdmin"))
-                        {
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="DueDate" class="form-label">Due Date</label>
-                                    <input asp-for="DueDate" type="date" class="form-control" />
-                                    <span asp-validation-for="DueDate" class="text-danger"></span>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <input type="hidden" asp-for="DueDate" />
-                        }
-
-                        @if (User.IsInRole("SuperAdmin"))
-                        {
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="SubtotalAmount" class="form-label">Subtotal Amount <span class="text-danger">*</span></label>
-                                    <input asp-for="SubtotalAmount" type="number" step="0.01" class="form-control" required />
-                                    <span asp-validation-for="SubtotalAmount" class="text-danger"></span>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="TaxAmount" class="form-label">Tax Amount <span class="text-danger">*</span></label>
-                                    <input asp-for="TaxAmount" type="number" step="0.01" class="form-control" required />
-                                    <span asp-validation-for="TaxAmount" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="DiscountAmount" class="form-label">Discount Amount <span class="text-danger">*</span></label>
-                                    <input asp-for="DiscountAmount" type="number" step="0.01" class="form-control" required />
-                                    <span asp-validation-for="DiscountAmount" class="text-danger"></span>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="TotalAmount" class="form-label">Total Amount <span class="text-danger">*</span></label>
-                                    <input asp-for="TotalAmount" type="number" step="0.01" class="form-control" required />
-                                    <span asp-validation-for="TotalAmount" class="text-danger"></span>
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="PaymentTermsDays" class="form-label">Payment Terms Days</label>
-                                    <input asp-for="PaymentTermsDays" type="number" class="form-control" />
-                                    <span asp-validation-for="PaymentTermsDays" class="text-danger"></span>
-                                </div>
-
-                                <div class="col-md-6 mb-3">
-                                    <label asp-for="StatusId" class="form-label">Status <span class="text-danger">*</span></label>
-                                    <select asp-for="StatusId" class="form-select" asp-items="Model.Statuses" required>
-                                        <option value="">-- Select Status --</option>
-                                    </select>
-                                    <span asp-validation-for="StatusId" class="text-danger"></span>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <input type="hidden" asp-for="SubtotalAmount" value="0" />
-                            <input type="hidden" asp-for="TaxAmount" value="0" />
-                            <input type="hidden" asp-for="DiscountAmount" value="0" />
-                            <input type="hidden" asp-for="TotalAmount" value="0" />
-                            <input type="hidden" asp-for="PaymentTermsDays" />
-                            <input type="hidden" asp-for="StatusId" value="@(Model.Statuses?.FirstOrDefault(s => !string.IsNullOrEmpty(s.Value))?.Value ?? "1")" />
-                        }
 
                         @* <div class="row">
                             <div class="col-md-6 mb-3">

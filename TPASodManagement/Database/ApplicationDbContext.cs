@@ -408,6 +408,11 @@ public class ApplicationDbContext : IdentityDbContext<TpaSodManagementUser, Iden
 
         builder.Entity<TagRange>(entity =>
         {
+            entity.HasOne(t => t.Farm)
+                .WithMany()
+                .HasForeignKey(t => t.FarmId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_TagRanges_Farms_FarmId");
             entity.Property(e => e.DeletedByUserId);
             entity.Property(e => e.DeletedDate);
         });

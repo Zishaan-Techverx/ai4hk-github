@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
 using System.Linq;
@@ -7,6 +8,7 @@ using TpaSodManagement.Services.Interfaces;
 using TpaSodManagement.ViewModels.TagRange;
 using TpaSodManagement.Utilities;
 using TpaSodManagement.Database.Entities;
+using TpaSodManagement.Database;
 using Microsoft.AspNetCore.Identity;
 using TpaSodManagement.Areas.Identity.Data;
 
@@ -19,13 +21,23 @@ namespace TpaSodManagement.Controllers
         private readonly IExportToExcel _exportToExcel;
         private readonly IExportToPdf _exportToPdf;
         private readonly UserManager<TpaSodManagementUser> _userManager;
+        private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
-        public TagRangeController(ITagRangeService tagRangeService, IExportToExcel exportToExcel, IExportToPdf exportToPdf, UserManager<TpaSodManagementUser> userManager)
+        public TagRangeController(
+            ITagRangeService tagRangeService,
+            IExportToExcel exportToExcel,
+            IExportToPdf exportToPdf,
+            UserManager<TpaSodManagementUser> userManager,
+            ApplicationDbContext context,
+            ICurrentUserService currentUserService)
         {
             _tagRangeService = tagRangeService;
             _exportToExcel = exportToExcel;
             _exportToPdf = exportToPdf;
             _userManager = userManager;
+            _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -35,8 +47,8 @@ namespace TpaSodManagement.Controllers
                 { "TagRangeCode", "Tag Range Code" },
                 { "TagStartNumber", "Tag Start Number" },
                 { "TagEndNumber", "Tag End Number" },
-                { "TagPrefix", "Tag Prefix" },
-                { "TagSuffix", "Tag Suffix" },
+                { "FarmName", "Farm" },
+                { "SeedType", "Type of Seed" },
                 { "TotalTags", "Total Tags" },
                 { "IsActive", "Is Active" }
             };
@@ -115,8 +127,8 @@ namespace TpaSodManagement.Controllers
                     ("Tag Range Code", "TagRangeCode"),
                     ("Tag Start Number", "TagStartNumber"),
                     ("Tag End Number", "TagEndNumber"),
-                    ("Tag Prefix", "TagPrefix"),
-                    ("Tag Suffix", "TagSuffix"),
+                    ("Farm", "FarmName"),
+                    ("Type of Seed", "SeedType"),
                     ("Total Tags", "TotalTags"),
                     ("Is Active", "IsActive")
                 };
@@ -135,8 +147,8 @@ namespace TpaSodManagement.Controllers
                             item.TagRangeCode ?? "",
                             item.TagStartNumber.ToString(),
                             item.TagEndNumber.ToString(),
-                            item.TagPrefix ?? "",
-                            item.TagSuffix ?? "",
+                            item.FarmName ?? "",
+                            item.SeedType ?? "",
                             item.TotalTags.ToString(),
                             item.IsActive ? "Yes" : "No"
                         };
@@ -187,8 +199,8 @@ namespace TpaSodManagement.Controllers
                     ("Tag Range Code", "TagRangeCode"),
                     ("Tag Start Number", "TagStartNumber"),
                     ("Tag End Number", "TagEndNumber"),
-                    ("Tag Prefix", "TagPrefix"),
-                    ("Tag Suffix", "TagSuffix"),
+                    ("Farm", "FarmName"),
+                    ("Type of Seed", "SeedType"),
                     ("Total Tags", "TotalTags"),
                     ("Is Active", "IsActive")
                 };
@@ -202,8 +214,8 @@ namespace TpaSodManagement.Controllers
                         item.TagRangeCode ?? "",
                         item.TagStartNumber.ToString(),
                         item.TagEndNumber.ToString(),
-                        item.TagPrefix ?? "",
-                        item.TagSuffix ?? "",
+                        item.FarmName ?? "",
+                        item.SeedType ?? "",
                         item.TotalTags.ToString(),
                         item.IsActive ? "Yes" : "No"
                     };
@@ -232,15 +244,18 @@ namespace TpaSodManagement.Controllers
             return View("Edit", vm);
         }
 
-        public IActionResult Create()
+        public async Task<IActionResult> Create()
         {
-            return View(new TagRangeEditViewModel { IsActive = true });
+            var vm = new TagRangeEditViewModel { IsActive = true };
+            await PopulateDropdowns(vm);
+            return View(vm);
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(TagRangeEditViewModel tagRangeVm)
         {
+            await PopulateDropdowns(tagRangeVm);
             if (ModelState.IsValid)
             {
                 var tagRange = MapToEntity(tagRangeVm);
@@ -264,6 +279,7 @@ namespace TpaSodManagement.Controllers
             if (!result.Success || result.Data == null)
                 return NotFound();
             var vm = MapToEditViewModel(result.Data);
+            await PopulateDropdowns(vm);
             return View(vm);
         }
 
@@ -273,6 +289,7 @@ namespace TpaSodManagement.Controllers
         {
             if (id != tagRangeVm.TagRangeId)
                 return NotFound();
+            await PopulateDropdowns(tagRangeVm);
             if (ModelState.IsValid)
             {
                 try
@@ -318,8 +335,9 @@ namespace TpaSodManagement.Controllers
                 TagRangeCode = entity.TagRangeCode ?? "",
                 TagStartNumber = entity.TagStartNumber,
                 TagEndNumber = entity.TagEndNumber,
-                TagPrefix = entity.TagPrefix,
-                TagSuffix = entity.TagSuffix,
+                FarmId = entity.FarmId,
+                FarmName = entity.Farm?.FarmName,
+                SeedType = FormatSeedType(entity.SeedType),
                 TotalTags = entity.TotalTags,
                 IsActive = entity.IsActive
             };
@@ -333,8 +351,8 @@ namespace TpaSodManagement.Controllers
                 TagRangeCode = entity.TagRangeCode ?? "",
                 TagStartNumber = entity.TagStartNumber,
                 TagEndNumber = entity.TagEndNumber,
-                TagPrefix = entity.TagPrefix,
-                TagSuffix = entity.TagSuffix,
+                FarmId = entity.FarmId,
+                SeedType = entity.SeedType,
                 TotalTags = entity.TotalTags,
                 IsActive = entity.IsActive,
                 CreatedDate = entity.CreatedDate,
@@ -350,11 +368,53 @@ namespace TpaSodManagement.Controllers
                 TagRangeCode = vm.TagRangeCode,
                 TagStartNumber = vm.TagStartNumber,
                 TagEndNumber = vm.TagEndNumber,
-                TagPrefix = vm.TagPrefix,
-                TagSuffix = vm.TagSuffix,
+                FarmId = vm.FarmId ?? 0,
+                SeedType = vm.SeedType ?? TagSeedType.HgtSeed,
                 TotalTags = (int)Math.Max(0, vm.TagEndNumber - vm.TagStartNumber + 1),
                 IsActive = vm.IsActive,
                 CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow
+            };
+        }
+
+        private static string FormatSeedType(TagSeedType seedType)
+        {
+            return seedType switch
+            {
+                TagSeedType.HgtSeed => "HGT Seed",
+                TagSeedType.RtfSeed => "RTF Seed",
+                TagSeedType.RtfHgtSeed => "RTF-HGT Seed",
+                _ => seedType.ToString()
+            };
+        }
+
+        private async Task PopulateDropdowns(TagRangeEditViewModel vm)
+        {
+            var farmsQuery = _context.Farms
+                .Where(f => f.IsActive)
+                .OrderBy(f => f.FarmName)
+                .AsQueryable();
+
+            if (!await _currentUserService.IsCurrentUserSuperAdminAsync())
+            {
+                var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
+                if (farmId.HasValue)
+                    farmsQuery = farmsQuery.Where(f => f.FarmId == farmId.Value);
+                else
+                    farmsQuery = farmsQuery.Where(_ => false);
+            }
+
+            var farms = await farmsQuery.ToListAsync();
+            vm.Farms = farms.Select(f => new SelectListItem
+            {
+                Value = f.FarmId.ToString(),
+                Text = string.IsNullOrWhiteSpace(f.FarmName) ? $"Farm #{f.FarmId}" : f.FarmName
+            });
+
+            vm.SeedTypes = new List<SelectListItem>
+            {
+                new() { Value = ((int)TagSeedType.HgtSeed).ToString(), Text = "HGT Seed" },
+                new() { Value = ((int)TagSeedType.RtfSeed).ToString(), Text = "RTF Seed" },
+                new() { Value = ((int)TagSeedType.RtfHgtSeed).ToString(), Text = "RTF-HGT Seed" }
             };
         }
     }

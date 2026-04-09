@@ -31,7 +31,6 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.AreaType)
                     .Include(s => s.Farm)
                     .Include(s => s.Field)
-                    .Include(s => s.TagRange)
                     .Include(s => s.User)
                     .AsQueryable();
 
@@ -63,7 +62,6 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.AreaType)
                     .Include(s => s.Farm)
                     .Include(s => s.Field)
-                    .Include(s => s.TagRange)
                     .Include(s => s.User)
                     .AsQueryable();
 
@@ -145,10 +143,16 @@ namespace TpaSodManagement.Services.Implementations
                         query = query.Where(s => s.Field != null && s.Field.FieldName != null && s.Field.FieldName.Contains(filterValue));
                     }
 
-                    if (filters.ContainsKey("TagRangeCode") && !string.IsNullOrWhiteSpace(filters["TagRangeCode"]))
+                    if (filters.ContainsKey("TagStartNumber") && !string.IsNullOrWhiteSpace(filters["TagStartNumber"]) &&
+                        int.TryParse(filters["TagStartNumber"], out int tagStartNumber))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["TagRangeCode"]);
-                        query = query.Where(s => s.TagRange != null && s.TagRange.TagRangeCode != null && s.TagRange.TagRangeCode.Contains(filterValue));
+                        query = query.Where(s => s.TagStartNumber == tagStartNumber);
+                    }
+
+                    if (filters.ContainsKey("TagEndNumber") && !string.IsNullOrWhiteSpace(filters["TagEndNumber"]) &&
+                        int.TryParse(filters["TagEndNumber"], out int tagEndNumber))
+                    {
+                        query = query.Where(s => s.TagEndNumber == tagEndNumber);
                     }
 
                     if (filters.ContainsKey("UserName") && !string.IsNullOrWhiteSpace(filters["UserName"]))
@@ -223,7 +227,6 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.AreaType)
                     .Include(s => s.Farm)
                     .Include(s => s.Field)
-                    .Include(s => s.TagRange)
                     .Include(s => s.User)
                     .FirstOrDefaultAsync(s => s.SeedingId == id);
 
@@ -287,7 +290,8 @@ namespace TpaSodManagement.Services.Implementations
                 existingSeeding.FarmId = seeding.FarmId;
                 existingSeeding.AreaTypeId = seeding.AreaTypeId;
                 existingSeeding.FieldId = seeding.FieldId;
-                existingSeeding.TagRangeId = seeding.TagRangeId;
+                existingSeeding.TagStartNumber = seeding.TagStartNumber;
+                existingSeeding.TagEndNumber = seeding.TagEndNumber;
                 existingSeeding.AreaAmount = seeding.AreaAmount;
                 existingSeeding.SeedingDate = seeding.SeedingDate;
                 existingSeeding.SeedingMethod = seeding.SeedingMethod;
@@ -353,9 +357,9 @@ namespace TpaSodManagement.Services.Implementations
             return response;
         }
 
-        public async Task<ServiceResponse<(SelectList AreaTypes, SelectList Farms, SelectList Fields, SelectList TagRanges, SelectList Users)>> GetDropdownDataAsync()
+        public async Task<ServiceResponse<(SelectList AreaTypes, SelectList Farms, SelectList Fields, SelectList Users)>> GetDropdownDataAsync()
         {
-            var response = new ServiceResponse<(SelectList, SelectList, SelectList, SelectList, SelectList)>();
+            var response = new ServiceResponse<(SelectList, SelectList, SelectList, SelectList)>();
             try
             {
                 var areaTypes = await _context.AreaTypes
@@ -389,10 +393,6 @@ namespace TpaSodManagement.Services.Implementations
                         fieldsQuery = fieldsQuery.Where(f => false);
                 }
                 var fields = await fieldsQuery.ToListAsync();
-                
-                var tagRanges = await _context.TagRanges
-                    .OrderBy(t => t.TagRangeId)
-                    .ToListAsync();
                 
                 // TpaSodManagementUser se users fetch karein (filter by org for non-SuperAdmin)
                 var usersQuery = _userManager.Users.AsQueryable();
@@ -433,13 +433,6 @@ namespace TpaSodManagement.Services.Implementations
                     Text = f.FieldName ?? $"Field #{f.FieldId}" // Simple: Just FieldName
                 }).ToList();
 
-                // Create SelectList for TagRanges
-                var tagRangeItems = tagRanges.Select(t => new SelectListItem
-                {
-                    Value = t.TagRangeId.ToString(),
-                    Text = $"Tag Range #{t.TagRangeId}" // Adjust based on TagRange model properties
-                }).ToList();
-
                 // Create SelectList for Users with display name (FirstName LastName or UserName)
                 var userItems = users.Select(u =>
                 {
@@ -466,7 +459,6 @@ namespace TpaSodManagement.Services.Implementations
                     new SelectList(areaTypeItems, "Value", "Text"),
                     new SelectList(farmItems, "Value", "Text"),
                     new SelectList(fieldItems, "Value", "Text"), // Direct SelectList - no need for fieldsSelectList variable
-                    new SelectList(tagRangeItems, "Value", "Text"),
                     new SelectList(userItems, "Value", "Text")
                 );
             }

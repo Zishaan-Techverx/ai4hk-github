@@ -71,19 +71,22 @@
                                 <input asp-for="TagEndNumber" type="number" class="form-control" min="0" disabled="@disabledAttr" required />
                                 <span asp-validation-for="TagEndNumber" class="text-danger"></span>
                             </div>
-
                             <div class="col-md-6 mb-3">
-                                <label asp-for="TagPrefix" class="form-label">Tag Prefix</label>
-                                <input asp-for="TagPrefix" class="form-control" disabled="@disabledAttr" maxlength="20" />
-                                <span asp-validation-for="TagPrefix" class="text-danger"></span>
+                                <label asp-for="FarmId" class="form-label">Farm <span class="text-danger">*</span></label>
+                                <select asp-for="FarmId" asp-items="Model.Farms" class="form-select" disabled="@disabledAttr" required>
+                                    <option value="">-- Select Farm --</option>
+                                </select>
+                                <span asp-validation-for="FarmId" class="text-danger"></span>
                             </div>
                         </div>
 
                         <div class="row">
                             <div class="col-md-6 mb-3">
-                                <label asp-for="TagSuffix" class="form-label">Tag Suffix</label>
-                                <input asp-for="TagSuffix" class="form-control" disabled="@disabledAttr" maxlength="20" />
-                                <span asp-validation-for="TagSuffix" class="text-danger"></span>
+                                <label asp-for="SeedType" class="form-label">Type of Seed <span class="text-danger">*</span></label>
+                                <select asp-for="SeedType" asp-items="Model.SeedTypes" class="form-select" disabled="@disabledAttr" required>
+                                    <option value="">-- Select Seed Type --</option>
+                                </select>
+                                <span asp-validation-for="SeedType" class="text-danger"></span>
                             </div>
 
                             <div class="col-md-6 mb-3">

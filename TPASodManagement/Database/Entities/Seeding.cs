@@ -15,7 +15,9 @@ public partial class Seeding : AuditBaseEntity
 
     public long? FieldId { get; set; }
 
-    public long TagRangeId { get; set; }
+    public int TagStartNumber { get; set; }
+
+    public int TagEndNumber { get; set; }
 
     public decimal? AreaAmount { get; set; }
 
@@ -44,8 +46,6 @@ public partial class Seeding : AuditBaseEntity
     public virtual Field? Field { get; set; }
 
     public virtual ICollection<SaleLineItem> SaleLineItems { get; set; } = new List<SaleLineItem>();
-
-    public virtual TagRange TagRange { get; set; } = null!;
 
     public virtual TpaSodManagementUser User { get; set; } = null!;
 

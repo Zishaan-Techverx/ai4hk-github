@@ -77,7 +77,8 @@
                 <th data-column="FarmName">Farm</th>
                 <th data-column="AreaTypeName">Area Type</th>
                 <th data-column="FieldName">Field</th>
-                <th data-column="TagRangeCode">Tag Range</th>
+                <th data-column="TagStartNumber">Tag Start Number</th>
+                <th data-column="TagEndNumber">Tag End Number</th>
                 <th data-column="AreaAmount">Area Amount</th>
                 <th data-column="SeedingDate">Seeding Date</th>
                 <th data-column="SeedingMethod">Seeding Method</th>
@@ -98,7 +99,8 @@
                     <td data-column="FarmName">@(item.FarmDisplay ?? "N/A")</td>
                     <td data-column="AreaTypeName">@(item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}")</td>
                     <td data-column="FieldName">@(item.FieldName ?? "N/A")</td>
-                    <td data-column="TagRangeCode">@(item.TagRangeCode ?? $"TagRange #{item.TagRangeId}")</td>
+                    <td data-column="TagStartNumber">@item.TagStartNumber</td>
+                    <td data-column="TagEndNumber">@item.TagEndNumber</td>
                     <td data-column="AreaAmount">@Html.DisplayFor(modelItem => item.AreaAmount)</td>
                     <td data-column="SeedingDate">@(item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("MM/dd/yyyy") : "")</td>
                     <td data-column="SeedingMethod">@Html.DisplayFor(modelItem => item.SeedingMethod)</td>
@@ -1231,7 +1233,8 @@
                 <td data-column="FarmName">${escapeHtml(item.farmDisplay || 'N/A')}</td>
                 <td data-column="AreaTypeName">${escapeHtml(item.areaTypeName || `AreaType #${item.areaTypeId}`)}</td>
                 <td data-column="FieldName">${escapeHtml(item.fieldName || 'N/A')}</td>
-                <td data-column="TagRangeCode">${escapeHtml(item.tagRangeCode || `TagRange #${item.tagRangeId}`)}</td>
+                <td data-column="TagStartNumber">${item.tagStartNumber ?? 0}</td>
+                <td data-column="TagEndNumber">${item.tagEndNumber ?? 0}</td>
                 <td data-column="AreaAmount">${item.areaAmount || ''}</td>
                 <td data-column="SeedingDate">${item.seedingDate ? formatDate(item.seedingDate) : ''}</td>
                 <td data-column="SeedingMethod">${escapeHtml(item.seedingMethod || '')}</td>

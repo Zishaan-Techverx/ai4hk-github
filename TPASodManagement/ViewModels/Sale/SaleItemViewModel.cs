@@ -19,7 +19,8 @@ namespace TpaSodManagement.ViewModels.Sale
         public string? CurrencyName { get; set; }
         public long? CustomerId { get; set; }
         public string? CustomerDisplay { get; set; }
-        public long? FarmId { get; set; }
+        public long? FieldId { get; set; }
+        public string? FieldDisplay { get; set; }
         public string? FarmDisplay { get; set; }
         public string? SaleTypeName { get; set; }
         public string? StatusName { get; set; }

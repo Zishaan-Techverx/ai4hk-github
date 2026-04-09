@@ -40,7 +40,8 @@ namespace TpaSodManagement.Controllers
                 { "FarmName", "Farm" },
                 { "AreaTypeName", "Area Type" },
                 { "FieldName", "Field" },
-                { "TagRangeCode", "Tag Range" },
+                { "TagStartNumber", "Tag Start Number" },
+                { "TagEndNumber", "Tag End Number" },
                 { "AreaAmount", "Area Amount" },
                 { "SeedingDate", "Seeding Date" },
                 { "SeedingMethod", "Seeding Method" },
@@ -114,13 +115,15 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(SeedingEditViewModel seedingVm)
         {
-            // Set automatic fields
             seedingVm.CreatedDate = DateTimeOffset.UtcNow;
-            
-            // Remove all ModelState errors - validations removed (same as SaleController and ProductController)
-            ModelState.Clear();
-            
-            // Validations removed - directly save
+
+            ValidateTagNumbers(seedingVm);
+            if (!ModelState.IsValid)
+            {
+                await PopulateDropdowns(seedingVm);
+                return View(seedingVm);
+            }
+
             var entity = MapToEntity(seedingVm);
             var result = await _seedingService.CreateAsync(entity);
             if (!result.Success)
@@ -151,10 +154,13 @@ namespace TpaSodManagement.Controllers
         {
             if (id != seedingVm.SeedingId) return NotFound();
 
-            // Remove all ModelState errors - validations removed (same as ProductController)
-            ModelState.Clear();
-            
-            // Validations removed - directly update
+            ValidateTagNumbers(seedingVm);
+            if (!ModelState.IsValid)
+            {
+                await PopulateDropdowns(seedingVm);
+                return View(seedingVm);
+            }
+
             var entity = MapToEntity(seedingVm);
             var result = await _seedingService.UpdateAsync(entity);
             if (!result.Success)
@@ -249,7 +255,8 @@ namespace TpaSodManagement.Controllers
                     ("Farm", "Farm"),
                     ("Area Type", "AreaType"),
                     ("Field", "Field"),
-                    ("Tag Range", "TagRange"),
+                    ("Tag Start Number", "TagStartNumber"),
+                    ("Tag End Number", "TagEndNumber"),
                     ("Area Amount", "AreaAmount"),
                     ("Seeding Date", "SeedingDate"),
                     ("Seeding Method", "SeedingMethod"),
@@ -278,7 +285,8 @@ namespace TpaSodManagement.Controllers
                             item.FarmDisplay ?? "N/A",
                             item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}",
                             item.FieldName ?? "N/A",
-                            item.TagRangeCode ?? $"TagRange #{item.TagRangeId}",
+                            item.TagStartNumber,
+                            item.TagEndNumber,
                             item.AreaAmount?.ToString("N2") ?? "",
                             item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("MM/dd/yyyy") : "",
                             item.SeedingMethod ?? "",
@@ -344,7 +352,8 @@ namespace TpaSodManagement.Controllers
                     ("Farm", "Farm"),
                     ("Area Type", "AreaType"),
                     ("Field", "Field"),
-                    ("Tag Range", "TagRange"),
+                    ("Tag Start Number", "TagStartNumber"),
+                    ("Tag End Number", "TagEndNumber"),
                     ("Area Amount", "AreaAmount"),
                     ("Seeding Date", "SeedingDate"),
                     ("Seeding Method", "SeedingMethod"),
@@ -366,7 +375,8 @@ namespace TpaSodManagement.Controllers
                         item.FarmDisplay ?? "N/A",
                         item.AreaTypeName ?? $"AreaType #{item.AreaTypeId}",
                         item.FieldName ?? "N/A",
-                        item.TagRangeCode ?? $"TagRange #{item.TagRangeId}",
+                        item.TagStartNumber,
+                        item.TagEndNumber,
                         item.AreaAmount?.ToString("N2") ?? "",
                         item.SeedingDate.HasValue ? item.SeedingDate.Value.ToString("MM/dd/yyyy") : "",
                         item.SeedingMethod ?? "",
@@ -401,8 +411,8 @@ namespace TpaSodManagement.Controllers
                 AreaTypeName = entity.AreaType?.AreaTypeName,
                 FieldId = entity.FieldId,
                 FieldName = entity.Field?.FieldName,
-                TagRangeId = entity.TagRangeId,
-                TagRangeCode = entity.TagRange?.TagRangeCode,
+                TagStartNumber = entity.TagStartNumber,
+                TagEndNumber = entity.TagEndNumber,
                 AreaAmount = entity.AreaAmount,
                 SeedingDate = entity.SeedingDate,
                 SeedingMethod = entity.SeedingMethod,
@@ -425,7 +435,8 @@ namespace TpaSodManagement.Controllers
                 FarmId = entity.FarmId,
                 AreaTypeId = entity.AreaTypeId,
                 FieldId = entity.FieldId,
-                TagRangeId = entity.TagRangeId,
+                TagStartNumber = entity.TagStartNumber,
+                TagEndNumber = entity.TagEndNumber,
                 AreaAmount = entity.AreaAmount,
                 UserId = entity.UserId,
                 SeedingDate = entity.SeedingDate,
@@ -451,7 +462,8 @@ namespace TpaSodManagement.Controllers
                 AreaTypeId = vm.AreaTypeId ?? 0,
                 FarmId = vm.FarmId ?? 0,
                 FieldId = vm.FieldId,
-                TagRangeId = vm.TagRangeId ?? 0,
+                TagStartNumber = vm.TagStartNumber ?? 0,
+                TagEndNumber = vm.TagEndNumber ?? 0,
                 UserId = vm.UserId ?? 0,
                 SeedingDate = vm.SeedingDate ?? fallbackDate,
                 SeedingMethod = vm.SeedingMethod,
@@ -473,7 +485,6 @@ namespace TpaSodManagement.Controllers
                 var areaTypeItems = (dropdowns.Data.AreaTypes ?? Enumerable.Empty<SelectListItem>()).ToList();
                 vm.Farms = dropdowns.Data.Farms ?? Enumerable.Empty<SelectListItem>();
                 vm.Fields = dropdowns.Data.Fields ?? Enumerable.Empty<SelectListItem>();
-                vm.TagRanges = dropdowns.Data.TagRanges ?? Enumerable.Empty<SelectListItem>();
                 vm.Users = dropdowns.Data.Users ?? Enumerable.Empty<SelectListItem>();
 
                 // Default prefill Area Type to "Acres" when no value is selected.
@@ -512,9 +523,34 @@ namespace TpaSodManagement.Controllers
                 vm.AreaTypes = vm.AreaTypes ?? Enumerable.Empty<SelectListItem>();
                 vm.Farms = vm.Farms ?? Enumerable.Empty<SelectListItem>();
                 vm.Fields = vm.Fields ?? Enumerable.Empty<SelectListItem>();
-                vm.TagRanges = vm.TagRanges ?? Enumerable.Empty<SelectListItem>();
                 vm.Users = vm.Users ?? Enumerable.Empty<SelectListItem>();
                 TempData["Error"] = dropdowns.Message;
+            }
+        }
+
+        private void ValidateTagNumbers(SeedingEditViewModel vm)
+        {
+            if (!vm.TagStartNumber.HasValue)
+            {
+                ModelState.AddModelError(nameof(vm.TagStartNumber), "Tag Start Number is required");
+            }
+            else if (vm.TagStartNumber.Value < 0)
+            {
+                ModelState.AddModelError(nameof(vm.TagStartNumber), "Tag Start Number must be a positive integer");
+            }
+
+            if (!vm.TagEndNumber.HasValue)
+            {
+                ModelState.AddModelError(nameof(vm.TagEndNumber), "Tag End Number is required");
+            }
+            else if (vm.TagEndNumber.Value < 0)
+            {
+                ModelState.AddModelError(nameof(vm.TagEndNumber), "Tag End Number must be a positive integer");
+            }
+
+            if (vm.TagStartNumber.HasValue && vm.TagEndNumber.HasValue && vm.TagStartNumber.Value > vm.TagEndNumber.Value)
+            {
+                ModelState.AddModelError(nameof(vm.TagEndNumber), "Tag End Number must be greater than or equal to Tag Start Number.");
             }
         }
     }

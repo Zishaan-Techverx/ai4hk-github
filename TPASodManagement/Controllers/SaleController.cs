@@ -30,6 +30,7 @@ namespace TpaSodManagement.Controllers
         private readonly IExportToPdf _exportToPdf;
         private readonly IWebHostEnvironment _env;
         private readonly ApplicationDbContext _context;
+        private readonly ICurrentUserService _currentUserService;
 
         public SaleController(
             ISaleService saleService,
@@ -38,7 +39,8 @@ namespace TpaSodManagement.Controllers
             IExportToExcel exportToExcel,
             IExportToPdf exportToPdf,
             IWebHostEnvironment env,
-            ApplicationDbContext context)
+            ApplicationDbContext context,
+            ICurrentUserService currentUserService)
         {
             _saleService = saleService;
             _userManager = userManager;
@@ -47,6 +49,7 @@ namespace TpaSodManagement.Controllers
             _exportToPdf = exportToPdf;
             _env = env;
             _context = context;
+            _currentUserService = currentUserService;
         }
 
         public async Task<IActionResult> Index(int pageNumber = 1, int pageSize = 10)
@@ -67,7 +70,7 @@ namespace TpaSodManagement.Controllers
                 { "Notes", "Notes" },
                 { "CurrencyName", "Currency" },
                 { "CustomerDisplay", "Customer" },
-                { "FarmName", "Farm" },
+                { "FieldName", "Field" },
                 { "SaleTypeName", "Sale Type" },
                 { "StatusName", "Status" },
                 { "UpdatedByUserName", "Updated By User" },
@@ -180,15 +183,15 @@ namespace TpaSodManagement.Controllers
         {
             var vm = new SaleEditViewModel();
             await PopulateDropdowns(vm);
+            var isSuperAdmin = await _currentUserService.IsCurrentUserSuperAdminAsync();
 
-            // Non-SuperAdmin: User and Farm are read-only, pre-filled from current user
-            if (!User.IsInRole("SuperAdmin"))
+            // Non-SuperAdmin: User is read-only, pre-filled from current user
+            if (!isSuperAdmin)
             {
                 var currentUser = await _userManager.GetUserAsync(HttpContext.User);
                 if (currentUser != null)
                 {
                     vm.UserId = currentUser.Id;
-                    vm.FarmId = currentUser.FarmId;
 
                     // User display name (FirstName LastName (UserName))
                     string? userDisplayName = null;
@@ -200,23 +203,6 @@ namespace TpaSodManagement.Controllers
                     }
                     ViewBag.CurrentUserDisplayName = userDisplayName ?? currentUser.UserName ?? $"User #{currentUser.Id}";
 
-                    // Farm display name
-                    string? farmDisplayName = null;
-                    if (currentUser.FarmId.HasValue)
-                    {
-                        var farm = await _context.Farms.Include(f => f.Organization).FirstOrDefaultAsync(f => f.FarmId == currentUser.FarmId.Value);
-                        if (farm != null)
-                        {
-                            farmDisplayName = !string.IsNullOrEmpty(farm.FarmName)
-                                ? farm.FarmName
-                                : !string.IsNullOrEmpty(farm.LicenseNumber)
-                                    ? farm.LicenseNumber
-                                    : $"Farm #{farm.FarmId}";
-                            if (farm.Organization != null && !string.IsNullOrEmpty(farm.Organization.OrganizationName))
-                                farmDisplayName += $" ({farm.Organization.OrganizationName})";
-                        }
-                    }
-                    ViewBag.CurrentFarmDisplayName = farmDisplayName ?? "-- No Farm Assigned --";
                     ViewBag.IsUserFarmReadOnly = true;
                 }
             }
@@ -232,34 +218,14 @@ namespace TpaSodManagement.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(SaleEditViewModel saleVm)
         {
-            // Non-SuperAdmin: set User and Farm from current user (read-only in UI)
-            if (!User.IsInRole("SuperAdmin"))
+            var isSuperAdmin = await _currentUserService.IsCurrentUserSuperAdminAsync();
+            // Non-SuperAdmin: set User from current user (read-only in UI)
+            if (!isSuperAdmin)
             {
                 var currentUser = await _userManager.GetUserAsync(HttpContext.User);
                 if (currentUser != null)
                 {
                     saleVm.UserId = currentUser.Id;
-                    saleVm.FarmId = currentUser.FarmId;
-                }
-            }
-
-            // Non-SuperAdmin: set defaults for restricted fields (hidden in UI)
-            if (!User.IsInRole("SuperAdmin"))
-            {
-                saleVm.SubtotalAmount ??= 0;
-                saleVm.TaxAmount ??= 0;
-                saleVm.DiscountAmount ??= 0;
-                saleVm.TotalAmount ??= 0;
-                if (saleVm.StatusId == null || saleVm.StatusId == 0)
-                {
-                    var dropdowns = await _saleService.GetDropdownDataAsync();
-                    var firstStatus = dropdowns.Data?.ContainsKey("StatusId") == true
-                        ? dropdowns.Data["StatusId"]?.FirstOrDefault(s => !string.IsNullOrEmpty(s.Value))
-                        : null;
-                    if (firstStatus != null && int.TryParse(firstStatus.Value, out int defaultStatusId))
-                        saleVm.StatusId = defaultStatusId;
-                    else
-                        saleVm.StatusId = 1;
                 }
             }
 
@@ -432,7 +398,7 @@ namespace TpaSodManagement.Controllers
                     ("Notes", "Notes"),
                     ("Currency", "Currency"),
                     ("Customer", "Customer"),
-                    ("Farm", "Farm"),
+                    ("Field", "Field"),
                     ("Sale Type", "SaleType"),
                     ("Status", "Status"),
                     ("Updated By User", "UpdatedByUser"),
@@ -466,7 +432,7 @@ namespace TpaSodManagement.Controllers
                             item.Notes ?? "",
                             item.CurrencyName ?? "N/A",
                             item.CustomerDisplay ?? $"Customer #{item.CustomerId}",
-                            item.FarmDisplay ?? "N/A",
+                            item.FieldDisplay ?? "N/A",
                             item.SaleTypeName ?? "N/A",
                             item.StatusName ?? "N/A",
                             item.UpdatedByUserName ?? "N/A",
@@ -537,7 +503,7 @@ namespace TpaSodManagement.Controllers
                     ("Notes", "Notes"),
                     ("Currency", "Currency"),
                     ("Customer", "Customer"),
-                    ("Farm", "Farm"),
+                    ("Field", "Field"),
                     ("Sale Type", "SaleType"),
                     ("Status", "Status"),
                     ("Updated By User", "UpdatedByUser"),
@@ -564,7 +530,7 @@ namespace TpaSodManagement.Controllers
                         item.Notes ?? "",
                         item.CurrencyName ?? "N/A",
                         item.CustomerDisplay ?? $"Customer #{item.CustomerId}",
-                        item.FarmDisplay ?? "N/A",
+                        item.FieldDisplay ?? "N/A",
                         item.SaleTypeName ?? "N/A",
                         item.StatusName ?? "N/A",
                         item.UpdatedByUserName ?? "N/A",
@@ -606,8 +572,9 @@ namespace TpaSodManagement.Controllers
                 CustomerDisplay = entity.Customer?.Person != null
                     ? $"{entity.Customer.Person.FirstName} {entity.Customer.Person.LastName}".Trim()
                     : !string.IsNullOrEmpty(entity.Customer?.CustomerCode) ? entity.Customer.CustomerCode : null,
-                FarmId = entity.FarmId,
-                FarmDisplay = entity.Farm?.FarmName,
+                FieldId = entity.FieldId,
+                FieldDisplay = entity.Field?.FieldName,
+                FarmDisplay = entity.Field?.Farm?.FarmName,
                 SaleTypeName = entity.SaleType?.SaleTypeName,
                 StatusName = entity.Status?.StatusName,
                 UpdatedByUserName = entity.UpdatedByUser?.UserName,
@@ -621,24 +588,13 @@ namespace TpaSodManagement.Controllers
             return new SaleEditViewModel
             {
                 SaleId = entity.SaleId,
-                SaleNumber = entity.SaleNumber,
                 InvoiceNumber = entity.InvoiceNumber,
-                PurchaseOrderNumber = entity.PurchaseOrderNumber,
                 SaleDate = entity.SaleDate,
-                DueDate = entity.DueDate,
-                SubtotalAmount = entity.SubtotalAmount,
-                TaxAmount = entity.TaxAmount,
-                DiscountAmount = entity.DiscountAmount,
-                TotalAmount = entity.TotalAmount,
-                PaymentTermsDays = entity.PaymentTermsDays,
                 Notes = entity.Notes,
                 UserId = entity.UserId,
-                FarmId = entity.FarmId,
                 CustomerId = entity.CustomerId,
                 FieldId = entity.FieldId,
                 SaleTypeId = entity.SaleTypeId,
-                StatusId = entity.StatusId,
-                CurrencyId = entity.CurrencyId,
                 UpdatedByUserId = entity.UpdatedByUserId,
                 CreatedDate = entity.CreatedDate,
                 UpdatedDate = entity.UpdatedDate,
@@ -649,7 +605,7 @@ namespace TpaSodManagement.Controllers
 
         private static SaleCertificateViewModel MapToCertificateViewModel(Sale sale)
         {
-            var farm = sale.Farm;
+            var farm = sale.Field?.Farm;
             var customer = sale.Customer;
             var fieldTypeName = sale.Field?.FieldType?.FieldTypeName ?? string.Empty;
             var normalizedFieldTypeIdentifier = NormalizeCertificateIdentifier(fieldTypeName);
@@ -723,14 +679,14 @@ namespace TpaSodManagement.Controllers
                 LicensedGrower = licensedGrower,
                 FarmAddress = farmAddress,
                 DateCertificateIssued = sale.SaleDate.ToString("MMMM d, yyyy"),
-                AreaSold = sale.TotalAmount.ToString("N2"),
+                AreaSold = sale.TotalAmount?.ToString("N2") ?? "0.00",
                 InvoiceNumbers = sale.InvoiceNumber ?? "—",
                 Customer = customerName,
                 CustomerAddress = customerAddress,
                 CertificateImagePath = certPath,
                 CertificateImageFileName = certFile ?? string.Empty,
                 HasCertificateTemplate = hasCertificateTemplate,
-                HasSelectedField = sale.FieldId.HasValue
+                HasSelectedField = sale.FieldId > 0
             };
         }
 
@@ -755,24 +711,23 @@ namespace TpaSodManagement.Controllers
             return new Sale
             {
                 SaleId = vm.SaleId,
-                SaleNumber = vm.SaleNumber ?? string.Empty,
+                SaleNumber = null,
                 InvoiceNumber = vm.InvoiceNumber,
-                PurchaseOrderNumber = vm.PurchaseOrderNumber,
+                PurchaseOrderNumber = null,
                 SaleDate = vm.SaleDate ?? fallbackDate,
-                DueDate = vm.DueDate ?? vm.SaleDate ?? fallbackDate,
-                SubtotalAmount = vm.SubtotalAmount ?? 0m,
-                TaxAmount = vm.TaxAmount ?? 0m,
-                DiscountAmount = vm.DiscountAmount ?? 0m,
-                TotalAmount = vm.TotalAmount ?? 0m,
-                PaymentTermsDays = vm.PaymentTermsDays,
+                DueDate = null,
+                SubtotalAmount = null,
+                TaxAmount = null,
+                DiscountAmount = null,
+                TotalAmount = null,
+                PaymentTermsDays = null,
                 Notes = vm.Notes,
                 UserId = vm.UserId ?? 0,
-                FarmId = vm.FarmId ?? 0,
                 CustomerId = vm.CustomerId ?? 0,
-                FieldId = vm.FieldId,
+                FieldId = vm.FieldId ?? 0,
                 SaleTypeId = vm.SaleTypeId ?? 0,
-                StatusId = vm.StatusId ?? 0,
-                CurrencyId = vm.CurrencyId ?? 0,
+                StatusId = null,
+                CurrencyId = null,
                 UpdatedByUserId = vm.UpdatedByUserId ?? 0,
                 CreatedDate = vm.CreatedDate ?? DateTimeOffset.UtcNow,
                 UpdatedDate = vm.UpdatedDate ?? DateTimeOffset.UtcNow,
@@ -786,22 +741,16 @@ namespace TpaSodManagement.Controllers
             if (dropdowns.Success && dropdowns.Data != null)
             {
                 vm.Users = dropdowns.Data.ContainsKey("UserId") ? dropdowns.Data["UserId"] : Enumerable.Empty<SelectListItem>();
-                vm.Farms = dropdowns.Data.ContainsKey("FarmId") ? dropdowns.Data["FarmId"] : Enumerable.Empty<SelectListItem>();
                 vm.Customers = dropdowns.Data.ContainsKey("CustomerId") ? dropdowns.Data["CustomerId"] : Enumerable.Empty<SelectListItem>();
                 vm.Fields = dropdowns.Data.ContainsKey("FieldId") ? dropdowns.Data["FieldId"] : Enumerable.Empty<SelectListItem>();
                 vm.SaleTypes = dropdowns.Data.ContainsKey("SaleTypeId") ? dropdowns.Data["SaleTypeId"] : Enumerable.Empty<SelectListItem>();
-                vm.Statuses = dropdowns.Data.ContainsKey("StatusId") ? dropdowns.Data["StatusId"] : Enumerable.Empty<SelectListItem>();
-                vm.Currencies = dropdowns.Data.ContainsKey("CurrencyId") ? dropdowns.Data["CurrencyId"] : Enumerable.Empty<SelectListItem>();
             }
             else
             {
                 vm.Users = vm.Users ?? Enumerable.Empty<SelectListItem>();
-                vm.Farms = vm.Farms ?? Enumerable.Empty<SelectListItem>();
                 vm.Customers = vm.Customers ?? Enumerable.Empty<SelectListItem>();
                 vm.Fields = vm.Fields ?? Enumerable.Empty<SelectListItem>();
                 vm.SaleTypes = vm.SaleTypes ?? Enumerable.Empty<SelectListItem>();
-                vm.Statuses = vm.Statuses ?? Enumerable.Empty<SelectListItem>();
-                vm.Currencies = vm.Currencies ?? Enumerable.Empty<SelectListItem>();
                 TempData["Error"] = dropdowns.Message;
             }
         }

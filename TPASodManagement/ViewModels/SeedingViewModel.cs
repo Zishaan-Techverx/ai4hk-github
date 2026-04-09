@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace TpaSodManagement.ViewModels;
 
@@ -13,8 +13,8 @@ public class SeedingViewModel
     public long? FieldId { get; set; }
     public string? FieldName { get; set; }
 
-    public long TagRangeId { get; set; }
-    public string TagRangeCode { get; set; } = string.Empty;
+    public int TagStartNumber { get; set; }
+    public int TagEndNumber { get; set; }
 
     public decimal AreaAmount { get; set; }
     public int AreaTypeId { get; set; }
@@ -26,6 +26,5 @@ public class SeedingViewModel
     // Dropdowns
     public IEnumerable<SelectListItem>? Farms { get; set; }
     public IEnumerable<SelectListItem>? Fields { get; set; }
-    public IEnumerable<SelectListItem>? TagRanges { get; set; }
     public IEnumerable<SelectListItem>? AreaTypes { get; set; }
 }

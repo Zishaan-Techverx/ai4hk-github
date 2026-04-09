@@ -61,8 +61,6 @@ public partial class Farm : AuditBaseEntity
 
     public virtual Organization Organization { get; set; } = null!;
 
-    public virtual ICollection<Sale> Sales { get; set; } = new List<Sale>();
-
     public virtual ICollection<Seeding> Seedings { get; set; } = new List<Seeding>();
 
     public virtual ICollection<Testimonial> Testimonials { get; set; } = new List<Testimonial>();

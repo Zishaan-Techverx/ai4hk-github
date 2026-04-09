@@ -37,9 +37,10 @@ namespace TpaSodManagement.Services.Implementations
                         .ThenInclude(c => c.Person)
                     .Include(s => s.Customer)
                         .ThenInclude(c => c.Organization)
-                    .Include(s => s.Farm)
                     .Include(s => s.Field)
                         .ThenInclude(f => f!.FieldType)
+                    .Include(s => s.Field)
+                        .ThenInclude(f => f!.Farm)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
                     .Include(s => s.UpdatedByUser)
@@ -50,7 +51,7 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
                     if (farmId.HasValue)
-                        query = query.Where(s => s.FarmId == farmId.Value);
+                        query = query.Where(s => s.Field != null && s.Field.FarmId == farmId.Value);
                     else
                         query = query.Where(s => false);
                 }
@@ -78,9 +79,10 @@ namespace TpaSodManagement.Services.Implementations
                         .ThenInclude(c => c.Person)
                     .Include(s => s.Customer)
                         .ThenInclude(c => c.Organization)
-                    .Include(s => s.Farm)
                     .Include(s => s.Field)
                         .ThenInclude(f => f!.FieldType)
+                    .Include(s => s.Field)
+                        .ThenInclude(f => f!.Farm)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
                     .Include(s => s.UpdatedByUser)
@@ -91,7 +93,7 @@ namespace TpaSodManagement.Services.Implementations
                 {
                     var farmId = await _currentUserService.GetCurrentUserFarmIdAsync();
                     if (farmId.HasValue)
-                        query = query.Where(s => s.FarmId == farmId.Value);
+                        query = query.Where(s => s.Field != null && s.Field.FarmId == farmId.Value);
                     else
                         query = query.Where(s => false);
                 }
@@ -179,10 +181,10 @@ namespace TpaSodManagement.Services.Implementations
                             (s.Customer != null && s.Customer.CustomerCode != null && s.Customer.CustomerCode.Contains(filterValue)));
                     }
 
-                    if (filters.ContainsKey("FarmName") && !string.IsNullOrWhiteSpace(filters["FarmName"]))
+                    if (filters.ContainsKey("FieldName") && !string.IsNullOrWhiteSpace(filters["FieldName"]))
                     {
-                        var filterValue = FilterHelper.NormalizeSearchText(filters["FarmName"]);
-                        query = query.Where(s => s.Farm != null && s.Farm.FarmName != null && s.Farm.FarmName.Contains(filterValue));
+                        var filterValue = FilterHelper.NormalizeSearchText(filters["FieldName"]);
+                        query = query.Where(s => s.Field != null && s.Field.FieldName != null && s.Field.FieldName.Contains(filterValue));
                     }
 
                     if (filters.ContainsKey("SaleTypeName") && !string.IsNullOrWhiteSpace(filters["SaleTypeName"]))
@@ -312,9 +314,10 @@ namespace TpaSodManagement.Services.Implementations
                     .Where(s => s.DeletedDate == null)
                     .Include(s => s.Currency)
                     .Include(s => s.Customer)
-                    .Include(s => s.Farm)
                     .Include(s => s.Field)
                         .ThenInclude(f => f!.FieldType)
+                    .Include(s => s.Field)
+                        .ThenInclude(f => f!.Farm)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
                     .Include(s => s.UpdatedByUser)
@@ -351,8 +354,8 @@ namespace TpaSodManagement.Services.Implementations
                     .Include(s => s.Customer).ThenInclude(c => c!.Person)
                     .Include(s => s.Customer).ThenInclude(c => c!.Organization)
                     .Include(s => s.Customer).ThenInclude(c => c!.Address).ThenInclude(a => a!.StateProvince)
-                    .Include(s => s.Farm).ThenInclude(f => f.Address).ThenInclude(a => a!.StateProvince)
-                    .Include(s => s.Farm).ThenInclude(f => f.Organization)
+                    .Include(s => s.Field).ThenInclude(f => f!.Farm).ThenInclude(fm => fm.Address).ThenInclude(a => a!.StateProvince)
+                    .Include(s => s.Field).ThenInclude(f => f!.Farm).ThenInclude(fm => fm.Organization)
                     .Include(s => s.Field).ThenInclude(f => f!.FieldType)
                     .Include(s => s.SaleType)
                     .Include(s => s.Status)
@@ -381,6 +384,17 @@ namespace TpaSodManagement.Services.Implementations
             var response = new ServiceResponse<Sale>();
             try
             {
+                if (!sale.CurrencyId.HasValue)
+                {
+                    var usdCurrencyId = await _context.Currencies
+                        .Where(c =>
+                            (c.CurrencyCode != null && c.CurrencyCode.ToUpper() == "USD") ||
+                            (c.CurrencyName != null && c.CurrencyName.ToUpper().Contains("US DOLLAR")))
+                        .Select(c => (int?)c.CurrencyId)
+                        .FirstOrDefaultAsync();
+                    sale.CurrencyId = usdCurrencyId;
+                }
+
                 var currentUserId = await _currentUserService.GetCurrentUserIdAsync();
                 sale.CreatedDate = DateTimeOffset.UtcNow;
                 sale.CreatedByUserId = currentUserId;
@@ -415,22 +429,11 @@ namespace TpaSodManagement.Services.Implementations
                 // Update only the properties that should be updated
                 // Preserve CreatedByUserId and CreatedDate
                 existingSale.UserId = sale.UserId;
-                existingSale.FarmId = sale.FarmId;
                 existingSale.CustomerId = sale.CustomerId;
                 existingSale.FieldId = sale.FieldId;
                 existingSale.SaleTypeId = sale.SaleTypeId;
-                existingSale.SaleNumber = sale.SaleNumber;
                 existingSale.InvoiceNumber = sale.InvoiceNumber;
-                existingSale.PurchaseOrderNumber = sale.PurchaseOrderNumber;
                 existingSale.SaleDate = sale.SaleDate;
-                existingSale.DueDate = sale.DueDate;
-                existingSale.SubtotalAmount = sale.SubtotalAmount;
-                existingSale.TaxAmount = sale.TaxAmount;
-                existingSale.DiscountAmount = sale.DiscountAmount;
-                existingSale.TotalAmount = sale.TotalAmount;
-                existingSale.CurrencyId = sale.CurrencyId;
-                existingSale.PaymentTermsDays = sale.PaymentTermsDays;
-                existingSale.StatusId = sale.StatusId;
                 existingSale.Notes = sale.Notes;
                 existingSale.IsActive = sale.IsActive;
                 
@@ -674,7 +677,6 @@ namespace TpaSodManagement.Services.Implementations
 
                     ["CustomerId"] = customerItems, 
 
-                    ["FarmId"] = farmItems,
                     ["FieldId"] = fields.Select(f => new SelectListItem
                     {
                         Value = f.FieldId.ToString(),

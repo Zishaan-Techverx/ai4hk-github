@@ -1,4 +1,6 @@
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using TpaSodManagement.Database.Entities;
 
 namespace TpaSodManagement.ViewModels.TagRange
 {
@@ -19,13 +21,13 @@ namespace TpaSodManagement.ViewModels.TagRange
         [Display(Name = "Tag End Number")]
         public long TagEndNumber { get; set; }
 
-        [StringLength(20)]
-        [Display(Name = "Tag Prefix")]
-        public string? TagPrefix { get; set; }
+        [Required]
+        [Display(Name = "Farm")]
+        public long? FarmId { get; set; }
 
-        [StringLength(20)]
-        [Display(Name = "Tag Suffix")]
-        public string? TagSuffix { get; set; }
+        [Required]
+        [Display(Name = "Type of Seed")]
+        public TagSeedType? SeedType { get; set; }
 
         [Display(Name = "Total Tags")]
         public int TotalTags { get; set; }
@@ -33,6 +35,9 @@ namespace TpaSodManagement.ViewModels.TagRange
         public bool IsActive { get; set; } = true;
 
         public DateTimeOffset? CreatedDate { get; set; }
+
+        public IEnumerable<SelectListItem> Farms { get; set; } = Enumerable.Empty<SelectListItem>();
+        public IEnumerable<SelectListItem> SeedTypes { get; set; } = Enumerable.Empty<SelectListItem>();
 
         public bool IsDetailsView { get; set; }
     }
